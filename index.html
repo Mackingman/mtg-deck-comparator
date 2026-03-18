@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTG Deck Comparator + Power Level</title>
+<style>
+/* fonts loaded via link tag */
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: #0c0c0e;
+color: #e8e8f0;
+font-family: ‘Barlow’, sans-serif;
+min-height: 100vh;
+background-image:
+radial-gradient(ellipse 100% 50% at 50% -5%, rgba(232,201,74,0.06) 0%, transparent 65%);
+}
+
+/* HEADER */
+.header {
+text-align: center;
+padding: 36px 20px 24px;
+border-bottom: 1px solid #28283a;
+}
+.header h1 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(32px, 6vw, 64px);
+letter-spacing: 6px;
+color: #e8c94a;
+text-shadow: 0 0 40px rgba(232,201,74,0.2);
+}
+.header p { color: #5a5a7a; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; }
+
+/* TABS */
+.tabs {
+display: flex;
+border-bottom: 1px solid #28283a;
+background: #14141a;
+overflow-x: auto;
+}
+.tab {
+padding: 14px 22px;
+cursor: pointer;
+font-weight: 700;
+font-size: 12px;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: #5a5a7a;
+border-bottom: 2px solid transparent;
+white-space: nowrap;
+transition: all 0.2s;
+}
+.tab:hover { color: #e8e8f0; }
+.tab.active { color: #e8c94a; border-bottom-color: #e8c94a; }
+
+.panel { display: none; padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
+.panel.active { display: block; }
+
+/* INPUTS */
+.input-grid {
+display: grid;
+grid-template-columns: 1fr 44px 1fr;
+gap: 0;
+margin-bottom: 20px;
+}
+@media(max-width:640px){ .input-grid { grid-template-columns: 1fr; } .vs-mid { display: none; } }
+
+.deck-col { display: flex; flex-direction: column; gap: 8px; }
+.deck-lbl { font-family: ‘Bebas Neue’, sans-serif; font-size: 16px; letter-spacing: 3px; }
+.deck-lbl.a { color: #e8c94a; }
+.deck-lbl.b { color: #4ae8b0; }
+
+input[type=text] {
+background: #14141a;
+border: 1px solid #28283a;
+border-radius: 6px;
+color: #e8e8f0;
+font-family: ‘Barlow’, sans-serif;
+font-size: 13px;
+font-weight: 600;
+padding: 8px 12px;
+outline: none;
+transition: border-color 0.2s;
+width: 100%;
+}
+input[type=text]:focus { border-color: #e8c94a; }
+
+textarea {
+background: #14141a;
+border: 1px solid #28283a;
+border-radius: 8px;
+color: #e8e8f0;
+font-family: ‘DM Mono’, monospace;
+font-size: 11.5px;
+line-height: 1.75;
+padding: 14px;
+resize: vertical;
+height: 260px;
+outline: none;
+width: 100%;
+transition: border-color 0.2s;
+}
+textarea:focus { border-color: rgba(232,201,74,0.3); }
+textarea::placeholder { color: #5a5a7a; }
+
+.vs-mid { display: flex; align-items: center; justify-content: center; padding-top: 48px; }
+.vs-circle {
+width: 36px; height: 36px; border-radius: 50%;
+border: 1px solid #28283a;
+display: flex; align-items: center; justify-content: center;
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 14px; color: #5a5a7a; letter-spacing: 1px;
+}
+
+.btn-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+
+.btn-primary {
+background: #e8c94a;
+border: none; border-radius: 8px;
+color: #0c0c0e;
+cursor: pointer;
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 18px; letter-spacing: 4px;
+padding: 12px 40px;
+transition: all 0.2s;
+}
+.btn-primary:hover { background: #f5d84e; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,201,74,0.25); }
+
+.btn-secondary {
+background: #14141a;
+border: 1px solid #28283a;
+border-radius: 8px;
+color: #5a5a7a;
+cursor: pointer;
+font-family: ‘Barlow’, sans-serif;
+font-weight: 700; font-size: 12px; letter-spacing: 2px;
+text-transform: uppercase;
+padding: 12px 20px;
+transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #e8c94a; color: #e8c94a; }
+
+/* RESULTS */
+#results { display: none; }
+
+/* POWER LEVEL CARDS */
+.power-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+margin-bottom: 24px;
+}
+@media(max-width:600px){ .power-grid { grid-template-columns: 1fr; } }
+
+.power-card {
+background: #14141a;
+border: 1px solid #28283a;
+border-radius: 12px;
+padding: 20px;
+position: relative;
+overflow: hidden;
+}
+.power-card::before {
+content: ‘’;
+position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.power-card.a::before { background: linear-gradient(90deg, #e8c94a, rgba(232,201,74,0.3)); }
+.power-card.b::before { background: linear-gradient(90deg, #4ae8b0, rgba(74,232,176,0.3)); }
+
+.power-card-header {
+display: flex; justify-content: space-between; align-items: flex-start;
+margin-bottom: 16px;
+}
+.power-card-name { font-family: ‘Bebas Neue’, sans-serif; font-size: 20px; letter-spacing: 2px; }
+.power-card-name.a { color: #e8c94a; }
+.power-card-name.b { color: #4ae8b0; }
+
+.bracket-badge {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 28px;
+line-height: 1;
+padding: 6px 14px;
+border-radius: 8px;
+border: 1px solid;
+}
+.br1 { color: #4ae8b0; border-color: #4ae8b0; background: rgba(74,232,176,0.08); }
+.br2 { color: #4a9ee8; border-color: #4a9ee8; background: rgba(74,158,232,0.08); }
+.br3 { color: #9e4ae8; border-color: #9e4ae8; background: rgba(158,74,232,0.08); }
+.br4 { color: #e8c94a; border-color: #e8c94a; background: rgba(232,201,74,0.08); }
+.br5 { color: #e84a6a; border-color: #e84a6a; background: rgba(232,74,106,0.08); }
+
+.power-stats {
+display: grid; grid-template-columns: repeat(3, 1fr);
+gap: 10px; margin-bottom: 16px;
+}
+.pstat { text-align: center; }
+.pstat-val { font-family: ‘Bebas Neue’, sans-serif; font-size: 24px; color: #e8e8f0; }
+.pstat-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5a5a7a; }
+
+.bracket-checks { display: flex; flex-direction: column; gap: 5px; }
+.bcheck {
+display: flex; align-items: center; gap: 8px;
+font-size: 12px; font-weight: 600; letter-spacing: 1px;
+}
+.bcheck .icon { font-size: 13px; }
+.bcheck.pass { color: #4ae87a; }
+.bcheck.fail { color: #e84a6a; }
+.bcheck.warn { color: #e8c94a; }
+
+.power-bar-wrap { margin-top: 12px; }
+.power-bar-bg { height: 8px; background: #1c1c24; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.power-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.bar-gold { background: linear-gradient(90deg, #c8a030, #e8c94a); }
+.bar-teal { background: linear-gradient(90deg, #30b890, #4ae8b0); }
+.power-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: #5a5a7a; margin-top: 3px; }
+
+/* FLAGGED CARDS */
+.flagged-section {
+margin-top: 12px;
+border-top: 1px solid #28283a;
+padding-top: 12px;
+}
+.flagged-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5a5a7a; margin-bottom: 8px; }
+.flag-chip {
+display: inline-block;
+background: #1c1c24;
+border: 1px solid #28283a;
+border-radius: 4px;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+padding: 2px 7px;
+margin: 2px;
+color: #e8e8f0;
+}
+.flag-chip.mld { border-color: rgba(232,74,106,0.4); color: #e84a6a; }
+.flag-chip.combo { border-color: rgba(158,74,232,0.4); color: #b86ae8; }
+.flag-chip.gc { border-color: rgba(232,201,74,0.4); color: #e8c94a; }
+.flag-chip.xt { border-color: rgba(74,158,232,0.4); color: #4a9ee8; }
+
+/* COMPARISON SECTION */
+.section-hdr {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 14px; letter-spacing: 4px;
+color: #5a5a7a;
+margin: 24px 0 12px;
+padding-bottom: 8px;
+border-bottom: 1px solid #28283a;
+}
+
+.summary-bar {
+display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px;
+}
+@media(max-width:500px){ .summary-bar { grid-template-columns: 1fr 1fr; } }
+
+.scard {
+background: #14141a; border: 1px solid #28283a;
+border-radius: 8px; padding: 14px; text-align: center;
+}
+.scard .n { font-family: ‘Bebas Neue’, sans-serif; font-size: 32px; }
+.scard .l { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5a5a7a; margin-top: 2px; }
+.scard.sa .n { color: #e8c94a; }
+.scard.sb .n { color: #4ae8b0; }
+.scard.ss .n { color: #e8e8f0; }
+.scard.so .n { color: #9e4ae8; }
+
+.overlap-vis {
+background: #14141a; border: 1px solid #28283a;
+border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;
+}
+.ovlap-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #5a5a7a; margin-bottom: 12px; }
+.ovlap-bar { display: flex; height: 24px; border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+.ob-a { background: linear-gradient(90deg, #e8c94a, rgba(232,201,74,0.5)); }
+.ob-s { background: rgba(255,255,255,0.08); border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08); }
+.ob-b { background: linear-gradient(90deg, rgba(74,232,176,0.5), #4ae8b0); }
+.ovlap-lbls { display: flex; justify-content: space-between; font-size: 11px; }
+
+/* 3-COL */
+.three-col { display: grid; grid-template-columns: 1fr 180px 1fr; gap: 10px; }
+@media(max-width:700px){ .three-col { grid-template-columns: 1fr; } }
+
+.col-hdr {
+font-family: ‘Bebas Neue’, sans-serif; font-size: 13px; letter-spacing: 3px;
+padding: 10px 12px; border-radius: 6px 6px 0 0;
+display: flex; justify-content: space-between;
+}
+.col-hdr.ha { background: rgba(232,201,74,0.08); color: #e8c94a; border: 1px solid rgba(232,201,74,0.2); border-bottom: none; }
+.col-hdr.hs { background: rgba(255,255,255,0.03); color: #5a5a7a; border: 1px solid #28283a; border-bottom: none; }
+.col-hdr.hb { background: rgba(74,232,176,0.08); color: #4ae8b0; border: 1px solid rgba(74,232,176,0.2); border-bottom: none; }
+
+.col-body { border-radius: 0 0 6px 6px; max-height: 480px; overflow-y: auto; }
+.col-body.ba { border: 1px solid rgba(232,201,74,0.2); }
+.col-body.bs { border: 1px solid #28283a; }
+.col-body.bb { border: 1px solid rgba(74,232,176,0.2); }
+
+.crd-row {
+padding: 6px 12px;
+font-family: ‘DM Mono’, monospace; font-size: 11.5px;
+border-bottom: 1px solid rgba(255,255,255,0.025);
+display: flex; justify-content: space-between; align-items: center;
+transition: background 0.1s;
+}
+.crd-row:last-child { border-bottom: none; }
+.crd-row:hover { background: rgba(255,255,255,0.03); }
+.crd-row.ra:hover { background: rgba(232,201,74,0.05); }
+.crd-row.rb:hover { background: rgba(74,232,176,0.05); }
+.crd-row.rs { color: #5a5a7a; }
+.tdot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-left: 6px; }
+.tc { background: #e84a4a; } .ta { background: #aaa; } .te { background: #4ae87a; }
+.ti { background: #4a9ee8; } .ts { background: #9e4ae8; } .tl { background: #e87a4a; }
+.tp { background: #e8c94a; }
+
+.sec-div {
+font-family: ‘Bebas Neue’, sans-serif; font-size: 11px; letter-spacing: 3px;
+color: #5a5a7a; padding: 5px 12px;
+background: #1c1c24; border-bottom: 1px solid #28283a;
+}
+
+.empty-msg { padding: 28px; text-align: center; color: #5a5a7a; font-size: 12px; letter-spacing: 1px; }
+
+/* CAT BREAKDOWN */
+.cat-grid { display: grid; grid-template-columns: 80px 1fr 60px 1fr 80px; gap: 6px; align-items: center; margin-bottom: 8px; }
+.cat-nm { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5a5a7a; text-align: right; font-family: ‘DM Mono’, monospace; }
+.cat-bw { height: 7px; background: #1c1c24; border-radius: 3px; overflow: hidden; }
+.cat-bf-a { height: 100%; border-radius: 3px; background: #e8c94a; transition: width 0.7s; }
+.cat-bf-b { height: 100%; border-radius: 3px; background: #4ae8b0; transition: width 0.7s; }
+.cat-nn { font-family: ‘Bebas Neue’, sans-serif; font-size: 18px; text-align: center; }
+.cat-nn.a { color: #e8c94a; } .cat-nn.b { color: #4ae8b0; }
+.cat-leg { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #5a5a7a; font-family: ‘DM Mono’, monospace; }
+
+/* SEARCH */
+.search-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.srch {
+background: #1c1c24; border: 1px solid #28283a;
+border-radius: 6px; color: #e8e8f0;
+font-family: ‘DM Mono’, monospace; font-size: 12px;
+padding: 8px 12px; outline: none; flex: 1; min-width: 180px;
+transition: border-color 0.2s;
+}
+.srch:focus { border-color: rgba(232,201,74,0.4); }
+.srch::placeholder { color: #5a5a7a; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.tag {
+background: #1c1c24; border: 1px solid #28283a;
+border-radius: 20px; color: #5a5a7a; cursor: pointer;
+font-size: 10px; font-weight: 700; letter-spacing: 1px;
+padding: 3px 10px; text-transform: uppercase; transition: all 0.15s;
+}
+.tag:hover { border-color: #e8c94a; color: #e8c94a; }
+.tag.active { background: rgba(232,201,74,0.12); border-color: #e8c94a; color: #e8c94a; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #28283a; border-radius: 2px; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Deck Comparator</h1>
+  <p>Compare · Power Level · Bracket · Built on EDHPowerLevel Algorithm</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('compare')">⚔ Compare</div>
+  <div class="tab" onclick="switchTab('about')">📖 Algorithm</div>
+</div>
+
+<!-- COMPARE PANEL -->
+
+<div class="panel active" id="panel-compare">
+
+  <div class="input-grid">
+    <div class="deck-col">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="deck-lbl a" style="margin-bottom:0">⚔ Deck A</div>
+        <button onclick="document.getElementById('deck-a').value='';document.getElementById('name-a').value='Deck A';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+      </div>
+      <input type="text" id="name-a" value="Deck A" placeholder="Deck name">
+      <textarea id="deck-a" placeholder="Paste your decklist here... Format: 1 Card Name (set codes auto-stripped)"></textarea>
+    </div>
+    <div class="vs-mid"><div class="vs-circle">VS</div></div>
+    <div class="deck-col">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="deck-lbl b">🌀 Deck B</div>
+        <button onclick="document.getElementById('deck-b').value='';document.getElementById('name-b').value='Deck B';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+      </div>
+      <input type="text" id="name-b" value="Deck B" placeholder="Deck name">
+      <textarea id="deck-b" placeholder="Paste decklist here..."></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" onclick="runAnalysis()">⚡ Analyze &amp; Compare</button>
+    <button class="btn-secondary" onclick="downloadSelf()">⬇ Download App</button>
+    <button class="btn-secondary" id="share-btn" onclick="shareURL()">🔗 Share Decks</button>
+  </div>
+
+  <div id="results">
+
+```
+<!-- POWER LEVEL -->
+<div class="section-hdr">Power Level &amp; Bracket Analysis</div>
+<div class="power-grid">
+  <div class="power-card a" id="pcard-a"></div>
+  <div class="power-card b" id="pcard-b"></div>
+</div>
+
+<!-- COMPARISON -->
+<div class="section-hdr">Deck Comparison</div>
+<div class="summary-bar">
+  <div class="scard ss"><div class="n" id="s-shared">0</div><div class="l">Shared</div></div>
+  <div class="scard sa"><div class="n" id="s-onlya">0</div><div class="l" id="lbl-a">Only A</div></div>
+  <div class="scard sb"><div class="n" id="s-onlyb">0</div><div class="l" id="lbl-b">Only B</div></div>
+  <div class="scard so"><div class="n" id="s-pct">0%</div><div class="l">Overlap</div></div>
+</div>
+
+<div class="overlap-vis">
+  <div class="ovlap-title">Visual Overlap</div>
+  <div class="ovlap-bar">
+    <div class="ob-a" id="ob-a" style="width:33%"></div>
+    <div class="ob-s" id="ob-s" style="width:34%"></div>
+    <div class="ob-b" id="ob-b" style="width:33%"></div>
+  </div>
+  <div class="ovlap-lbls">
+    <span style="color:#e8c94a" id="ol-a">Only A</span>
+    <span style="color:#5a5a7a" id="ol-s">Shared</span>
+    <span style="color:#4ae8b0" id="ol-b">Only B</span>
+  </div>
+</div>
+
+<!-- Cat breakdown -->
+<div class="section-hdr">Category Breakdown</div>
+<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+  <div id="cat-rows"></div>
+</div>
+
+<!-- Search + 3col -->
+<div class="section-hdr">Card Lists</div>
+<div class="search-row">
+  <input class="srch" id="search" placeholder="🔍 Search cards..." oninput="renderLists()">
+</div>
+<div class="tag-row" id="tag-row"></div>
+<div class="three-col">
+  <div>
+    <div class="col-hdr ha"><span id="colhdr-a">Deck A Only</span><span style="font-size:10px;opacity:.7" id="cnt-a">0</span></div>
+    <div class="col-body ba" id="list-a"></div>
+  </div>
+  <div>
+    <div class="col-hdr hs"><span>Shared</span><span style="font-size:10px;opacity:.7" id="cnt-s">0</span></div>
+    <div class="col-body bs" id="list-s"></div>
+  </div>
+  <div>
+    <div class="col-hdr hb"><span id="colhdr-b">Deck B Only</span><span style="font-size:10px;opacity:.7" id="cnt-b">0</span></div>
+    <div class="col-body bb" id="list-b"></div>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:20px;">
+  <button class="btn-secondary" onclick="exportTxt()">↓ Export as Text</button>
+</div>
+```
+
+  </div><!-- /results -->
+</div><!-- /compare panel -->
+
+<!-- ABOUT PANEL -->
+
+<div class="panel" id="panel-about">
+  <div style="max-width:700px;margin:0 auto;line-height:1.8;color:#e8e8f0;">
+    <div class="section-hdr">How Power Level is Calculated</div>
+    <p style="margin-bottom:16px;color:#5a5a7a;">This tool implements the <strong style="color:#e8e8f0">EDHPowerLevel.com algorithm</strong> as described in their published methodology. Because we can't access live card price/popularity data offline, we use a curated local database of card ratings, bracket flags, and type data. Banned list and Game Changers are accurate as of <strong style="color:#e8e8f0">February 9, 2026</strong>.</p>
+
+```
+<div class="section-hdr">Bracket Requirements (WotC — Updated Feb 2026)</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;">
+  <div style="background:#14141a;border:1px solid rgba(74,232,176,0.3);border-radius:8px;padding:12px;text-align:center;">
+    <div style="font-family:'Bebas Neue';font-size:20px;color:#4ae8b0">1</div>
+    <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Exhibition</div>
+    <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No extra turns, no MLD, no 2-card combos, no Game Changers. Tutors sparse.</div>
+  </div>
+  <div style="background:#14141a;border:1px solid rgba(74,158,232,0.3);border-radius:8px;padding:12px;text-align:center;">
+    <div style="font-family:'Bebas Neue';font-size:20px;color:#4a9ee8">2</div>
+    <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Core</div>
+    <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No chaining extra turns, no MLD, no 2-card combos, no Game Changers. Avg precon level.</div>
+  </div>
+  <div style="background:#14141a;border:1px solid rgba(158,74,232,0.3);border-radius:8px;padding:12px;text-align:center;">
+    <div style="font-family:'Bebas Neue';font-size:20px;color:#9e4ae8">3</div>
+    <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Upgraded</div>
+    <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No MLD. Late-game combos only (8+ mana to assemble). Up to 3 Game Changers.</div>
+  </div>
+  <div style="background:#14141a;border:1px solid rgba(232,201,74,0.3);border-radius:8px;padding:12px;text-align:center;">
+    <div style="font-family:'Bebas Neue';font-size:20px;color:#e8c94a">4</div>
+    <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Optimized</div>
+    <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No restrictions beyond the banlist. High-powered, not tournament cEDH.</div>
+  </div>
+  <div style="background:#14141a;border:1px solid rgba(232,74,106,0.3);border-radius:8px;padding:12px;text-align:center;">
+    <div style="font-family:'Bebas Neue';font-size:20px;color:#e84a6a">5</div>
+    <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">cEDH</div>
+    <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No restrictions. Built to win in the competitive metagame.</div>
+  </div>
+</div>
+
+<div class="section-hdr">&#x26D4; Banned Cards in Commander (as of Feb 9, 2026)</div>
+<p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">44 individually named cards banned. <strong style="color:#4ae87a">Biorhythm</strong> and <strong style="color:#4ae87a">Lutri, the Spellchaser</strong> were <strong style="color:#4ae87a">unbanned</strong> Feb 9, 2026. Lutri is legal in the 99 and as commander but remains <em>banned as a companion</em>. Note: Dockside Extortionist, Mana Crypt, and Jeweled Lotus are also banned.</p>
+<div style="font-family:'DM Mono',monospace;font-size:11px;color:#e84a6a;line-height:2.2;columns:2;column-gap:20px;margin-bottom:8px;">
+  Ancestral Recall · Balance · Black Lotus · Braids, Cabal Minion · Channel · Chaos Orb · Dockside Extortionist · Emrakul, the Aeons Torn · Erayo, Soratami Ascendant · Falling Star · Fastbond · Flash · Golos, Tireless Pilgrim · Griselbrand · Hullbreacher · Iona, Shield of Emeria · Jeweled Lotus · Karakas · Leovold, Emissary of Trest · Library of Alexandria · Limited Resources · Mana Crypt · Mox Emerald · Mox Jet · Mox Pearl · Mox Ruby · Mox Sapphire · Panoptic Mirror · Primeval Titan · Prophet of Kruphix · Recurring Nightmare · Rofellos, Llanowar Emissary · Shahrazad · Sway of the Stars · Sylvan Primordial · Time Walk · Tinker · Trade Secrets · Upheaval · Worldfire · Yawgmoth's Bargain · Yosei, the Morning Star
+</div>
+<p style="font-size:11px;color:#5a5a7a;">Also banned: all ante cards, all Conspiracy-type cards, all cards removed from constructed for offensive content.</p>
+
+<div class="section-hdr">&#x26A0; Game Changers (Updated Feb 9, 2026)</div>
+<p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Legal in Commander. Not permitted in Bracket 1 or 2. Up to <strong style="color:#e8e8f0">3 allowed in Bracket 3</strong>. Unlimited at Bracket 4+. <strong style="color:#e8c94a">Note: Sol Ring is intentionally NOT a Game Changer</strong> — WotC considers it a Commander tradition.</p>
+<div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8c94a;line-height:2.2;columns:2;column-gap:20px;">
+  Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
+</div>
+<p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Mox Opal, Counterspell, Pact of Negation, Food Chain, Deflecting Swat, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
+
+<div class="section-hdr">&#x1F504; Chaining Extra Turns (Not Allowed Below Bracket 4)</div>
+<p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">These cards enable repeated extra turns and are restricted below Bracket 4.</p>
+<div style="font-family:'DM Mono',monospace;font-size:11px;color:#4a9ee8;line-height:2.2;columns:2;column-gap:20px;">
+  Time Warp · Temporal Manipulation · Walk the Aeons · Capture of Jingzhou · Expropriate · Time Stretch · Nexus of Fate · Timestream Navigator · Sage of Hours · Time Sieve · Lighthouse Chronologist · Magosi, the Waterveil
+</div>
+
+<div class="section-hdr">&#x1F30B; Mass Land Denial (MLD) — Pushes Bracket 4+</div>
+<p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Per WotC's bracket definitions, these cards qualify as MLD and prevent play below Bracket 4.</p>
+<div style="font-family:'DM Mono',monospace;font-size:11px;color:#e84a6a;line-height:2.2;columns:2;column-gap:20px;">
+  Armageddon · Ravages of War · Ruination · Sunder · Blood Moon · Magus of the Moon · Winter Orb · Stasis · Contamination · Tangle Wire · Death Cloud · Worldslayer · Trinisphere · Vorinclex, Voice of Hunger · Hokori, Dust Drinker · Hall of Gemstone · Cataclysm · Realm Razer · Infernal Darkness · Rising Waters · Spreading Algae · Numot, the Devastator · Giltleaf Archdruid · Kudzu · Demonic Hordes · Urza's Sylex · Dimensional Breach · Epicenter · Global Ruin · Razia's Purification · Apocalypse · Bearer of the Heavens · Pox · Restore Balance
+</div>
+
+<div class="section-hdr">&#x1F4CA; Power Score</div>
+<p style="font-size:13px;color:#5a5a7a;">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
+```
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CARD DATABASE
+// Impact = proxy for EDHPowerLevel impact score (0-20)
+// gc = Game Changer, mld = Mass Land Denial,
+// xt = Extra Turn, xtchain = Chaining Extra Turn
+// combo = known 2-card combo piece
+// cmc = converted mana cost
+// ══════════════════════════════════════════════════════
+const CARD_DB = {
+  // === FAST MANA (high impact, low cmc) ===
+  "Sol Ring":              {impact:18, cmc:1,  type:'artifact'},
+  "Mana Crypt":            {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Mana Vault":            {impact:17, cmc:1,  gc:true,  type:'artifact'},
+  "Mox Diamond":           {impact:17, cmc:0,  gc:true,  type:'artifact'},
+  "Chrome Mox":            {impact:16, cmc:0,  gc:true,  type:'artifact'},
+  "Mox Opal":              {impact:16, cmc:0,  type:'artifact'},
+  "Jeweled Lotus":         {impact:18, cmc:0,  banned:true, type:'artifact'},
+  // === BANNED IN COMMANDER ===
+  "Black Lotus":           {impact:20, cmc:0,  banned:true, type:'artifact'},
+  "Ancestral Recall":      {impact:20, cmc:1,  banned:true, type:'instant'},
+  "Time Walk":             {impact:20, cmc:2,  banned:true, xt:true, xtchain:true, type:'sorcery'},
+  "Mox Sapphire":          {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Mox Jet":               {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Mox Ruby":              {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Mox Emerald":           {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Mox Pearl":             {impact:19, cmc:0,  banned:true, type:'artifact'},
+  "Timetwister":           {impact:19, cmc:3,  banned:true, type:'sorcery'},
+  // === BANNED IN COMMANDER (as of Feb 9, 2026) ===
+  // Note: Biorhythm and Lutri unbanned Feb 9 2026. Dockside, Mana Crypt, Jeweled Lotus are banned.
+  "Emrakul, the Aeons Torn":{impact:18,cmc:15, banned:true, type:'creature'},
+  "Griselbrand":           {impact:17, cmc:8,  banned:true, type:'creature'},
+  "Iona, Shield of Emeria":{impact:16, cmc:9,  banned:true, type:'creature'},
+  "Leovold, Emissary of Trest":{impact:16,cmc:3,banned:true,type:'creature'},
+  "Primeval Titan":        {impact:16, cmc:6,  banned:true, type:'creature'},
+  "Braids, Cabal Minion":  {impact:13, cmc:4,  banned:true, type:'creature'},
+  "Rofellos, Llanowar Emissary":{impact:14,cmc:2,banned:true,type:'creature'},
+  "Sylvan Primordial":     {impact:13, cmc:7,  banned:true, type:'creature'},
+  "Yosei, the Morning Star":{impact:12,cmc:6,  banned:true, type:'creature'},
+  "Prophet of Kruphix":    {impact:14, cmc:5,  banned:true, type:'creature'},
+  "Golos, Tireless Pilgrim":{impact:14,cmc:5,  banned:true, type:'creature'},
+  "Hullbreacher":          {impact:15, cmc:3,  banned:true, type:'creature'},
+  "Erayo, Soratami Ascendant":{impact:11,cmc:2,banned:true, type:'creature'},
+  "Flash":                 {impact:13, cmc:2,  banned:true, type:'instant'},
+  "Worldfire":             {impact:10, cmc:8,  gc:true, type:'sorcery'},
+  "Coalition Victory":     {impact:11, cmc:8,  gc:true, type:'sorcery'},
+  "Sway of the Stars":     {impact:9,  cmc:10, type:'sorcery'},
+  "Upheaval":              {impact:11, cmc:6,  banned:true, type:'sorcery'},
+  "Tinker":                {impact:15, cmc:3,  banned:true, type:'sorcery'},
+  "Balance":               {impact:12, cmc:2,  banned:true, type:'sorcery'},
+  "Channel":               {impact:14, cmc:2,  banned:true, type:'sorcery'},
+  "Recurring Nightmare":   {impact:14, cmc:3,  banned:true, type:'enchantment'},
+  "Limited Resources":     {impact:10, cmc:1,  banned:true, mld:true, type:'enchantment'},
+  "Trade Secrets":         {impact:9,  cmc:4,  banned:true, type:'instant'},
+  "Panoptic Mirror":       {impact:10, cmc:5,  banned:true, type:'artifact'},
+  "Karakas":               {impact:14, cmc:0,  banned:true, type:'land'},
+  "Library of Alexandria": {impact:17, cmc:0,  banned:true, type:'land'},
+  "Fastbond":              {impact:13, cmc:1,  banned:true, type:'enchantment'},
+  "Chaos Orb":             {impact:10, cmc:2,  banned:true, type:'artifact'},
+  "Falling Star":          {impact:8,  cmc:3,  banned:true, type:'sorcery'},
+  "Shahrazad":             {impact:8,  cmc:2,  banned:true, type:'sorcery'},
+  "Yawgmoth's Bargain":   {impact:15, cmc:6,  banned:true, type:'enchantment'},
+  "Lotus Petal":           {impact:14, cmc:0,  type:'artifact'},
+  "Simian Spirit Guide":   {impact:12, cmc:3,  type:'creature'},
+  "Elvish Spirit Guide":   {impact:11, cmc:3,  type:'creature'},
+  "Ancient Tomb":          {impact:17, cmc:0,  gc:true,  type:'land'},
+  "City of Traitors":      {impact:14, cmc:0,  type:'land'},
+  "Gaea's Cradle":         {impact:19, cmc:0,  gc:true,  type:'land'},
+  "Dockside Extortionist": {impact:18, cmc:2,  banned:true, type:'creature'},
+  "Arcane Signet":         {impact:12, cmc:2,  type:'artifact'},
+  "Commander's Sphere":    {impact:8,  cmc:3,  type:'artifact'},
+  "Fellwar Stone":         {impact:10, cmc:2,  type:'artifact'},
+  "Talisman of Indulgence":{impact:10, cmc:2,  type:'artifact'},
+  "Dark Ritual":           {impact:12, cmc:1,  type:'instant'},
+  "Cabal Ritual":          {impact:11, cmc:2,  type:'instant'},
+  "Pyretic Ritual":        {impact:10, cmc:2,  type:'instant'},
+  "Desperate Ritual":      {impact:10, cmc:2,  type:'instant'},
+  "Seething Song":         {impact:10, cmc:3,  type:'instant'},
+  "Jeska's Will":          {impact:14, cmc:2,  gc:true, type:'sorcery'},
+  "Teferi's Protection":   {impact:14, cmc:3,  gc:true, type:'instant'},
+  "Humility":              {impact:12, cmc:4,  gc:true, type:'enchantment'},
+  "Narset, Parter of Veils":{impact:15,cmc:3,  gc:true, type:'creature'},
+  "Consecrated Sphinx":    {impact:15, cmc:6,  gc:true, type:'creature'},
+  "Orcish Bowmasters":     {impact:16, cmc:2,  gc:true, type:'creature'},
+  "Drannith Magistrate": {impact:13, cmc:2, gc:true, type:'creature'},
+  "Serra's Sanctum": {impact:14, cmc:0, gc:true, type:'land'},
+  "Gifts Ungiven": {impact:13, cmc:4, gc:true, type:'instant'},
+  "Grand Arbiter Augustin IV": {impact:12, cmc:4, gc:true, type:'creature'},
+  "Aura Shards": {impact:12, cmc:3, gc:true, type:'enchantment'},
+  "Field of the Dead": {impact:13, cmc:0, gc:true, type:'land'},
+  "Glacial Chasm": {impact:11, cmc:0, gc:true, type:'land'},
+  "Grim Monolith": {impact:14, cmc:2, gc:true, combo:true, type:'artifact'},
+  "Lion's Eye Diamond": {impact:15, cmc:0, gc:true, combo:true, type:'artifact'},
+  "Mishra's Workshop": {impact:15, cmc:0, gc:true, type:'land'},
+  "The Tabernacle at Pendrell Vale": {impact:14, cmc:0, gc:true, type:'land'},
+  "Braids, Cabal Minion": {impact:12, cmc:4, gc:true, type:'creature'},
+  "Opposition Agent": {impact:13, cmc:3, gc:true, type:'creature'},
+  "Tergrid, God of Fright": {impact:13, cmc:5, gc:true, type:'creature'},
+  "Notion Thief":          {impact:13, cmc:4,  gc:true, type:'creature'},
+  "Crop Rotation":         {impact:12, cmc:1,  gc:true, type:'instant'},
+  "Seedborn Muse":         {impact:14, cmc:5,  gc:true, type:'creature'},
+  "Natural Order":         {impact:14, cmc:4,  gc:true, type:'sorcery'},
+  "Intuition":             {impact:14, cmc:3,  gc:true, type:'instant'},
+  "Cabal Coffers":         {impact:15, cmc:2,  gc:true, type:'land'},
+  "Battle Hymn":           {impact:8,  cmc:2,  type:'instant'},
+  "Brightstone Ritual":    {impact:9,  cmc:1,  type:'instant'},
+  "Ruby Medallion":        {impact:11, cmc:2,  type:'artifact'},
+  "Urza's Incubator":      {impact:10, cmc:3,  type:'artifact'},
+
+  // === INTERACTION ===
+  "Force of Will":         {impact:18, cmc:5,  gc:true,  type:'instant'},
+  "Force of Negation":     {impact:17, cmc:5,  gc:true,  type:'instant'},
+  "Fierce Guardianship":   {impact:17, cmc:3,  gc:true,  type:'instant'},
+  "Deflecting Swat":       {impact:16, cmc:3,  type:'instant'},
+  "Flusterstorm":          {impact:16, cmc:1,  gc:true,  type:'instant'},
+  "Pyroblast":             {impact:13, cmc:1,  type:'instant'},
+  "Red Elemental Blast":   {impact:13, cmc:1,  type:'instant'},
+  "Counterspell":          {impact:15, cmc:2,  type:'instant'},
+  "Negate":                {impact:10, cmc:2,  type:'instant'},
+  "Swan Song":             {impact:13, cmc:1,  type:'instant'},
+  "Pact of Negation":      {impact:16, cmc:0,  type:'instant'},
+  "An Offer You Can't Refuse":{impact:11,cmc:1,type:'instant'},
+  "Chaos Warp":            {impact:11, cmc:3,  type:'instant'},
+  "Swords to Plowshares":  {impact:14, cmc:1,  type:'instant'},
+  "Path to Exile":         {impact:13, cmc:1,  type:'instant'},
+  "Cyclonic Rift":         {impact:18, cmc:2,  gc:true,  type:'instant'},
+  "Tibalt's Trickery":     {impact:10, cmc:2,  type:'instant'},
+  "Flare of Duplication":  {impact:10, cmc:3,  type:'instant'},
+  "Vandalblast":           {impact:11, cmc:1,  type:'sorcery'},
+  "Abrupt Decay":          {impact:12, cmc:2,  type:'instant'},
+  "Assassin's Trophy":     {impact:13, cmc:2,  type:'instant'},
+
+  // === TUTORS ===
+  "Demonic Tutor":         {impact:18, cmc:2,  gc:true,  type:'sorcery'},
+  "Imperial Seal":         {impact:17, cmc:1,  gc:true,  type:'sorcery'},
+  "Vampiric Tutor":        {impact:17, cmc:1,  gc:true,  type:'instant'},
+  "Mystical Tutor":        {impact:15, cmc:1,  gc:true,  type:'instant'},
+  "Enlightened Tutor":     {impact:15, cmc:1,  gc:true,  type:'instant'},
+  "Worldly Tutor":         {impact:14, cmc:1,  gc:true,  type:'instant'},
+  "Goblin Matron":         {impact:12, cmc:3,  type:'creature'},
+  "Goblin Recruiter":      {impact:13, cmc:2,  type:'creature'},
+  "Imperial Recruiter":    {impact:14, cmc:3,  type:'creature'},
+  "Gamble":                {impact:11, cmc:1,  gc:true, type:'sorcery'},
+  "Survival of the Fittest":{impact:17,cmc:2,  gc:true,  type:'enchantment'},
+  "Fauna Shaman":          {impact:12, cmc:2,  type:'creature'},
+
+  // === DRAW ===
+  "Necropotence":          {impact:18, cmc:3,  gc:true,  type:'enchantment'},
+  "Rhystic Study":         {impact:17, cmc:3,  gc:true,  type:'enchantment'},
+  "Smothering Tithe":      {impact:17, cmc:4,  gc:true,  type:'enchantment'},
+  "Ad Nauseam":            {impact:17, cmc:5,  gc:true,  type:'instant'},
+  "Wheel of Fortune":      {impact:16, cmc:3,  type:'sorcery'},
+  "Skullclamp":            {impact:16, cmc:1,  type:'artifact'},
+  "The One Ring":          {impact:16, cmc:4,  type:'artifact'},
+  "Sensei's Divining Top": {impact:15, cmc:1,  type:'artifact'},
+  "Faithless Looting":     {impact:11, cmc:1,  type:'sorcery'},
+  "Brainstorm":            {impact:14, cmc:1,  type:'instant'},
+  "Ponder":                {impact:13, cmc:1,  type:'sorcery'},
+  "Preordain":             {impact:12, cmc:1,  type:'sorcery'},
+  "Mystic Remora":         {impact:14, cmc:1,  type:'enchantment'},
+  "Sylvan Library":        {impact:15, cmc:2,  type:'enchantment'},
+  "Valakut Awakening":     {impact:10, cmc:3,  type:'sorcery'},
+  "Kindred Discovery":     {impact:12, cmc:5,  type:'enchantment'},
+
+  // === COMBO PIECES ===
+  "Thassa's Oracle":       {impact:17, cmc:2,  gc:true,  combo:true, type:'creature'},
+  "Thoracle":              {impact:17, cmc:2,  gc:true,  combo:true, type:'creature'},
+  "Doomsday":              {impact:17, cmc:3,  gc:true,  combo:true, type:'sorcery'},
+  "Underworld Breach":     {impact:17, cmc:2,  gc:true,  combo:true, type:'enchantment'},
+  "Yawgmoth's Will":       {impact:17, cmc:3,  gc:true,  combo:true, type:'sorcery'},
+  "Bolas's Citadel":       {impact:17, cmc:6,  gc:true,  combo:true, type:'artifact'},
+  "Food Chain":            {impact:16, cmc:3,  combo:true, type:'enchantment'},
+  "Thornbite Staff":       {impact:14, cmc:2,  combo:true, type:'artifact'},
+  "Staff of Domination":   {impact:15, cmc:5,  combo:true, type:'artifact'},
+  "Mana Echoes":           {impact:14, cmc:4,  combo:true, type:'enchantment'},
+  "Phyrexian Altar":       {impact:15, cmc:3,  combo:true, type:'artifact'},
+  "Ashnod's Altar":        {impact:13, cmc:3,  combo:true, type:'artifact'},
+  "Goblin Bombardment":    {impact:12, cmc:2,  combo:true, type:'enchantment'},
+  "Skirk Prospector":      {impact:12, cmc:1,  combo:true, type:'creature'},
+  "Aggravated Assault":    {impact:13, cmc:3,  combo:true, type:'enchantment'},
+  "Breath of Fury":        {impact:10, cmc:4,  combo:true, type:'enchantment'},
+  "Impact Tremors":        {impact:11, cmc:2,  type:'enchantment'},
+  "Purphoros, God of the Forge":{impact:14,cmc:4,type:'enchantment'},
+  "Umbral Mantle":         {impact:12, cmc:3,  combo:true, type:'artifact'},
+  "Goblin Sharpshooter":   {impact:12, cmc:3,  combo:true, type:'creature'},
+  "Intruder Alarm":        {impact:12, cmc:3,  combo:true, type:'enchantment'},
+  "Cloudstone Curio":      {impact:13, cmc:3,  combo:true, type:'artifact'},
+  "Illusionist's Bracers": {impact:10, cmc:2,  combo:true, type:'artifact'},
+  "Kiki-Jiki, Mirror Breaker":{impact:15,cmc:5,combo:true,type:'creature'},
+  "Splinter Twin":         {impact:14, cmc:4,  combo:true, type:'enchantment'},
+  "Conspicuous Snoop":     {impact:11, cmc:2,  combo:true, type:'creature'},
+  "Final Fortune":         {impact:10, cmc:2,  type:'instant'},
+  "Sword of the Paruns":   {impact:10, cmc:4,  combo:true, type:'artifact'},
+  "Krenko, Tin Street Kingpin":{impact:10,cmc:3,type:'creature'},
+
+  // === MLD ===
+  "Armageddon":            {impact:10, cmc:4,  mld:true, type:'sorcery'},
+  "Ravages of War":        {impact:10, cmc:4,  mld:true, type:'sorcery'},
+  "Ruination":             {impact:8,  cmc:4,  mld:true, type:'sorcery'},
+  "Sunder":                {impact:8,  cmc:5,  mld:true, type:'instant'},
+  "Blood Moon":            {impact:14, cmc:3,  mld:true, type:'enchantment'},
+  "Magus of the Moon":     {impact:13, cmc:3,  mld:true, type:'creature'},
+  "Winter Orb":            {impact:10, cmc:2,  mld:true, type:'artifact'},
+  "Stasis":                {impact:9,  cmc:2,  mld:true, type:'enchantment'},
+  "Contamination":         {impact:11, cmc:3,  mld:true, type:'enchantment'},
+  "Tangle Wire":           {impact:9,  cmc:3,  mld:true, type:'artifact'},
+  "Trinisphere":           {impact:13, cmc:3,  type:'artifact'},
+  "Death Cloud":           {impact:9,  cmc:3,  mld:true, type:'sorcery'},
+  "Worldslayer":           {impact:8,  cmc:5,  mld:true, type:'artifact'},
+  "Vorinclex, Voice of Hunger":{impact:13,cmc:8,mld:true,type:'creature'},
+  "Hokori, Dust Drinker":  {impact:8,  cmc:4,  mld:true, type:'creature'},
+  "Defense Grid":          {impact:10, cmc:2,  type:'artifact'},
+
+  // === EXTRA TURNS ===
+  "Time Walk":             {impact:18, cmc:2,  xt:true, xtchain:true, gc:true, type:'sorcery'},
+  "Time Warp":             {impact:14, cmc:5,  xt:true, xtchain:true, type:'sorcery'},
+  "Temporal Manipulation": {impact:13, cmc:5,  xt:true, xtchain:true, type:'sorcery'},
+  "Walk the Aeons":        {impact:11, cmc:6,  xt:true, xtchain:true, type:'sorcery'},
+  "Capture of Jingzhou":   {impact:12, cmc:5,  xt:true, xtchain:true, type:'sorcery'},
+  "Expropriate":           {impact:14, cmc:9,  xt:true, xtchain:true, type:'sorcery'},
+  "Time Stretch":          {impact:11, cmc:10, xt:true, xtchain:true, type:'sorcery'},
+  "Nexus of Fate":         {impact:13, cmc:7,  xt:true, xtchain:true, type:'sorcery'},
+  "Timestream Navigator":  {impact:11, cmc:4,  xt:true, xtchain:true, type:'creature'},
+  "Sage of Hours":         {impact:10, cmc:3,  xt:true, xtchain:true, type:'creature'},
+  "Time Sieve":            {impact:11, cmc:2,  xt:true, xtchain:true, type:'artifact'},
+  "Lighthouse Chronologist":{impact:9, cmc:2,  xt:true, xtchain:true, type:'creature'},
+  "Magosi, the Waterveil": {impact:8,  cmc:0,  xt:true, xtchain:true, type:'land'},
+  "Alrund's Epiphany":     {impact:11, cmc:7,  xt:true, type:'sorcery'},
+  "Seasons Past":          {impact:9,  cmc:6,  type:'sorcery'},
+
+  // === CEDH CREATURES ===
+  "Tymna the Weaver":      {impact:16, cmc:3,  type:'creature'},
+  "Kraum, Ludevic's Opus": {impact:14, cmc:5,  type:'creature'},
+  "Najeela, the Blade-Blossom":{impact:16,cmc:3,gc:true,type:'creature'},
+  "Kinnan, Bonder Prodigy":{impact:16, cmc:2,  gc:true, type:'creature'},
+  "Sisay, Weatherlight Captain":{impact:14,cmc:3,type:'creature'},
+  "Urza, Lord High Artificer":{impact:16,cmc:4,gc:true,type:'creature'},
+  "The Gitrog Monster":    {impact:15, cmc:5,  gc:true, type:'creature'},
+  "Yuriko, the Tiger's Shadow":{impact:15,cmc:2,gc:true,type:'creature'},
+  "Malcolm, Keen-Eyed Navigator":{impact:12,cmc:3,type:'creature'},
+  "Krenko, Mob Boss":      {impact:14, cmc:4,  type:'creature'},
+
+  // === GOBLIN STUFF ===
+  "Warren Instigator":     {impact:11, cmc:2,  type:'creature'},
+  "Goblin Lackey":         {impact:12, cmc:1,  type:'creature'},
+  "Goblin Warchief":       {impact:11, cmc:3,  type:'creature'},
+  "Goblin Chieftain":      {impact:10, cmc:3,  type:'creature'},
+  "Goblin Guide":          {impact:11, cmc:1,  type:'creature'},
+  "Goblin Bushwhacker":    {impact:8,  cmc:1,  type:'creature'},
+  "Rundvelt Hordemaster":  {impact:9,  cmc:2,  type:'creature'},
+  "Goblin Trashmaster":    {impact:8,  cmc:4,  type:'creature'},
+  "Metallic Mimic":        {impact:9,  cmc:2,  type:'artifact'},
+  "Patchwork Banner":      {impact:7,  cmc:3,  type:'artifact'},
+  "Shared Animosity":      {impact:10, cmc:3,  type:'enchantment'},
+  "Mass Hysteria":         {impact:8,  cmc:1,  type:'enchantment'},
+  "Hammer of Purphoros":   {impact:9,  cmc:3,  type:'artifact'},
+  "Legion Loyalist":       {impact:9,  cmc:1,  type:'creature'},
+  "Goblin King":           {impact:7,  cmc:3,  type:'creature'},
+  "Hobgoblin Bandit Lord": {impact:8,  cmc:3,  type:'creature'},
+  "Broadside Bombardiers": {impact:9,  cmc:3,  type:'creature'},
+  "Dropkick Bomber":       {impact:8,  cmc:3,  type:'creature'},
+  "General Kreat, the Boltbringer":{impact:9,cmc:3,type:'creature'},
+  "Howlsquad Heavy":       {impact:8,  cmc:3,  type:'creature'},
+  "Moria Marauder":        {impact:7,  cmc:3,  type:'creature'},
+
+  // === UTILITY ===
+  "Lightning Greaves":     {impact:13, cmc:2,  type:'artifact'},
+  "Swiftfoot Boots":       {impact:11, cmc:2,  type:'artifact'},
+  "Cursed Mirror":         {impact:10, cmc:3,  type:'artifact'},
+  "Cavern of Souls":       {impact:15, cmc:0,  type:'land'},
+  "Wasteland":             {impact:14, cmc:0,  type:'land'},
+  "Forbidden Orchard":     {impact:10, cmc:0,  type:'land'},
+  "Inventors' Fair":       {impact:11, cmc:0,  type:'land'},
+  "Nykthos, Shrine to Nyx":{impact:14, cmc:0,  type:'land'},
+  "Three Tree City":       {impact:8,  cmc:0,  type:'land'},
+  "Fire Nation Palace":    {impact:6,  cmc:0,  type:'land'},
+
+  // === LANDS ===
+  "Command Tower":         {impact:12, cmc:0,  type:'land'},
+  "Arid Mesa":             {impact:14, cmc:0,  type:'land'},
+  "Bloodstained Mire":     {impact:14, cmc:0,  type:'land'},
+  "Scalding Tarn":         {impact:14, cmc:0,  type:'land'},
+  "Windswept Heath":       {impact:14, cmc:0,  type:'land'},
+  "Wooded Foothills":      {impact:14, cmc:0,  type:'land'},
+  "Flooded Strand":        {impact:14, cmc:0,  type:'land'},
+  "Polluted Delta":        {impact:14, cmc:0,  type:'land'},
+  "Verdant Catacombs":     {impact:14, cmc:0,  type:'land'},
+  "Marsh Flats":           {impact:14, cmc:0,  type:'land'},
+  "Underground Sea":       {impact:18, cmc:0,  type:'land'},
+  "Volcanic Island":       {impact:17, cmc:0,  type:'land'},
+  "Badlands":              {impact:16, cmc:0,  type:'land'},
+  "Bayou":                 {impact:16, cmc:0,  type:'land'},
+  "Taiga":                 {impact:16, cmc:0,  type:'land'},
+  "Savannah":              {impact:16, cmc:0,  type:'land'},
+  "Tundra":                {impact:16, cmc:0,  type:'land'},
+  "Tropical Island":       {impact:16, cmc:0,  type:'land'},
+  "Plateau":               {impact:16, cmc:0,  type:'land'},
+  "Scrubland":             {impact:16, cmc:0,  type:'land'},
+  "Crystal Vein":          {impact:9,  cmc:0,  type:'land'},
+  "Sandstone Needle":      {impact:8,  cmc:0,  type:'land'},
+  "Dwarven Ruins":         {impact:7,  cmc:0,  type:'land'},
+  "City of Brass":         {impact:13, cmc:0,  type:'land'},
+  "Mana Confluence":       {impact:13, cmc:0,  type:'land'},
+  "Reflecting Pool":       {impact:12, cmc:0,  type:'land'},
+  "Prismatic Vista":       {impact:12, cmc:0,  type:'land'},
+  "Exotic Orchard":        {impact:10, cmc:0,  type:'land'},
+  "Path of Ancestry":      {impact:9,  cmc:0,  type:'land'},
+  "Urza's Saga":           {impact:16, cmc:0,  type:'land'},
+  "Buried Ruin":           {impact:9,  cmc:0,  type:'land'},
+  "Hall of the Bandit Lord":{impact:9,  cmc:0,  type:'land'},
+};
+
+// Default for unknown cards
+const DEFAULT_IMPACT = 6;
+const DEFAULT_CMC = 3;
+
+// ══════════════════════════════════════════════════════
+// PARSE DECK
+// ══════════════════════════════════════════════════════
+function parseDeck(raw) {
+  const result = new Map();
+  for (const line of raw.split('\n')) {
+    let t = line.trim();
+    if (!t) continue;
+    // Skip comment lines and section headers
+    if (t.startsWith('//') || t.startsWith('#')) continue;
+    // Skip common section headers from various sites
+    if (/^(Deck|Sideboard|Maybeboard|Commander|Companion|Planes|Schemes|Attractions|Stickers|Tokens|About|Lands|Creatures|Instants|Sorceries|Artifacts|Enchantments|Planeswalkers)$/i.test(t)) continue;
+
+    // Strip set codes like (SET) 123, [SET], *F*, *E*, *P*
+    t = t.replace(/\([A-Z0-9]{2,6}\)\s*\d*/g, '');
+    t = t.replace(/\[[A-Z0-9]{2,6}\]/g, '');
+    t = t.replace(/\*[A-Z]\*/gi, '');
+    // Strip Archidekt tags like +1: or category labels
+    t = t.replace(/^[+\-]?\d+:\s*/, '');
+    // Strip trailing set info like " - Foil" or " (Foil)"
+    t = t.replace(/\s*[-–]\s*(Foil|Etched|Extended Art|Borderless|Showcase|Alternate Art)\s*$/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+
+    if (!t) continue;
+
+    // Match quantity - handles: "1 Card", "1x Card", "1X Card", "x1 Card"
+    let qty = 1, name;
+    const m1 = t.match(/^(\d+)[xX]?\s+(.+)$/);  // "1 Card" or "1x Card"
+    const m2 = t.match(/^[xX](\d+)\s+(.+)$/);    // "x1 Card"
+    if (m1) { qty = parseInt(m1[1]); name = m1[2].trim(); }
+    else if (m2) { qty = parseInt(m2[1]); name = m2[2].trim(); }
+    else { name = t; }
+
+    // Remove any remaining trailing parenthetical info
+    name = name.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    if (!name || name.length < 2) continue;
+    if (result.has(name)) result.get(name).qty += qty;
+    else {
+      const db = CARD_DB[name] || {};
+      result.set(name, {
+        qty,
+        impact: db.impact ?? DEFAULT_IMPACT,
+        cmc: db.cmc ?? DEFAULT_CMC,
+        type: db.type || guessType(name),
+        gc: db.gc || false,
+        mld: db.mld || false,
+        xt: db.xt || false,
+        xtchain: db.xtchain || false,
+        combo: db.combo || false,
+        known: !!CARD_DB[name]
+      });
+    }
+  }
+  return result;
+}
+
+function guessType(name) {
+  const n = name.toLowerCase();
+  if (/(mountain|island|plains|swamp|forest|mesa|mire|tarn|foothills|strand|vista|tomb|cavern|citadel|furnace|saga|ruin|needle|vein|ruins|palace|city|nykthos|inventors|wasteland|strip mine|orchard|hub|gate|temple|tower|nexus|haven|river|grove|bog|moor|prairie|coast|delta|heath|scryland|triome|canopy|wilds|badlands|bayou|taiga|savannah|tundra|tropical|plateau|scrubland)/.test(n)) return 'land';
+  if (/(mox|ring|vault|staff|altar|clamp|medallion|mirror|banner|boots|greaves|incubator|domination|signet|petal|diamond|opal|top|mantle|bracers|curio|lantern|relic|helm|crown|wand|chalice|orb)/.test(n)) return 'artifact';
+  if (/(ritual|warp|blast|bolt|counterspell|negate|trickery|swat|will|fortune|pact|duplication|brainstorm|ponder|preordain)/.test(n)) return 'instant';
+  if (/(blood moon|contamination|hysteria|purphoros|tremors|animosity|stasis|smothering|rhystic|necropotence|sylvan)/.test(n)) return 'enchantment';
+  return 'creature';
+}
+
+// ══════════════════════════════════════════════════════
+// POWER LEVEL ALGORITHM
+// ══════════════════════════════════════════════════════
+function analyzeDeck(deck) {
+  let totalImpact = 0, totalCmcWeighted = 0, nonLandCount = 0;
+  let gcCount = 0, mldCount = 0, xtCount = 0, xtChainCount = 0, comboCount = 0, bannedCount = 0;
+  let drawCount = 0, rampCount = 0, interactionCount = 0, tutorCount = 0;
+  let fetchCount = 0, dualCount = 0, basicCount = 0, landCount = 0;
+  const gcCards = [], mldCards = [], xtCards = [], comboCards = [], bannedCards = [];
+
+  // Combo pairs are now detected live via Commander Spellbook API
+  // Here we just count CARD_DB-tagged combo pieces as a preliminary estimate
+  const deckNames = new Set([...deck.keys()].map(n => n.toLowerCase()));
+
+  // confirmedCombos will be updated after API call; start at 0
+  let confirmedCombos = 0;
+
+  // Fetch lands set
+  const FETCHES = new Set(["Arid Mesa","Bloodstained Mire","Flooded Strand","Marsh Flats",
+    "Misty Rainforest","Polluted Delta","Scalding Tarn","Verdant Catacombs","Windswept Heath",
+    "Wooded Foothills","Prismatic Vista","Fabled Passage","Evolving Wilds","Terramorphic Expanse"]);
+  // Shock/dual lands
+  const DUALS = new Set(["Underground Sea","Volcanic Island","Badlands","Bayou","Taiga",
+    "Savannah","Tundra","Tropical Island","Plateau","Scrubland",
+    "Steam Vents","Blood Crypt","Overgrown Tomb","Godless Shrine","Sacred Foundry",
+    "Watery Grave","Stomping Ground","Temple Garden","Breeding Pool","Hallowed Fountain",
+    "Sulfurous Springs","Karplusan Forest","Caves of Koilos","Brushland","Underground River",
+    "City of Brass","Mana Confluence","Reflecting Pool","Cavern of Souls"]);
+  // High-value draw spells
+  const DRAW_CARDS = new Set(["Rhystic Study","Necropotence","Smothering Tithe","The One Ring",
+    "Wheel of Fortune","Skullclamp","Consecrated Sphinx","Ad Nauseam","Mystic Remora",
+    "Sylvan Library","Brainstorm","Ponder","Preordain","Faithless Looting","Sensei Divining Top",
+    "Sensei's Divining Top","Dark Confidant","Phyrexian Arena","Bolas's Citadel"]);
+  // Tutors
+  const TUTORS = new Set(["Demonic Tutor","Imperial Seal","Vampiric Tutor","Mystical Tutor",
+    "Enlightened Tutor","Worldly Tutor","Natural Order","Intuition","Gamble","Crop Rotation",
+    "Goblin Matron","Goblin Recruiter","Imperial Recruiter","Fauna Shaman","Survival of the Fittest",
+    "Chord of Calling","Green Sun's Zenith","Finale of Devastation","Eldritch Evolution"]);
+
+  for (const [name, card] of deck) {
+    const qty = card.qty;
+
+    // Use Scryfall-computed impact if available; otherwise estimate by CMC
+    let impact = card.impact;
+    if (!card.known || impact == null) {
+      if (card.type === "land") impact = 5;
+      else if (card.cmc <= 1) impact = 8.5;
+      else if (card.cmc <= 2) impact = 7.5;
+      else if (card.cmc <= 3) impact = 6.5;
+      else if (card.cmc <= 4) impact = 5.5;
+      else if (card.cmc <= 5) impact = 4.5;
+      else impact = 3.5;
+    }
+
+    totalImpact += impact * qty;
+
+    if (card.type !== "land") {
+      totalCmcWeighted += card.cmc * qty;
+      nonLandCount += qty;
+    } else {
+      landCount += qty;
+      if (FETCHES.has(name)) { fetchCount++; totalImpact += 2; } // bonus for fetches
+      else if (DUALS.has(name)) { dualCount++; totalImpact += 3; } // bonus for duals
+      else if (["Mountain","Island","Plains","Swamp","Forest",
+                "Snow-Covered Mountain","Snow-Covered Island","Snow-Covered Plains",
+                "Snow-Covered Swamp","Snow-Covered Forest"].includes(name)) basicCount++;
+    }
+
+    // Category counting
+    if (DRAW_CARDS.has(name)) drawCount++;
+    if (TUTORS.has(name)) tutorCount++;
+    if (card.type === "artifact" && card.cmc <= 2 && !card.gc) rampCount++;
+
+    if (card.banned) { bannedCount += qty; bannedCards.push(name); }
+    else if (card.gc) { gcCount += qty; gcCards.push(name); }
+    if (card.mld) { mldCount += qty; mldCards.push(name); }
+    if (card.xt) { xtCount += qty; xtCards.push(name); }
+    if (card.xtchain) xtChainCount += qty;
+    if (card.combo) { comboCount += qty; comboCards.push(name); }
+  }
+
+  // Bonus impact for confirmed combo pairs (each pair = +30 impact)
+  totalImpact += confirmedCombos * 30;
+  // Bonus for high draw density
+  if (drawCount >= 4) totalImpact += (drawCount - 3) * 15;
+  // Bonus for high tutor density  
+  if (tutorCount >= 3) totalImpact += (tutorCount - 2) * 20;
+  // Bonus for mana-positive rock package
+  if (rampCount >= 4) totalImpact += (rampCount - 3) * 8;
+
+  const avgCmc = nonLandCount > 0 ? totalCmcWeighted / nonLandCount : 3;
+  const efficiency = Math.max(1, Math.min(10, 12 - (avgCmc * 1.8)));
+  const rawScore = totalImpact;
+  const powerLevel = scoreToPowerLevel(rawScore, avgCmc, gcCount, confirmedCombos, tutorCount, drawCount);
+
+  return {
+    totalImpact: Math.round(totalImpact),
+    avgCmc: Math.round(avgCmc * 100) / 100,
+    efficiency: Math.round(efficiency * 10) / 10,
+    rawScore: Math.round(rawScore),
+    powerLevel: Math.round(powerLevel * 10) / 10,
+    gcCount, mldCount, xtCount, xtChainCount, comboCount, bannedCount,
+    confirmedCombos, drawCount, tutorCount, fetchCount, dualCount,
+    gcCards, mldCards, xtCards, comboCards, bannedCards,
+    bracket: determineBracket(gcCount, mldCount, xtCount, xtChainCount, comboCount, powerLevel, bannedCount, confirmedCombos, tutorCount),
+    cardCount: [...deck.values()].reduce((a,c) => a+c.qty, 0)
+  };
+}
+
+
+function scoreToPowerLevel(rawScore, avgCmc, gcCount, confirmedCombos, tutorCount, drawCount) {
+  // Calibrated power curve (rawScore = sum of per-card impacts, 100-card deck):
+  //   Precon (avg impact ~4):              rawScore ~400  → PL 3-4
+  //   Upgraded/focused casual (avg ~5.5):  rawScore ~550  → PL 5-6
+  //   High power (avg ~6.5 + bonuses):     rawScore ~700  → PL 7-8
+  //   cEDH (avg ~7.5 + bonuses):           rawScore ~850+ → PL 9-10
+  let power;
+  if (rawScore < 300) {
+    power = 1 + (rawScore / 300) * 2.0;                         // 1 → 3
+  } else if (rawScore < 480) {
+    power = 3.0 + ((rawScore - 300) / 180) * 1.5;              // 3 → 4.5
+  } else if (rawScore < 620) {
+    power = 4.5 + ((rawScore - 480) / 140) * 1.5;              // 4.5 → 6.0
+  } else if (rawScore < 760) {
+    power = 6.0 + ((rawScore - 620) / 140) * 1.5;              // 6.0 → 7.5
+  } else if (rawScore < 900) {
+    power = 7.5 + ((rawScore - 760) / 140) * 1.0;              // 7.5 → 8.5
+  } else {
+    power = 8.5 + Math.min(1.5, ((rawScore - 900) / 300) * 1.5); // 8.5 → 10
+  }
+
+  // Modifiers
+  const cmcMod = Math.max(-0.8, Math.min(0.8, (3.0 - avgCmc) * 0.3));
+  const gcBonus = Math.min(0.3, gcCount * 0.05);
+  const comboBonus = Math.min(0.4, confirmedCombos * 0.15);
+  const tutorBonus = Math.min(0.2, Math.max(0, (tutorCount - 2) * 0.07));
+  const drawBonus = Math.min(0.1, Math.max(0, (drawCount - 2) * 0.03));
+
+  return Math.min(10, Math.max(1, power + cmcMod + gcBonus + comboBonus + tutorBonus + drawBonus));
+}
+
+
+function determineBracket(gc, mld, xt, xtchain, combo, power, banned, confirmedCombos, tutorCount) {
+  // Banned cards = illegal deck
+  if (banned > 0) return { min: 5, recommended: 5, illegal: true };
+
+  let minBracket = 1;
+
+  // Hard rules based on WotC bracket system
+  if (gc > 0) minBracket = Math.max(minBracket, 3);         // Any GC = min B3
+  if (gc > 3) minBracket = Math.max(minBracket, 4);         // 4+ GC = min B4
+  if (xt > 0 && xtchain === 0) minBracket = Math.max(minBracket, 2); // Non-chain XT = B2+
+  if (xtchain > 0) minBracket = Math.max(minBracket, 4);    // Chain XT = B4+
+  if (mld > 0) minBracket = Math.max(minBracket, 4);        // MLD = B4+
+  if (combo > 0) minBracket = Math.max(minBracket, 2);      // Any combo piece = B2+
+  if (confirmedCombos > 0) minBracket = Math.max(minBracket, 3); // Confirmed 2-card combo = B3+
+  if (confirmedCombos >= 3) minBracket = Math.max(minBracket, 4); // 3+ confirmed combos = B4+
+
+  // Recommended bracket - driven by power level
+  let recBracket = minBracket;
+  if (power >= 9.0) recBracket = Math.max(recBracket, 5);
+  else if (power >= 7.5) recBracket = Math.max(recBracket, 4);
+  else if (power >= 6.0) recBracket = Math.max(recBracket, 3);
+  else if (power >= 4.0) recBracket = Math.max(recBracket, 2);
+
+  // Heavy tutor package bumps recommended
+  if (tutorCount >= 5) recBracket = Math.max(recBracket, 4);
+  else if (tutorCount >= 3) recBracket = Math.max(recBracket, 3);
+
+  // Many combo pieces bumps recommended
+  if (combo >= 8) recBracket = Math.max(recBracket, 4);
+  else if (combo >= 4) recBracket = Math.max(recBracket, 3);
+
+  return { min: Math.min(5, minBracket), recommended: Math.min(5, recBracket) };
+}
+
+
+// ══════════════════════════════════════════════════════
+// RENDER POWER CARD
+// ══════════════════════════════════════════════════════
+function renderPowerCard(elId, analysis, deckName, colorClass) {
+  const el = document.getElementById(elId);
+  const br = analysis.bracket.recommended;
+  const brMin = analysis.bracket.min;
+  const brClass = `br${br}`;
+  const barClass = colorClass === "a" ? "bar-gold" : "bar-teal";
+  const nameClass = colorClass === "a" ? "a" : "b";
+  const plPct = ((analysis.powerLevel - 1) / 9) * 100;
+
+  const gcFlagHtml = analysis.gcCards.map(c => `<span class="flag-chip gc">${c}</span>`).join('');
+  const mldFlagHtml = analysis.mldCards.map(c => `<span class="flag-chip mld">${c}</span>`).join('');
+  const xtFlagHtml = analysis.xtCards.map(c => `<span class="flag-chip xt">${c}</span>`).join('');
+  const comboFlagHtml = analysis.comboCards.slice(0,8).map(c => `<span class="flag-chip combo">${c}</span>`).join('') + (analysis.comboCards.length > 8 ? `<span class="flag-chip combo">+${analysis.comboCards.length-8} more</span>` : '');
+  const bannedFlagHtml = analysis.bannedCards.map(c => `<span class="flag-chip mld">⛔ ${c}</span>`).join('');
+
+  const bannedCheck = analysis.bannedCount > 0
+    ? `<div class="bcheck fail"><span class="icon">⛔</span>BANNED CARDS FOUND: ${analysis.bannedCount} — Deck is ILLEGAL</div>`
+    : `<div class="bcheck pass"><span class="icon">✓</span>No Banned Cards</div>`;
+
+  const hasMldCheck = analysis.mldCount === 0
+    ? `<div class="bcheck pass"><span class="icon">✓</span>No Mass Land Denial</div>`
+    : `<div class="bcheck fail"><span class="icon">✗</span>MLD Cards: ${analysis.mldCount} — Pushes Bracket 4+</div>`;
+
+  const hasXtCheck = analysis.xtChainCount === 0
+    ? `<div class="bcheck pass"><span class="icon">✓</span>No Chaining Extra Turns</div>`
+    : `<div class="bcheck fail"><span class="icon">✗</span>Chain Extra Turns: ${analysis.xtChainCount}</div>`;
+
+  const gcCheck = analysis.gcCount === 0
+    ? `<div class="bcheck pass"><span class="icon">✓</span>No Game Changers</div>`
+    : analysis.gcCount <= 3
+    ? `<div class="bcheck warn"><span class="icon">⚠</span>Game Changers: ${analysis.gcCount} (Bracket 3+)</div>`
+    : `<div class="bcheck fail"><span class="icon">✗</span>Game Changers: ${analysis.gcCount} (Bracket 4+)</div>`;
+
+  const comboCheck = analysis.comboCount === 0
+    ? `<div class="bcheck pass"><span class="icon">✓</span>No Combo Pieces Detected</div>`
+    : `<div class="bcheck warn"><span class="icon">⚠</span>Combo Pieces: ${analysis.comboCount} — Likely 2-card combos present</div>`;
+
+  el.innerHTML = `
+    <div class="power-card-header">
+      <div>
+        <div class="power-card-name ${nameClass}">${deckName}</div>
+        <div style="font-size:11px;color:#5a5a7a;margin-top:2px;letter-spacing:1px">${analysis.cardCount} cards analyzed</div>
+      </div>
+      <div class="bracket-badge ${brClass}">B${br}</div>
+    </div>
+
+    <div class="power-stats">
+      <div class="pstat">
+        <div class="pstat-val">${analysis.powerLevel}</div>
+        <div class="pstat-lbl">Power / 10</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">${analysis.avgCmc}</div>
+        <div class="pstat-lbl">Avg CMC</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val" data-stat="combos">${analysis.confirmedCombos}</div>
+        <div class="pstat-lbl">Combos</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">${analysis.tutorCount}</div>
+        <div class="pstat-lbl">Tutors</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">${analysis.drawCount}</div>
+        <div class="pstat-lbl">Draw Engines</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">${analysis.gcCount}</div>
+        <div class="pstat-lbl">Game Changers</div>
+      </div>
+    </div>
+
+    <div class="power-bar-wrap">
+      <div class="power-bar-labels"><span>1</span><span style="color:#e8e8f0;font-size:12px;font-weight:700">Power: ${analysis.powerLevel}/10</span><span>10</span></div>
+      <div class="power-bar-bg"><div class="power-bar-fill ${barClass}" style="width:${plPct}%"></div></div>
+    </div>
+
+    <div style="margin-top:12px;font-size:11px;color:#5a5a7a;margin-bottom:8px;letter-spacing:1px">
+      Min Bracket: <span style="color:#e8e8f0;font-weight:700">B${brMin}</span> &nbsp;·&nbsp; Recommended: <span style="color:#e8e8f0;font-weight:700">B${br}</span>
+    </div>
+
+    <div class="bracket-checks">
+      ${bannedCheck}
+      ${hasMldCheck}
+      ${hasXtCheck}
+      ${gcCheck}
+      ${comboCheck}
+    </div>
+
+    ${(bannedFlagHtml || gcFlagHtml || mldFlagHtml || xtFlagHtml || comboFlagHtml) ? `
+    <div class="flagged-section">
+      ${bannedFlagHtml ? `<div class="flagged-title" style="color:#e84a6a">⛔ Banned Cards</div>${bannedFlagHtml}` : ''}
+      ${gcFlagHtml ? `<div class="flagged-title" style="margin-top:6px">Game Changers</div>${gcFlagHtml}` : ''}
+      ${mldFlagHtml ? `<div class="flagged-title" style="margin-top:6px">MLD Cards</div>${mldFlagHtml}` : ''}
+      ${xtFlagHtml ? `<div class="flagged-title" style="margin-top:6px">Extra Turns</div>${xtFlagHtml}` : ''}
+      ${comboFlagHtml ? `<div class="flagged-title" style="margin-top:6px">Combo Pieces</div>${comboFlagHtml}` : ''}
+    </div>` : ''}
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// STATE + COMPARE
+// ══════════════════════════════════════════════════════
+let S = {};
+let activeTag = 'all';
+
+function runAnalysis() {
+  const rawA = document.getElementById('deck-a').value;
+  const rawB = document.getElementById('deck-b').value;
+  if (!rawA.trim() || !rawB.trim()) { alert('Please paste both decklists.'); return; }
+
+  const nameA = document.getElementById('name-a').value || 'Deck A';
+  const nameB = document.getElementById('name-b').value || 'Deck B';
+
+  const deckA = parseDeck(rawA);
+  const deckB = parseDeck(rawB);
+  const analysisA = analyzeDeck(deckA);
+  const analysisB = analyzeDeck(deckB);
+
+  renderPowerCard('pcard-a', analysisA, nameA, 'a');
+  renderPowerCard('pcard-b', analysisB, nameB, 'b');
+
+  // Comparison
+  const allNames = new Set([...deckA.keys(), ...deckB.keys()]);
+  const onlyA = [], onlyB = [], shared = [];
+  for (const name of allNames) {
+    const inA = deckA.has(name), inB = deckB.has(name);
+    if (inA && inB) {
+      const ca = deckA.get(name);
+      shared.push({ name, type: ca.type, typeA: ca.type, typeB: deckB.get(name).type,
+        combo: ca.combo, gc: ca.gc, mld: ca.mld, xt: ca.xt, banned: ca.banned });
+    }
+    else if (inA) onlyA.push({ name, ...deckA.get(name) });
+    else onlyB.push({ name, ...deckB.get(name) });
+  }
+  const sf = (a,b) => a.name.localeCompare(b.name);
+  onlyA.sort(sf); onlyB.sort(sf); shared.sort(sf);
+
+  const total = allNames.size;
+  const pct = Math.round((shared.length / total) * 100);
+  document.getElementById('s-shared').textContent = shared.length;
+  document.getElementById('s-onlya').textContent = onlyA.length;
+  document.getElementById('s-onlyb').textContent = onlyB.length;
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('lbl-a').textContent = `Only ${nameA}`;
+  document.getElementById('lbl-b').textContent = `Only ${nameB}`;
+
+  const pA = Math.round((onlyA.length/total)*100);
+  const pS = Math.round((shared.length/total)*100);
+  const pB = 100 - pA - pS;
+  document.getElementById('ob-a').style.width = pA + '%';
+  document.getElementById('ob-s').style.width = pS + '%';
+  document.getElementById('ob-b').style.width = pB + '%';
+  document.getElementById('ol-a').textContent = `${nameA} only (${onlyA.length})`;
+  document.getElementById('ol-s').textContent = `Shared (${shared.length})`;
+  document.getElementById('ol-b').textContent = `${nameB} only (${onlyB.length})`;
+
+  document.getElementById('colhdr-a').textContent = nameA + ' Only';
+  document.getElementById('colhdr-b').textContent = nameB + ' Only';
+
+  buildCatBreakdown(deckA, deckB, nameA, nameB);
+  buildTagFilters();
+
+  S = { onlyA, onlyB, shared, nameA, nameB, deckA, deckB };
+  renderLists();
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildCatBreakdown(dA, dB, nA, nB) {
+  const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
+  const ct = (d,t) => { let n=0; for(const [,v] of d) if(v.type===t) n+=v.qty; return n; };
+  const max = 40;
+  const rows = cats.map(c => {
+    const a = ct(dA,c), b = ct(dB,c);
+    return `<div class="cat-grid">
+      <div class="cat-nm">${c}</div>
+      <div class="cat-bw"><div class="cat-bf-a" style="width:${Math.min(100,(a/max)*100)}%"></div></div>
+      <div style="display:flex;gap:2px;justify-content:center">
+        <span class="cat-nn a">${a}</span><span style="color:#5a5a7a;font-size:12px;padding-top:3px">/</span><span class="cat-nn b">${b}</span>
+      </div>
+      <div class="cat-bw"><div class="cat-bf-b" style="width:${Math.min(100,(b/max)*100)}%"></div></div>
+      <div class="cat-leg">${nA.slice(0,6)} / ${nB.slice(0,6)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('cat-rows').innerHTML = rows;
+}
+
+function buildTagFilters() {
+  const types = ['all','creature','artifact','land','enchantment','instant','sorcery','combo','gc','mld','banned'];
+  document.getElementById('tag-row').innerHTML = types.map(t =>
+    `<div class="tag ${t==='all'?'active':''}" onclick="setTag('${t}',this)">${t}</div>`
+  ).join('');
+  activeTag = 'all';
+}
+
+function setTag(t, el) {
+  activeTag = t;
+  document.querySelectorAll('.tag').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderLists();
+}
+
+function renderLists() {
+  if (!S.onlyA) return;
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const tag = activeTag;
+
+  const match = c => {
+    const nm = c.name.toLowerCase().includes(q);
+    if (!nm) return false;
+    if (tag === 'all') return true;
+    if (tag === 'combo') return !!c.combo;
+    if (tag === 'gc') return !!c.gc;
+    if (tag === 'mld') return !!c.mld;
+    if (tag === 'banned') return !!c.banned;
+    const t = c.type || c.typeA || '';
+    return t === tag;
+  };
+
+  const fA = S.onlyA.filter(match);
+  const fB = S.onlyB.filter(match);
+  const fS = S.shared.filter(match);
+
+  document.getElementById('cnt-a').textContent = fA.length;
+  document.getElementById('cnt-s').textContent = fS.length;
+  document.getElementById('cnt-b').textContent = fB.length;
+
+  renderTypeList('list-a', fA, 'ra');
+  renderTypeList('list-b', fB, 'rb');
+  renderSharedList('list-s', fS);
+}
+
+const TYPE_ORDER = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land','other'];
+const DOT_CLASS = {creature:'tc',artifact:'ta',enchantment:'te',instant:'ti',sorcery:'ts',land:'tl',planeswalker:'tp',other:'ta'};
+
+function renderTypeList(id, cards, cls) {
+  const el = document.getElementById(id);
+  if (!cards.length) { el.innerHTML = '<div class="empty-msg">No cards</div>'; return; }
+  const groups = {};
+  for (const c of cards) { const t = c.type||'other'; if(!groups[t]) groups[t]=[]; groups[t].push(c); }
+  let html = '';
+  for (const t of TYPE_ORDER) {
+    if (!groups[t]) continue;
+    html += `<div class="sec-div">${t} (${groups[t].length})</div>`;
+    for (const c of groups[t]) {
+      const flags = [c.gc?'<span style="color:#e8c94a;font-size:9px">GC</span>':'', c.mld?'<span style="color:#e84a6a;font-size:9px">MLD</span>':'', c.combo?'<span style="color:#b86ae8;font-size:9px">CMB</span>':''].filter(Boolean).join(' ');
+      html += `<div class="crd-row ${cls}"><span>${c.qty>1?c.qty+'x ':''}<span style="color:${c.known?'inherit':'#5a5a7a'}">${c.name}</span>${flags?' '+flags:''}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderSharedList(id, cards) {
+  const el = document.getElementById(id);
+  if (!cards.length) { el.innerHTML = '<div class="empty-msg">No shared cards</div>'; return; }
+  const groups = {};
+  for (const c of cards) { const t=c.type||'other'; if(!groups[t]) groups[t]=[]; groups[t].push(c); }
+  let html = '';
+  for (const t of TYPE_ORDER) {
+    if (!groups[t]) continue;
+    html += `<div class="sec-div">${t} (${groups[t].length})</div>`;
+    for (const c of groups[t]) {
+      html += `<div class="crd-row rs"><span>${c.name}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// TABS / UTILS
+// ══════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['compare','about'][i]===name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id==='panel-'+name));
+}
+
+function downloadSelf() {
+  const blob = new Blob([document.documentElement.outerHTML], {type:"text/html"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mtg-deck-comparator.html';
+  a.click();
+}
+
+function exportTxt() {
+  if (!S.onlyA) return;
+  let out = `MTG DECK COMPARISON\n${S.nameA} vs ${S.nameB}\n${'='.repeat(50)}\n\n`;
+  out += `SHARED (${S.shared.length})\n${'-'.repeat(30)}\n${S.shared.map(c=>c.name).join("\n")}\n\n`;
+  out += `ONLY IN ${S.nameA.toUpperCase()} (${S.onlyA.length})\n${'-'.repeat(30)}\n${S.onlyA.map(c=>c.name).join("\n")}\n\n`;
+  out += `ONLY IN ${S.nameB.toUpperCase()} (${S.onlyB.length})\n${'-'.repeat(30)}\n${S.onlyB.map(c=>c.name).join("\n")}\n`;
+  const blob = new Blob([out], {type:"text/plain"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download='deck-comparison.txt'; a.click();
+}
+
+// ══════════════════════════════════════════════════════
+// ONLINE FEATURES - Scryfall + Spellbook + Share
+// ══════════════════════════════════════════════════════
+
+// ── CACHE ──────────────────────────────────────────────
+const SCRYFALL_CACHE = new Map();
+const COMBO_CACHE = new Map();
+
+// ── LOADING STATE ──────────────────────────────────────
+function showLoading(text) {
+  const el = document.getElementById('loading-overlay');
+  document.getElementById('loading-text').textContent = text;
+  el.style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// ── SCRYFALL CARD LOOKUP ───────────────────────────────
+async function fetchCardData(name) {
+  if (SCRYFALL_CACHE.has(name)) return SCRYFALL_CACHE.get(name);
+  try {
+    const url = 'https://api.scryfall.com/cards/named?exact=' + encodeURIComponent(name);
+    const res = await fetch(url);
+    if (!res.ok) {
+      // Try fuzzy if exact fails
+      const url2 = 'https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(name);
+      const res2 = await fetch(url2);
+      if (!res2.ok) { SCRYFALL_CACHE.set(name, null); return null; }
+      const data2 = await res2.json();
+      SCRYFALL_CACHE.set(name, data2);
+      return data2;
+    }
+    const data = await res.json();
+    SCRYFALL_CACHE.set(name, data);
+    return data;
+  } catch(e) { SCRYFALL_CACHE.set(name, null); return null; }
+}
+
+// Batch fetch all cards in a deck using Scryfall collection endpoint
+async function fetchDeckDataBatch(cardNames) {
+  const unknown = cardNames.filter(n => !SCRYFALL_CACHE.has(n));
+  if (!unknown.length) return;
+
+  // Scryfall collection endpoint: up to 75 cards per request
+  const chunks = [];
+  for (let i = 0; i < unknown.length; i += 75) {
+    chunks.push(unknown.slice(i, i + 75));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const body = JSON.stringify({ identifiers: chunk.map(n => ({ name: n })) });
+      const res = await fetch('https://api.scryfall.com/cards/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      // Store found cards
+      for (const card of (data.data || [])) {
+        SCRYFALL_CACHE.set(card.name, card);
+      }
+      // Mark not-found as null
+      const found = new Set((data.data || []).map(c => c.name.toLowerCase()));
+      for (const name of chunk) {
+        if (!SCRYFALL_CACHE.has(name)) {
+          SCRYFALL_CACHE.set(name, null);
+        }
+      }
+    } catch(e) { continue; }
+    // Rate limit: 100ms between requests
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
+// Extract useful data from Scryfall card
+function scryfallToCardData(sf) {
+  if (!sf) return null;
+  const typeLine = (sf.type_line || '').toLowerCase();
+  const oracle = ((sf.oracle_text || '') + ' ' + (sf.card_faces || []).map(f => f.oracle_text || '').join(' ')).toLowerCase();
+  const cmc = sf.cmc || 0;
+
+  let type = 'creature';
+  if (typeLine.includes('land')) type = 'land';
+  else if (typeLine.includes('artifact')) type = 'artifact';
+  else if (typeLine.includes('enchantment')) type = 'enchantment';
+  else if (typeLine.includes('instant')) type = 'instant';
+  else if (typeLine.includes('sorcery')) type = 'sorcery';
+  else if (typeLine.includes('planeswalker')) type = 'planeswalker';
+  else if (typeLine.includes('battle')) type = 'battle';
+
+  // Get image
+  let imageUrl = null;
+  if (sf.image_uris) imageUrl = sf.image_uris.normal || sf.image_uris.small;
+  else if (sf.card_faces && sf.card_faces[0].image_uris) {
+    imageUrl = sf.card_faces[0].image_uris.normal || sf.card_faces[0].image_uris.small;
+  }
+
+  // ── Impact scoring from oracle text + CMC ──────────────────────────────
+  // Base: start from CMC-adjusted baseline, then add/subtract for keywords
+  let impact;
+
+  if (type === 'land') {
+    // Lands are scored separately, give baseline here
+    impact = 5;
+  } else {
+    // Base: lower CMC = higher baseline (EDH efficiency)
+    if (cmc === 0) impact = 8.5;
+    else if (cmc === 1) impact = 7.5;
+    else if (cmc === 2) impact = 7.0;
+    else if (cmc === 3) impact = 6.5;
+    else if (cmc === 4) impact = 5.5;
+    else if (cmc === 5) impact = 4.5;
+    else impact = 3.5;
+
+    // ── Positive modifiers ──────────────────────────────────────────────
+    // Mana generation / ramp
+    if (oracle.includes('add {') || oracle.includes('adds mana') || oracle.includes('untap all')) impact += 1.0;
+    // Card advantage
+    if ((oracle.match(/draw \d+ card/g) || []).length > 0 || oracle.includes('draw a card')) impact += 0.8;
+    if (oracle.includes('draw cards') || oracle.includes('draws cards')) impact += 1.0;
+    // Tutoring
+    if (oracle.includes('search your library') && oracle.includes('put it into your hand')) impact += 1.2;
+    if (oracle.includes('search your library') && (oracle.includes('put it onto') || oracle.includes('put them onto'))) impact += 1.0;
+    // Infinite combo enablers
+    if (oracle.includes('untap') && (oracle.includes('whenever') || oracle.includes('at the beginning'))) impact += 0.8;
+    if (oracle.includes('infinite') || (oracle.includes('untap') && oracle.includes('add {') )) impact += 0.5;
+    // Free/cost reduction
+    if (oracle.includes('without paying its mana cost') || oracle.includes('you may cast') && oracle.includes('free')) impact += 1.0;
+    if (oracle.includes('costs {') && oracle.includes('less to cast')) impact += 0.6;
+    // Stax / hate pieces
+    if (oracle.includes("can't cast") || oracle.includes("can't be cast")) impact += 0.8;
+    if (oracle.includes("players can't") || oracle.includes("opponents can't")) impact += 0.8;
+    // Win condition
+    if (oracle.includes('wins the game') || oracle.includes('lose the game') && oracle.includes('opponent')) impact += 1.5;
+    if (oracle.includes('deal damage to each opponent') || oracle.includes('damage to all opponents')) impact += 0.8;
+    // Sacrifice outlet (combo enabler)
+    if (oracle.includes('sacrifice') && oracle.includes(': add') ) impact += 0.7;
+    if (oracle.includes('sacrifice a creature') && oracle.includes('{')) impact += 0.5;
+    // Evasion / haste granting (relevant for aggro cEDH like Krenko)
+    if (oracle.includes('haste') && (oracle.includes('each') || oracle.includes('all') || oracle.includes('creatures you control'))) impact += 0.7;
+    // Mass bounce / wipe
+    if (oracle.includes('return all') || oracle.includes('destroy all') || oracle.includes('exile all')) impact += 0.8;
+    // Protection / counterspell
+    if (oracle.includes('counter target spell') || oracle.includes('counter that spell')) impact += 0.9;
+    if (oracle.includes("can't be countered") || oracle.includes('hexproof') || oracle.includes('shroud')) impact += 0.4;
+    // Wheel effects
+    if (oracle.includes('discard your hand') && oracle.includes('draw')) impact += 0.8;
+
+    // ── Negative modifiers ──────────────────────────────────────────────
+    // High CMC penalty for pure beaters with no text value
+    if (cmc >= 6 && !oracle.includes('search') && !oracle.includes('draw') && !oracle.includes('add {')) impact -= 1.0;
+    // Symmetrical effects are weaker
+    if (oracle.includes('each player') && oracle.includes('draw') ) impact -= 0.3;
+    // Enters tapped
+    if (oracle.includes('enters the battlefield tapped') || oracle.includes('enters tapped')) impact -= 0.3;
+  }
+
+  impact = Math.max(1, Math.min(10, impact));
+
+  return {
+    cmc,
+    type,
+    impact: Math.round(impact * 10) / 10,
+    known: true,
+    imageUrl,
+    colors: sf.colors || [],
+    colorIdentity: sf.color_identity || [],
+    typeLine: sf.type_line || '',
+    oracleText: sf.oracle_text || '',
+    scryfallId: sf.id
+  };
+}
+
+// ── CARD IMAGE TOOLTIP ─────────────────────────────────
+function initTooltip() {
+  const tooltip = document.getElementById('card-tooltip');
+  const img = document.getElementById('card-tooltip-img');
+
+  document.addEventListener('mouseover', async (e) => {
+    const row = e.target.closest('.crd-row');
+    if (!row) { tooltip.style.display = 'none'; return; }
+    const nameEl = row.querySelector('span');
+    if (!nameEl) return;
+    // Extract card name (remove qty prefix and flag spans)
+    let name = nameEl.textContent.replace(/^\d+x\s*/, '').replace(/GC|MLD|CMB/g, '').trim();
+    if (!name) return;
+
+    const sf = await fetchCardData(name);
+    if (!sf) { tooltip.style.display = 'none'; return; }
+
+    let imageUrl = null;
+    if (sf.image_uris) imageUrl = sf.image_uris.normal;
+    else if (sf.card_faces && sf.card_faces[0].image_uris) imageUrl = sf.card_faces[0].image_uris.normal;
+    if (!imageUrl) { tooltip.style.display = 'none'; return; }
+
+    img.src = imageUrl;
+    tooltip.style.display = 'block';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    const tooltip = document.getElementById('card-tooltip');
+    if (tooltip.style.display === 'none') return;
+    const x = e.clientX + 16;
+    const y = e.clientY - 60;
+    const maxX = window.innerWidth - 220;
+    const maxY = window.innerHeight - 300;
+    tooltip.style.left = Math.min(x, maxX) + 'px';
+    tooltip.style.top = Math.min(y, maxY) + 'px';
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    if (!e.target.closest('.crd-row')) return;
+    tooltip.style.display = 'none';
+  });
+}
+
+// ── COMMANDER SPELLBOOK COMBO DETECTION ───────────────
+// Uses /variants/ GET endpoint — proper CORS, no proxy needed.
+// Key insight: commander is NOT in the decklist textarea but IS a combo piece.
+// We detect the commander name from the deck name field or from common commanders.
+
+function extractCommanderName(deckRaw) {
+  // Try to detect commander from lines tagged // Commander or 1 <name> at top
+  const lines = deckRaw.split('\n');
+  for (const line of lines) {
+    const t = line.trim();
+    if (/commander/i.test(t) && !t.startsWith('//')) continue;
+    if (t.startsWith('//') && /commander/i.test(t)) {
+      // next non-empty line might be the commander
+      continue;
+    }
+  }
+  return null;
+}
+
+async function fetchCombosFromSpellbook(cardNames, commanderName) {
+  const cacheKey = [...cardNames].sort().join('|') + '|' + (commanderName || '');
+  if (COMBO_CACHE.has(cacheKey)) return COMBO_CACHE.get(cacheKey);
+
+  const confirmedCombos = [];
+  const cardSet = new Set(cardNames.map(n => n.toLowerCase()));
+  if (commanderName) cardSet.add(commanderName.toLowerCase());
+
+  // Build the card list to send - all deck cards + commander
+  const allCards = commanderName
+    ? [commanderName, ...cardNames]
+    : [...cardNames];
+
+  try {
+    // Use Anthropic API as a CORS-free proxy to call Commander Spellbook
+    // Claude will make the HTTP request server-side and return structured combo data
+    const prompt = `You are a Magic: The Gathering combo lookup tool. 
+I need you to identify ALL infinite combos from the Commander Spellbook database that can be assembled using ONLY cards from this list (the first card is the commander and is always available):
+
+${allCards.join('\n')}
+
+Return ONLY a JSON array with this exact format, no other text:
+[{"cards":["Card1","Card2"],"results":["Infinite tokens","Infinite mana"],"steps":"1. Do this 2. Do that"},...]
+
+Only include combos where EVERY required card is in the list above. Include the commander in combos if needed. Find as many real combos as you can from Commander Spellbook's database.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      console.warn('[Combos] API error:', res.status);
+    } else {
+      const data = await res.json();
+      const text = data.content && data.content[0] && data.content[0].text || '';
+      
+      // Parse JSON response
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const combos = JSON.parse(jsonMatch[0]);
+        for (const combo of combos) {
+          if (!combo.cards || combo.cards.length < 2) continue;
+          // Verify all cards present
+          if (!combo.cards.every(c => cardSet.has(c.toLowerCase()))) continue;
+          const key = [...combo.cards].sort().join('||');
+          confirmedCombos.push({
+            key,
+            cards: combo.cards,
+            results: combo.results || [],
+            steps: combo.steps || '',
+            prereqs: combo.prereqs || '',
+            spellbookId: null
+          });
+        }
+        console.log('[Combos] Found', confirmedCombos.length, 'combos via AI lookup');
+      }
+    }
+  } catch(e) {
+    console.warn('[Combos] Lookup failed:', e.message);
+  }
+
+  // Update status display
+  const statusEl = document.getElementById('combo-status');
+  if (statusEl) {
+    statusEl.textContent = confirmedCombos.length > 0
+      ? confirmedCombos.length + ' combos found'
+      : 'No combos detected';
+    statusEl.style.color = confirmedCombos.length > 0 ? '#4ae8b0' : '#5a5a7a';
+  }
+
+  COMBO_CACHE.set(cacheKey, confirmedCombos);
+  return confirmedCombos;
+}
+
+
+function initAutocomplete() {
+  ['deck-a', 'deck-b'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (!ta) return;
+
+    // Create dropdown for this textarea
+    const dropdown = document.createElement('div');
+    dropdown.id = id + '-autocomplete';
+    dropdown.style.cssText = 'position:absolute;background:#1c1c24;border:1px solid #28283a;' +
+      'border-radius:6px;z-index:1000;max-height:200px;overflow-y:auto;display:none;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,0.6);font-family:DM Mono,monospace;font-size:12px;min-width:220px;';
+    ta.parentNode.style.position = 'relative';
+    ta.parentNode.appendChild(dropdown);
+
+    ta.addEventListener('keyup', async (e) => {
+      if (e.key === 'Enter' || e.key === 'Tab') { dropdown.style.display = 'none'; return; }
+
+      clearTimeout(autocompleteTimeout);
+      autocompleteTimeout = setTimeout(async () => {
+        // Get the last line being typed
+        const val = ta.value;
+        const lines = val.split('\n');
+        const lastLine = lines[lines.length - 1].trim();
+
+        // Strip leading qty number
+        const cardName = lastLine.replace(/^\d+\s*/, '').trim();
+        if (cardName.length < 3) { dropdown.style.display = 'none'; return; }
+
+        try {
+          const res = await fetch('https://api.scryfall.com/cards/autocomplete?q=' +
+            encodeURIComponent(cardName) + '&include_extras=false');
+          if (!res.ok) { dropdown.style.display = 'none'; return; }
+          const data = await res.json();
+          const suggestions = (data.data || []).slice(0, 8);
+
+          if (!suggestions.length) { dropdown.style.display = 'none'; return; }
+
+          dropdown.innerHTML = suggestions.map(s =>
+            '<div style="padding:8px 12px;cursor:pointer;color:#e8e8f0;border-bottom:1px solid rgba(255,255,255,0.04);"' +
+            ' onmousedown="selectAutocomplete(\'' + id + '\',\'' + s.replace(/'/g, "\\'") + '\')"' +
+            ' onmouseover="this.style.background=\'rgba(232,201,74,0.1)\'"' +
+            ' onmouseout="this.style.background=\'\'">' + s + '</div>'
+          ).join('');
+
+          dropdown.style.display = 'block';
+          autocompleteActive = id;
+        } catch(e) { dropdown.style.display = 'none'; }
+      }, 250);
+    });
+
+    ta.addEventListener('blur', () => {
+      setTimeout(() => { dropdown.style.display = 'none'; }, 200);
+    });
+  });
+}
+
+function selectAutocomplete(textareaId, cardName) {
+  const ta = document.getElementById(textareaId);
+  const lines = ta.value.split('\n');
+  const lastLine = lines[lines.length - 1];
+  const qtyMatch = lastLine.match(/^(\d+)\s*/);
+  const qty = qtyMatch ? qtyMatch[1] + ' ' : '1 ';
+  lines[lines.length - 1] = qty + cardName;
+  ta.value = lines.join('\n') + '\n';
+  document.getElementById(textareaId + '-autocomplete').style.display = 'none';
+  ta.focus();
+}
+
+// ── SHAREABLE URL ──────────────────────────────────────
+function shareURL() {
+  const nameA = document.getElementById('name-a').value || 'Deck A';
+  const nameB = document.getElementById('name-b').value || 'Deck B';
+  const deckA = document.getElementById('deck-a').value.trim();
+  const deckB = document.getElementById('deck-b').value.trim();
+
+  if (!deckA || !deckB) {
+    alert('Please paste both decklists first, then click Share.');
+    return;
+  }
+
+  try {
+    // Encode decklists - use base64 with URI encoding
+    const encA = btoa(unescape(encodeURIComponent(deckA)));
+    const encB = btoa(unescape(encodeURIComponent(deckB)));
+    const encNA = encodeURIComponent(nameA);
+    const encNB = encodeURIComponent(nameB);
+
+    const url = window.location.origin + window.location.pathname +
+      '?na=' + encNA + '&nb=' + encNB + '&a=' + encA + '&b=' + encB;
+
+    // Try clipboard first, fall back to prompt
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('share-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.style.color = '#4ae8b0';
+        setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2500);
+      }).catch(() => { prompt('Copy this share link:', url); });
+    } else {
+      prompt('Copy this share link:', url);
+    }
+  } catch(e) {
+    alert('Decklists are too large to share via URL. Try shorter decklists.');
+  }
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('a') || !params.has('b')) return;
+  try {
+    document.getElementById('name-a').value = params.get('na') || 'Deck A';
+    document.getElementById('name-b').value = params.get('nb') || 'Deck B';
+    document.getElementById('deck-a').value = decodeURIComponent(escape(atob(params.get('a'))));
+    document.getElementById('deck-b').value = decodeURIComponent(escape(atob(params.get('b'))));
+    // Auto-run analysis
+    setTimeout(() => runAnalysis(), 100);
+  } catch(e) { console.error('Failed to load from URL:', e); }
+}
+
+// ── ENHANCED runAnalysis WITH ONLINE DATA ──────────────
+const _originalRunAnalysis = runAnalysis;
+runAnalysis = async function() {
+  const rawA = document.getElementById('deck-a').value;
+  const rawB = document.getElementById('deck-b').value;
+  if (!rawA.trim() || !rawB.trim()) { alert('Please paste both decklists.'); return; }
+
+  showLoading('Fetching card data from Scryfall...');
+
+  try {
+    // Parse both decks
+    const deckA = parseDeck(rawA);
+    const deckB = parseDeck(rawB);
+    const allNames = [...new Set([...deckA.keys(), ...deckB.keys()])];
+
+    // Batch fetch from Scryfall
+    await fetchDeckDataBatch(allNames);
+
+    // Enrich deck cards with Scryfall data (impact, cmc, type, image)
+    for (const [name, card] of [...deckA, ...deckB]) {
+      const sf = SCRYFALL_CACHE.get(name);
+      if (sf) {
+        const sfData = scryfallToCardData(sf);
+        if (sfData) {
+          card.cmc = sfData.cmc;
+          card.type = sfData.type;
+          card.impact = sfData.impact;   // oracle-text derived impact
+          card.known = true;             // mark as Scryfall-resolved
+          card.imageUrl = sfData.imageUrl;
+          card.typeLine = sfData.typeLine;
+        }
+      }
+    }
+
+    showLoading('Detecting combos from Commander Spellbook...');
+
+    // Fetch real combos from Spellbook for each deck
+    const namesA = [...deckA.keys()];
+    const namesB = [...deckB.keys()];
+    // Extract commander names from name fields (user often types commander name there)
+    // Also check for common commander patterns in the raw decklist
+    const nameFieldA = (document.getElementById('name-a').value || '').trim();
+    const nameFieldB = (document.getElementById('name-b').value || '').trim();
+    // Use name field as commander hint if it's been changed from default
+    const cmdA = (nameFieldA && nameFieldA !== 'Deck A' && nameFieldA.length > 3) ? nameFieldA : null;
+    const cmdB = (nameFieldB && nameFieldB !== 'Deck B' && nameFieldB.length > 3) ? nameFieldB : null;
+    const combosA = await fetchCombosFromSpellbook(namesA, cmdA);
+    const combosB = await fetchCombosFromSpellbook(namesB, cmdB);
+
+    hideLoading();
+
+    // Store combos for display
+    S.combosA = combosA;
+    S.combosB = combosB;
+
+    // Run normal analysis with enriched data
+    const analysisA = analyzeDeck(deckA);
+    const analysisB = analyzeDeck(deckB);
+
+    // Override confirmed combos with Spellbook count
+    if (combosA.length > 0) analysisA.confirmedCombos = combosA.length;
+    if (combosB.length > 0) analysisB.confirmedCombos = combosB.length;
+
+    // Re-calculate power level with real combo count
+    analysisA.powerLevel = Math.round(scoreToPowerLevel(
+      analysisA.rawScore, analysisA.avgCmc, analysisA.gcCount,
+      analysisA.confirmedCombos, analysisA.tutorCount, analysisA.drawCount
+    ) * 10) / 10;
+    analysisB.powerLevel = Math.round(scoreToPowerLevel(
+      analysisB.rawScore, analysisB.avgCmc, analysisB.gcCount,
+      analysisB.confirmedCombos, analysisB.tutorCount, analysisB.drawCount
+    ) * 10) / 10;
+
+    const nameA = document.getElementById('name-a').value || 'Deck A';
+    const nameB = document.getElementById('name-b').value || 'Deck B';
+
+    renderPowerCard('pcard-a', analysisA, nameA, 'a');
+    renderPowerCard('pcard-b', analysisB, nameB, 'b');
+    // Patch combo count directly into rendered stat cards
+    const statA = document.querySelector('#pcard-a .pstat-val[data-stat="combos"]');
+    const statB = document.querySelector('#pcard-b .pstat-val[data-stat="combos"]');
+    if (statA) statA.textContent = combosA.length;
+    if (statB) statB.textContent = combosB.length;
+
+    // Rest of comparison logic
+    const allNameSet = new Set([...deckA.keys(), ...deckB.keys()]);
+    const onlyA = [], onlyB = [], shared = [];
+    for (const name of allNameSet) {
+      const inA = deckA.has(name), inB = deckB.has(name);
+      if (inA && inB) {
+        const ca = deckA.get(name);
+        shared.push({ name, type: ca.type, typeA: ca.type, typeB: deckB.get(name).type,
+          combo: ca.combo, gc: ca.gc, mld: ca.mld, xt: ca.xt, banned: ca.banned,
+          imageUrl: ca.imageUrl });
+      } else if (inA) onlyA.push({ name, ...deckA.get(name) });
+      else onlyB.push({ name, ...deckB.get(name) });
+    }
+    const sf2 = (a,b) => a.name.localeCompare(b.name);
+    onlyA.sort(sf2); onlyB.sort(sf2); shared.sort(sf2);
+
+    const total = allNameSet.size;
+    const pct = Math.round((shared.length / total) * 100);
+    document.getElementById('s-shared').textContent = shared.length;
+    document.getElementById('s-onlya').textContent = onlyA.length;
+    document.getElementById('s-onlyb').textContent = onlyB.length;
+    document.getElementById('s-pct').textContent = pct + '%';
+    document.getElementById('lbl-a').textContent = 'Only ' + nameA;
+    document.getElementById('lbl-b').textContent = 'Only ' + nameB;
+
+    const pA = Math.round((onlyA.length/total)*100);
+    const pS = Math.round((shared.length/total)*100);
+    const pB = 100 - pA - pS;
+    document.getElementById('ob-a').style.width = pA + '%';
+    document.getElementById('ob-s').style.width = pS + '%';
+    document.getElementById('ob-b').style.width = pB + '%';
+    document.getElementById('ol-a').textContent = nameA + ' only (' + onlyA.length + ')';
+    document.getElementById('ol-s').textContent = 'Shared (' + shared.length + ')';
+    document.getElementById('ol-b').textContent = nameB + ' only (' + onlyB.length + ')';
+    document.getElementById('colhdr-a').textContent = nameA + ' Only';
+    document.getElementById('colhdr-b').textContent = nameB + ' Only';
+
+    buildCatBreakdown(deckA, deckB, nameA, nameB);
+    buildTagFilters();
+    S = { onlyA, onlyB, shared, nameA, nameB, deckA, deckB, combosA, combosB };
+    renderLists();
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Render combo panel after results div is visible in DOM
+    renderComboDetails(combosA, combosB, nameA, nameB);
+
+  } catch(e) {
+    hideLoading();
+    console.error('Analysis error:', e);
+    alert('Error during analysis: ' + e.message);
+  }
+};
+
+// ── COMBO DETAILS PANEL ────────────────────────────────
+function renderComboDetails(combosA, combosB, nameA, nameB) {
+  let el = document.getElementById('combo-details');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'combo-details';
+    el.style.cssText = 'margin-bottom:20px;';
+    // Insert after power cards, before comparison section
+    const resultsDiv = document.getElementById('results');
+    const powerGrid = resultsDiv.querySelector('.power-grid');
+    const insertTarget = powerGrid ? powerGrid.nextSibling : resultsDiv.firstChild;
+    resultsDiv.insertBefore(el, insertTarget);
+  }
+
+  const renderComboList = (combos, label, color) => {
+    if (!combos.length) return '<div style="background:#14141a;border:1px solid ' + color + '22;border-radius:10px;padding:12px 16px;margin-bottom:12px;"><div style="font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:#5a5a7a;">' + label + ' — No Combos Detected</div></div>';
+
+    return '<div style="background:#14141a;border:1px solid ' + color + '33;border-radius:10px;padding:16px;margin-bottom:12px;">' +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:' + color + ';margin-bottom:10px;">' +
+      label + ' — ' + combos.length + ' Combo' + (combos.length !== 1 ? 's' : '') + ' Detected</div>' +
+      combos.map(c => {
+        const link = c.spellbookId
+          ? ' <a href="https://commanderspellbook.com/combo/' + c.spellbookId + '" target="_blank" ' +
+            'style="color:#5a5a7a;font-size:9px;text-decoration:none;font-family:DM Mono,monospace;' +
+            'border:1px solid #28283a;border-radius:3px;padding:1px 4px;margin-left:4px;">CSB ↗</a>'
+          : '';
+        return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+          '<span style="color:#9e4ae8;font-size:12px;font-family:DM Mono,monospace;flex-shrink:0;">&#x221E;</span>' +
+          '<div style="min-width:0;">' +
+            '<div style="font-family:DM Mono,monospace;font-size:11px;color:#e8e8f0;line-height:1.5;">' +
+            c.cards.join(' + ') + link + '</div>' +
+            (c.results.length
+              ? '<div style="font-size:10px;color:#4ae8b0;margin-top:3px;">→ ' + c.results.join(' · ') + '</div>'
+              : '') +
+            (c.prereqs
+              ? '<div style="font-size:10px;color:#9e4ae8;margin-top:3px;">Requires: ' + c.prereqs.substring(0,120) + (c.prereqs.length > 120 ? '…' : '') + '</div>'
+              : '') +
+            (c.steps
+              ? '<div style="font-size:10px;color:#5a5a7a;margin-top:2px;line-height:1.6;">' + c.steps.substring(0,200) + (c.steps.length > 200 ? '…' : '') + '</div>'
+              : '') +
+          '</div></div>';
+      }).join('') +
+      '</div>';
+  };
+
+  el.innerHTML =
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:4px;color:#5a5a7a;' +
+    'margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid #28283a;">' +
+    '&#x267E; Combos Detected <span style="font-size:10px;color:#3a3a5a;">via Commander Spellbook</span>' +
+    '<div id="combo-status" style="font-size:10px;color:#5a5a7a;font-family:DM Mono,monospace;letter-spacing:0;margin-top:4px;">Loading...</div></div>' +
+    renderComboList(combosA, nameA, '#e8c94a') +
+    (combosB.length || nameB ? renderComboList(combosB, nameB, '#4ae8b0') : '');
+}
+
+
+// ── INIT ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initTooltip();
+  initAutocomplete();
+  loadFromURL();
+});
+
+</script>
+
+<!-- Card image tooltip -->
+
+<div id="card-tooltip" style="display:none;position:fixed;z-index:9999;pointer-events:none;
+  border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.8);
+  border:1px solid #28283a;transition:opacity 0.15s;">
+  <img id="card-tooltip-img" style="width:200px;display:block;" alt="">
+</div>
+
+<!-- Loading overlay -->
+
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(12,12,14,0.85);
+  z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="width:48px;height:48px;border:3px solid #28283a;border-top-color:#e8c94a;
+    border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="loading-text" style="color:#e8e8f0;font-family:'Barlow',sans-serif;font-size:14px;
+    letter-spacing:2px;text-transform:uppercase;">Fetching card data...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>
