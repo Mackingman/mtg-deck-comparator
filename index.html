@@ -395,6 +395,7 @@ textarea::placeholder { color: #5a5a7a; }
 <div class="tabs">
   <div class="tab active" onclick="switchTab('compare')">⚔ Compare</div>
   <div class="tab" onclick="switchTab('recommend')">✨ Recommendations</div>
+  <div class="tab" onclick="switchTab('synergy')">🔗 Synergies</div>
   <div class="tab" onclick="switchTab('about')">📖 Algorithm</div>
 </div>
 
@@ -494,6 +495,34 @@ textarea::placeholder { color: #5a5a7a; }
 
   </div><!-- /results -->
 </div><!-- /compare panel -->
+
+<!-- SYNERGIES PANEL -->
+<div class="panel" id="panel-synergy">
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">🔗 Synergy Analyzer</div>
+    <div style="font-size:12px;color:#5a5a7a;margin-bottom:24px;letter-spacing:1px;">Detect synergies, themes, and synergy score between two decks</div>
+
+    <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div>
+          <div class="deck-lbl a" style="margin-bottom:8px;">⚔ Deck A</div>
+          <input type="text" id="syn-name-a" value="Deck A" placeholder="Deck A name" style="width:100%;padding:8px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+          <textarea id="syn-deck-a" placeholder="Paste Deck A here..." style="width:100%;height:140px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <div>
+          <div class="deck-lbl b" style="margin-bottom:8px;">🌀 Deck B</div>
+          <input type="text" id="syn-name-b" value="Deck B" placeholder="Deck B name" style="width:100%;padding:8px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+          <textarea id="syn-deck-b" placeholder="Paste Deck B here..." style="width:100%;height:140px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+      </div>
+      <button onclick="analyzeSynergies()" id="syn-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#9e4ae8,#7a32c4);color:#fff;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;">
+        🔗 ANALYZE SYNERGIES
+      </button>
+    </div>
+
+    <div id="syn-results" style="display:none;"></div>
+  </div>
+</div>
 
 <!-- RECOMMENDATIONS PANEL -->
 <div class="panel" id="panel-recommend">
@@ -2545,6 +2574,345 @@ function renderRecommendations(text, commander, mode, usedEdhrec) {
 
   html += '</div>';
   resultsEl.innerHTML = html;
+}
+
+// ── SYNERGY ANALYZER ──────────────────────────────────
+
+// Theme detection using Scryfall oracle text
+const THEME_PATTERNS = {
+  'Sacrifice': [/sacrifice a (creature|permanent|goblin|artifact)/i, /whenever (a|another) creature (you control )?dies/i, /when ~ (dies|is put into)/i, /\{t\}: sacrifice/i],
+  'Tokens': [/create (a|an|x|\d+) [\w\s]+ token/i, /put a [\w\s]+ token/i, /token creatures you control/i, /creates? [\w\s]+ tokens/i],
+  'Card Draw': [/draw (a|two|three|x|\d+) cards?/i, /draws? (a|two|three|x|\d+) cards?/i, /look at the top/i, /scry/i],
+  'Graveyard': [/from (your|a) graveyard/i, /return target [\w\s]+ from (your|a) graveyard/i, /mill/i, /escape/i, /flashback/i, /unearth/i],
+  'Ramp': [/add \{[rgbwu]\}/i, /search your library for (a|up to \d+) [\w\s]*land/i, /land cards? onto the battlefield/i, /reduces? the (cost|mana cost)/i],
+  'Counters': [/\+1\/\+1 counter/i, /-1\/-1 counter/i, /proliferate/i, /remove a counter/i, /put \d+ counter/i],
+  'Spellslinger': [/whenever you cast (an instant|a sorcery|a spell)/i, /magecraft/i, /storm/i, /copy (target|that) (instant|sorcery|spell)/i],
+  'Tribal': [/other [\w]+ creatures you control/i, /whenever a [\w]+ enters/i, /\+1\/\+1 as long as you control a/i],
+  'Lifegain': [/you gain \d+ life/i, /gain \d+ life/i, /lifelink/i, /whenever you gain life/i],
+  'Control': [/counter target (spell|creature|instant|sorcery)/i, /destroy target/i, /exile target/i, /return target nonland/i],
+  'Reanimator': [/return target creature card from (your|a) graveyard to the battlefield/i, /put target creature card from (a|any) graveyard/i],
+  'Blink': [/exile target creature (you control|that)/i, /return (that card|it) to the battlefield/i, /flicker/i],
+  'Artifacts': [/artifact (enters|you control)/i, /whenever (an artifact|you cast an artifact)/i, /all artifacts/i],
+  'Enchantments': [/enchantment (enters|you control)/i, /whenever (an enchantment|you cast an enchantment)/i, /constellation/i],
+  'Combat': [/whenever ~ attacks/i, /whenever (a creature|it) deals combat damage/i, /additional combat/i, /goad/i],
+  'Landfall': [/whenever a land (enters|you control)/i, /landfall/i],
+  'ETB': [/when ~ enters the battlefield/i, /whenever a creature (you control )?enters/i, /enters the battlefield/i],
+  'Untap': [/untap (target|all|~|up to)/i, /untap each/i, /untap it/i],
+  'Aristocrats': [/whenever a creature (you control )?dies/i, /whenever ~ or another creature dies/i, /each opponent loses \d+ life/i],
+  'Storm': [/storm/i, /whenever you cast a spell, copy it/i, /spell mastery/i],
+  'Voltron': [/equipped creature/i, /enchanted creature gets/i, /whenever equipped creature/i, /attach/i],
+};
+
+// Comprehensive mechanical synergy pairs
+const SYNERGY_PAIRS = [
+  // Token synergies
+  {a:'Skullclamp', b:'1/1', bType:'oracle', desc:'Skullclamp on a 1/1 draws 2 cards — insane value with token generators'},
+  {a:'Ashnod\'s Altar', b:'token', bType:'oracle', desc:'Converts token floods into colorless mana for big spells'},
+  {a:'Phyrexian Altar', b:'token', bType:'oracle', desc:'Tokens become any colored mana — enables infinite loops'},
+  {a:'Goblin Bombardment', b:'create', bType:'oracle', desc:'Sacrifice tokens for free direct damage'},
+  {a:'Purphoros, God of the Forge', b:'create', bType:'oracle', desc:'2 damage per token entering the battlefield'},
+  {a:'Impact Tremors', b:'create', bType:'oracle', desc:'1 damage per creature entering — wins with large token swings'},
+  {a:'Parallel Lives', b:'create', bType:'oracle', desc:'Doubles every token creation trigger'},
+  {a:'Anointed Procession', b:'create', bType:'oracle', desc:'Doubles every token creation trigger'},
+  {a:'Doubling Season', b:'create', bType:'oracle', desc:'Doubles tokens AND counters placed'},
+  {a:'Intruder Alarm', b:'create', bType:'oracle', desc:'Every new creature untaps all your creatures — enables infinite activations'},
+  // Sacrifice payoffs
+  {a:'Grave Pact', b:'sacrifice', bType:'oracle', desc:'Each creature you sacrifice forces opponents to sacrifice too'},
+  {a:'Dictate of Erebos', b:'sacrifice', bType:'oracle', desc:'Flash version of Grave Pact — punishes all your deaths'},
+  {a:'Blood Artist', b:'sacrifice', bType:'oracle', desc:'Each creature death drains 1 life from an opponent'},
+  {a:'Zulaport Cutthroat', b:'sacrifice', bType:'oracle', desc:'Each of your creatures dying deals 1 damage to all opponents'},
+  {a:'Mayhem Devil', b:'sacrifice', bType:'oracle', desc:'1 damage per permanent sacrificed by ANY player'},
+  {a:'Viscera Seer', b:'sacrifice', bType:'oracle', desc:'Free sacrifice outlet that lets you scry for perfect draws'},
+  {a:'Yawgmoth, Thran Physician', b:'counter', bType:'oracle', desc:'Sacrifice creatures to draw cards and spread -1/-1 counters'},
+  // ETB doublers
+  {a:'Panharmonicon', b:'enters the battlefield', bType:'oracle', desc:'Doubles all ETB triggers — insane value engine'},
+  {a:'Conjurer\'s Closet', b:'enters the battlefield', bType:'oracle', desc:'Blinks a creature each end step for repeated ETBs'},
+  {a:'Deadeye Navigator', b:'enters the battlefield', bType:'oracle', desc:'Blink any creature repeatedly for infinite ETBs with mana'},
+  {a:'Teleportation Circle', b:'enters the battlefield', bType:'oracle', desc:'Blinks a permanent each end step for repeated ETBs'},
+  // Draw engines
+  {a:'Rhystic Study', b:'draws', bType:'oracle', desc:'Every opponent draw that goes unpaid draws you a card'},
+  {a:'Smothering Tithe', b:'draws', bType:'oracle', desc:'Opponents pay or you get a Treasure every time they draw'},
+  {a:'Mystic Remora', b:'spells', bType:'oracle', desc:'Draw a card whenever opponent casts a noncreature spell they don\'t pay for'},
+  {a:'Skullclamp', b:'dies', bType:'oracle', desc:'Any creature death with Skullclamp equipped draws 2 cards'},
+  {a:'Necropotence', b:'life', bType:'oracle', desc:'Pay life to draw cards — broken with lifegain'},
+  {a:'Sylvan Library', b:'draw', bType:'oracle', desc:'See 3 cards per draw step — pay life or put 2 back'},
+  // Graveyard
+  {a:'Crucible of Worlds', b:'fetchland', bType:'name', desc:'Replay fetchlands from graveyard every turn — massive ramp'},
+  {a:'Life from the Loam', b:'fetch', bType:'name', desc:'Return up to 3 lands from graveyard + dredge to repeat'},
+  {a:'Animate Dead', b:'graveyard', bType:'oracle', desc:'Reanimate any creature from any graveyard cheaply'},
+  {a:'Mikaeus, the Unhallowed', b:'sacrifice', bType:'oracle', desc:'Undying on non-humans — each sacrifice piece comes back once'},
+  // Mana rocks + untap
+  {a:'Seedborn Muse', b:'mana', bType:'oracle', desc:'Untaps ALL permanents on each opponent\'s turn — free mana'},
+  {a:'Paradox Engine', b:'artifact', bType:'type', desc:'Cast a spell, untap all nonlands — generates huge mana'},
+  {a:'Dramatic Reversal', b:'artifact', bType:'type', desc:'Untap all nonland permanents — infinite with Isochron Scepter'},
+  {a:'Isochron Scepter', b:'cmc 2 instant', bType:'oracle', desc:'Imprint a cheap instant and copy it every turn for free'},
+  // Protection
+  {a:'Heroic Intervention', b:'destroy all', bType:'oracle', desc:'Instant speed protection from board wipes and targeted removal'},
+  {a:'Teferi\'s Protection', b:'destroy all', bType:'oracle', desc:'Phase out everything — the best board wipe protection'},
+  {a:'Swiftfoot Boots', b:'commander', bType:'type', desc:'Haste + hexproof on your commander — protects your key piece'},
+  {a:'Lightning Greaves', b:'commander', bType:'type', desc:'Free equip haste + shroud — protects commander instantly'},
+  // Counters
+  {a:'Hardened Scales', b:'counter', bType:'oracle', desc:'Each +1/+1 counter placed becomes 2 instead'},
+  {a:'Cathars\'s Crusade', b:'creature', bType:'type', desc:'+1/+1 on each of your creatures when any creature enters'},
+  {a:'Doubling Season', b:'counter', bType:'oracle', desc:'Doubles +1/+1 counters placed AND tokens created'},
+  {a:'Vorel of the Hull Clade', b:'counter', bType:'oracle', desc:'Double the counters on any permanent at instant speed'},
+  // Enchantress
+  {a:'Enchantress\'s Presence', b:'enchantment', bType:'type', desc:'Draw a card whenever you cast an enchantment'},
+  {a:'Argothian Enchantress', b:'enchantment', bType:'type', desc:'Draw a card whenever you cast an enchantment — hexproof too'},
+  {a:'Zur the Enchanter', b:'enchantment', bType:'type', desc:'Attack to tutor any enchantment with CMC 3 or less directly into play'},
+  // Spells matter
+  {a:'Guttersnipe', b:'instant', bType:'oracle', desc:'2 damage to each opponent whenever you cast an instant or sorcery'},
+  {a:'Young Pyromancer', b:'instant', bType:'oracle', desc:'Create a 1/1 Elemental token for each instant/sorcery cast'},
+  {a:'Talrand, Sky Summoner', b:'instant', bType:'oracle', desc:'Create a 2/2 Drake for each instant/sorcery cast'},
+  {a:'Thousand-Year Storm', b:'instant', bType:'oracle', desc:'Copy each spell once per spell cast before it this turn'},
+  // Graveyard recursion
+  {a:'Eternal Witness', b:'graveyard', bType:'oracle', desc:'Return any card from your graveyard to hand on ETB'},
+  {a:'Regrowth', b:'graveyard', bType:'oracle', desc:'Return any card from your graveyard to hand'},
+  {a:'Sun Titan', b:'permanent', bType:'oracle', desc:'Return any permanent CMC 3 or less from graveyard on ETB and attack'},
+  // Landfall
+  {a:'Omnath, Locus of Rage', b:'land', bType:'type', desc:'Create a 5/5 Elemental and deal 3 damage to anything when land ETBs'},
+  {a:'Retreat to Coralhelm', b:'land', bType:'type', desc:'Scry or tap/untap a creature when a land enters'},
+  {a:'Amulet of Vigor', b:'enters the battlefield tapped', bType:'oracle', desc:'All permanents that enter tapped come in untapped instead'},
+  // Goblin specific
+  {a:'Krenko, Mob Boss', b:'goblin', bType:'oracle', desc:'Doubles your goblin count each activation — exponential growth'},
+  {a:'Mana Echoes', b:'goblin', bType:'oracle', desc:'Each goblin entering generates colorless mana equal to goblins you control'},
+  {a:'Shared Animosity', b:'goblin', bType:'oracle', desc:'Each attacking goblin gets +1/+0 per other attacking goblin'},
+  {a:'Goblin Recruiter', b:'goblin', bType:'oracle', desc:'Stack your entire goblin package on top of your library'},
+  {a:'Thornbite Staff', b:'tap: deal', bType:'oracle', desc:'Untap equipped creature whenever a creature dies — infinite with sac outlet'},
+  // Aristocrats
+  {a:'Teysa Karlov', b:'dies', bType:'oracle', desc:'Doubles all death triggers — incredible with any death payoff'},
+  {a:'Butcher of Malakir', b:'sacrifice', bType:'oracle', desc:'Each creature you sacrifice forces all opponents to sacrifice too'},
+  {a:'Savra, Queen of the Golgari', b:'sacrifice', bType:'oracle', desc:'Each black/green sacrifice drains 2 life or destroys a creature'},
+];
+
+function detectThemes(cards) {
+  const themes = {};
+  const cardsByTheme = {};
+
+  for (const name of cards) {
+    const sf = SCRYFALL_CACHE && SCRYFALL_CACHE.get ? SCRYFALL_CACHE.get(name) : null;
+    const oracle = sf ? ((sf.oracle_text || '') + ' ' + (sf.card_faces || []).map(f => f.oracle_text || '').join(' ') + ' ' + (sf.type_line || '')).toLowerCase() : name.toLowerCase();
+    const typeLine = sf ? (sf.type_line || '').toLowerCase() : '';
+
+    for (const [theme, patterns] of Object.entries(THEME_PATTERNS)) {
+      if (patterns.some(pat => pat.test(oracle) || pat.test(typeLine))) {
+        themes[theme] = (themes[theme] || 0) + 1;
+        if (!cardsByTheme[theme]) cardsByTheme[theme] = [];
+        if (cardsByTheme[theme].length < 5) cardsByTheme[theme].push(name);
+      }
+    }
+  }
+  return { themes, cardsByTheme };
+}
+
+function detectSynergies(cards) {
+  const cardSet = new Set(cards.map(c => c.toLowerCase()));
+  const found = [];
+  const seenPairs = new Set();
+
+  for (const pair of SYNERGY_PAIRS) {
+    if (!cardSet.has(pair.a.toLowerCase())) continue;
+
+    // Check if the B side matches
+    let bMatch = null;
+    if (pair.bType === 'name') {
+      bMatch = cards.find(c => c.toLowerCase().includes(pair.b.toLowerCase()));
+    } else if (pair.bType === 'oracle') {
+      bMatch = cards.find(c => {
+        if (c.toLowerCase() === pair.a.toLowerCase()) return false;
+        const sf = SCRYFALL_CACHE && SCRYFALL_CACHE.get ? SCRYFALL_CACHE.get(c) : null;
+        const oracle = sf ? (sf.oracle_text || '').toLowerCase() : c.toLowerCase();
+        const type = sf ? (sf.type_line || '').toLowerCase() : '';
+        return oracle.includes(pair.b.toLowerCase()) || type.includes(pair.b.toLowerCase());
+      });
+    } else if (pair.bType === 'type') {
+      bMatch = cards.find(c => {
+        if (c.toLowerCase() === pair.a.toLowerCase()) return false;
+        const sf = SCRYFALL_CACHE && SCRYFALL_CACHE.get ? SCRYFALL_CACHE.get(c) : null;
+        const type = sf ? (sf.type_line || '').toLowerCase() : '';
+        return type.includes(pair.b.toLowerCase());
+      });
+    }
+
+    if (!bMatch) continue;
+
+    const key = [pair.a, bMatch].sort().join('|');
+    if (seenPairs.has(key)) continue;
+    seenPairs.add(key);
+
+    found.push({ a: pair.a, b: bMatch, desc: pair.desc });
+  }
+  return found;
+}
+
+
+function calcSynergyScore(themesA, themesB, synA, synB) {
+  // Score based on theme overlap + synergy count
+  const sharedThemes = Object.keys(themesA).filter(t => themesB[t]);
+  const themeScore = sharedThemes.reduce((sum, t) => sum + Math.min(themesA[t], themesB[t]), 0);
+  const synScore = synA.length + synB.length;
+  const total = Math.min(100, Math.round((themeScore * 2 + synScore * 5)));
+  return { score: total, sharedThemes };
+}
+
+async function analyzeSynergies() {
+  const rawA = document.getElementById('syn-deck-a').value.trim();
+  const rawB = document.getElementById('syn-deck-b').value.trim();
+  const nameA = document.getElementById('syn-name-a').value || 'Deck A';
+  const nameB = document.getElementById('syn-name-b').value || 'Deck B';
+
+  if (!rawA || !rawB) { alert('Please paste both decklists.'); return; }
+
+  const btn = document.getElementById('syn-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing...';
+
+  const resultsEl = document.getElementById('syn-results');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:#5a5a7a;font-family:DM Mono,monospace;">Analyzing synergies...</div>';
+
+  const deckA = [...parseDeck(rawA).keys()];
+  const deckB = [...parseDeck(rawB).keys()];
+
+  // Fetch Scryfall data for oracle text
+  await fetchDeckDataBatch([...new Set([...deckA, ...deckB])]);
+
+  const { themes: themesA, cardsByTheme: ctA } = detectThemes(deckA, SCRYFALL_CACHE);
+  const { themes: themesB, cardsByTheme: ctB } = detectThemes(deckB, SCRYFALL_CACHE);
+  const synA = detectSynergies(deckA);
+  const synB = detectSynergies(deckB);
+  const { score, sharedThemes } = calcSynergyScore(themesA, themesB, synA, synB);
+
+  // Render
+  let html = '';
+
+  // Synergy score card
+  const scoreColor = score >= 70 ? '#4ae8b0' : score >= 40 ? '#e8c94a' : '#e84a6a';
+  const scoreLabel = score >= 70 ? 'HIGH SYNERGY' : score >= 40 ? 'MODERATE SYNERGY' : 'LOW SYNERGY';
+  html += `<div style="background:#14141a;border:1px solid ${scoreColor}44;border-radius:10px;padding:20px;margin-bottom:16px;text-align:center;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:#5a5a7a;margin-bottom:8px;">DECK SYNERGY SCORE</div>
+    <div style="font-size:64px;font-family:'Bebas Neue',sans-serif;color:${scoreColor};line-height:1;">${score}</div>
+    <div style="font-size:14px;font-family:'Bebas Neue',sans-serif;letter-spacing:3px;color:${scoreColor};margin-top:4px;">${scoreLabel}</div>
+    ${sharedThemes.length ? `<div style="font-size:11px;color:#5a5a7a;margin-top:8px;">Shared themes: ${sharedThemes.join(' · ')}</div>` : ''}
+  </div>`;
+
+  // Side by side theme breakdown
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">`;
+
+  for (const [deck, themes, cardsByTheme, name, color] of [
+    [deckA, themesA, ctA, nameA, '#e8c94a'],
+    [deckB, themesB, ctB, nameB, '#4ae8b0']
+  ]) {
+    const sorted = Object.entries(themes).sort((a,b) => b[1]-a[1]).slice(0,8);
+    html += `<div style="background:#14141a;border:1px solid ${color}22;border-radius:10px;padding:16px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:${color};margin-bottom:12px;">${name} — Themes</div>`;
+    if (!sorted.length) {
+      html += '<div style="color:#5a5a7a;font-size:11px;">No themes detected</div>';
+    } else {
+      for (const [theme, count] of sorted) {
+        const pct = Math.min(100, Math.round((count / deck.length) * 100 * 3));
+        html += `<div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:11px;margin-bottom:3px;">
+            <span style="color:#e8e8f0;">${theme}</span>
+            <span style="color:#5a5a7a;">${count} cards</span>
+          </div>
+          <div style="background:#0e0e14;border-radius:3px;height:4px;">
+            <div style="background:${color};width:${pct}%;height:4px;border-radius:3px;"></div>
+          </div>
+        </div>`;
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Mechanical synergies per deck
+  for (const [syns, name, color] of [[synA, nameA, '#e8c94a'], [synB, nameB, '#4ae8b0']]) {
+    if (!syns.length) continue;
+    html += `<div style="background:#14141a;border:1px solid ${color}22;border-radius:10px;padding:16px;margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:${color};margin-bottom:10px;">${name} — ${syns.length} Mechanical Synergies</div>`;
+    for (const s of syns) {
+      html += `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="color:${color};font-size:11px;font-family:DM Mono,monospace;flex-shrink:0;">⚡</span>
+        <div>
+          <div style="font-family:DM Mono,monospace;font-size:11px;color:#e8e8f0;">${s.a} + ${s.b}</div>
+          <div style="font-size:10px;color:#5a5a7a;margin-top:2px;">${s.desc}</div>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Missing synergy suggestions via Claude
+  html += `<div style="background:#14141a;border:1px solid #9e4ae833;border-radius:10px;padding:16px;margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;margin-bottom:10px;">💡 Missing Synergies</div>
+    <button onclick="getMissingSynergies('${nameA.replace(/'/g,'')}')" id="miss-btn-a" style="background:#9e4ae822;border:1px solid #9e4ae844;color:#9e4ae8;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:DM Mono,monospace;font-size:11px;margin-right:8px;">Find missing synergies for ${nameA}</button>
+    <button onclick="getMissingSynergies('${nameB.replace(/'/g,'')}')" id="miss-btn-b" style="background:#9e4ae822;border:1px solid #9e4ae844;color:#9e4ae8;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:DM Mono,monospace;font-size:11px;">Find missing synergies for ${nameB}</button>
+    <div id="miss-results" style="margin-top:12px;"></div>
+  </div>`;
+
+  // Store deck data for missing synergies lookup
+  window._synDeckA = { cards: deckA, name: nameA };
+  window._synDeckB = { cards: deckB, name: nameB };
+
+  resultsEl.innerHTML = html;
+  btn.disabled = false;
+  btn.textContent = '🔗 ANALYZE SYNERGIES';
+}
+
+async function getMissingSynergies(deckName) {
+  const deck = window._synDeckA && window._synDeckA.name === deckName ? window._synDeckA : window._synDeckB;
+  if (!deck) return;
+
+  const missEl = document.getElementById('miss-results');
+  missEl.innerHTML = '<div style="color:#5a5a7a;font-family:DM Mono,monospace;font-size:11px;padding:8px;">Analyzing missing synergies via AI...</div>';
+
+  try {
+    const prompt = `You are an expert MTG Commander deckbuilder. Analyze this deck and identify the TOP 5 missing synergies — cards that would create powerful synergies with existing cards but are NOT currently in the deck.
+
+Deck: ${deck.name}
+Cards: ${deck.cards.slice(0, 60).join(', ')}
+
+For each missing synergy, identify:
+1. The card to add
+2. Which existing card(s) it synergizes with
+3. Why it's a powerful synergy
+
+Respond ONLY in this exact JSON format:
+[{"add":"Card Name","synergizes_with":["Existing Card 1","Existing Card 2"],"why":"Brief explanation","type":"Combo|Value|Protection|Ramp|Draw"}]`;
+
+    const WORKER = 'https://spellbook-proxy.work-macarthur.workers.dev';
+    const res = await fetch(WORKER + '/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
+    });
+
+    if (!res.ok) throw new Error('API error ' + res.status);
+    const data = await res.json();
+    const text = data.content && data.content[0] && data.content[0].text || '';
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No JSON in response');
+    const suggestions = JSON.parse(jsonMatch[0]);
+
+    const typeColor = { Combo:'#9e4ae8', Value:'#e8c94a', Protection:'#4a9ee8', Ramp:'#4ae8b0', Draw:'#4ae8b0' };
+    let html = '';
+    for (const s of suggestions) {
+      const tc = typeColor[s.type] || '#5a5a7a';
+      const scryfallUrl = 'https://scryfall.com/search?q=%21' + encodeURIComponent(s.add);
+      html += `<div style="border:1px solid #28283a;border-radius:6px;padding:10px;margin-bottom:8px;background:#0e0e14;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="color:${tc};font-size:10px;border:1px solid ${tc}44;border-radius:3px;padding:1px 5px;">${s.type||'Synergy'}</span>
+          <a href="${scryfallUrl}" target="_blank" style="font-family:DM Mono,monospace;font-size:12px;color:#e8e8f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#e8c94a'" onmouseout="this.style.color='#e8e8f0'">${s.add} ↗</a>
+        </div>
+        <div style="font-size:11px;color:#5a5a7a;">Synergizes with: <span style="color:#b8b8d0;">${(s.synergizes_with||[]).join(', ')}</span></div>
+        <div style="font-size:11px;color:#8888a0;margin-top:3px;">${s.why||''}</div>
+      </div>`;
+    }
+    missEl.innerHTML = html;
+  } catch(e) {
+    missEl.innerHTML = `<div style="color:#e84a6a;font-size:11px;font-family:DM Mono,monospace;">Error: ${e.message}</div>`;
+  }
 }
 
 // ── INIT ───────────────────────────────────────────────
