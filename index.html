@@ -2534,9 +2534,9 @@ function renderRecommendations(text, commander, mode, usedEdhrec) {
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
         '<span style="color:' + pc + ';font-size:10px;border:1px solid ' + pc + '44;border-radius:3px;padding:1px 6px;">' + (rec.priority||'') + '</span>' +
         '<span style="color:' + cc + ';font-size:10px;border:1px solid ' + cc + '44;border-radius:3px;padding:1px 6px;">' + (rec.category||'') + '</span>' +
-        '<a href="' + scryfallUrl + '" target="_blank" style="font-family:\'DM Mono\',monospace;font-size:13px;color:#e8e8f0;font-weight:700;text-decoration:none;border-bottom:1px solid #e8c94a44;" onmouseover="this.style.color=\'#e8c94a\'" onmouseout="this.style.color=\'#e8e8f0\'">' + rec.card + '</a>' +
-        ' <a href="https://edhrec.com/cards/' + rec.card.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '" target="_blank" style="font-size:10px;color:#4ae8b0;text-decoration:none;border:1px solid #4ae8b033;border-radius:3px;padding:1px 5px;margin-left:4px;">EDHREC ↗</a>' +
-        ' <a href="' + scryfallUrl + '" target="_blank" style="font-size:10px;color:#5a5a7a;text-decoration:none;border:1px solid #28283a;border-radius:3px;padding:1px 5px;margin-left:2px;">Scryfall ↗</a>' +
+        '<span style="font-family:DM Mono,monospace;font-size:13px;color:#e8e8f0;font-weight:700;">' + rec.card + '</span>' +
+        ' <a href="https://edhrec.com/cards/' + rec.card.toLowerCase().replace(/[^a-z0-9]/g, function(c) { return c === " " ? "-" : ""; }).replace(/ /g,"-") + '" target="_blank" style="font-size:10px;color:#4ae8b0;text-decoration:none;border:1px solid #4ae8b033;border-radius:3px;padding:1px 5px;margin-left:6px;">EDHREC ↗</a>' +
+        ' <a href="https://scryfall.com/search?q=%21' + encodeURIComponent(rec.card) + '" target="_blank" style="font-size:10px;color:#5a5a7a;text-decoration:none;border:1px solid #28283a;border-radius:3px;padding:1px 5px;margin-left:3px;">Scryfall ↗</a>' +
       '</div>' +
       '<div style="font-size:12px;color:#b8b8d0;margin-bottom:8px;">' + (rec.reason||'') + '</div>' +
       (rec.replace ? '<div style="font-size:11px;color:#5a5a7a;border-top:1px solid #1c1c2a;padding-top:8px;margin-top:4px;">→ Replace <span style="color:#e84a6a;">' + rec.replace + '</span>: ' + (rec.replace_reason||'') + '</div>' : '') +
