@@ -2700,36 +2700,170 @@ function detectThemes(cards) {
 }
 
 function detectSynergies(cards) {
-  const cardSet = new Set(cards.map(c => c.toLowerCase()));
   const found = [];
   const seenKeys = new Set();
 
+  // Build a lookup: lowercase card name -> oracle text + type line
+  const cardOracle = new Map();
+  const cardType = new Map();
+  for (const name of cards) {
+    const sf = SCRYFALL_CACHE.get(name);
+    if (sf) {
+      const oracle = [
+        sf.oracle_text || '',
+        ...(sf.card_faces || []).map(f => f.oracle_text || '')
+      ].join(' ').toLowerCase();
+      const type = (sf.type_line || '').toLowerCase();
+      cardOracle.set(name.toLowerCase(), oracle);
+      cardType.set(name.toLowerCase(), type);
+    } else {
+      // Fallback: use card name as oracle text
+      cardOracle.set(name.toLowerCase(), name.toLowerCase());
+      cardType.set(name.toLowerCase(), '');
+    }
+  }
+
+  // Helper: get oracle text for a card (case-insensitive name lookup)
+  function getOracle(name) {
+    return cardOracle.get(name.toLowerCase()) || name.toLowerCase();
+  }
+  function getType(name) {
+    return cardType.get(name.toLowerCase()) || '';
+  }
+
   for (const pair of SYNERGY_PAIRS) {
-    if (!cardSet.has(pair.a.toLowerCase())) continue;
+    // Check if card A is in deck (case insensitive)
+    const cardAInDeck = cards.find(c => c.toLowerCase() === pair.a.toLowerCase());
+    if (!cardAInDeck) continue;
 
-    const others = cards.filter(c => c.toLowerCase() !== pair.a.toLowerCase());
-    const matches = others.filter(c => {
-      const sf = SCRYFALL_CACHE && SCRYFALL_CACHE.get ? SCRYFALL_CACHE.get(c) : null;
-      const oracle = sf
-        ? [sf.oracle_text || '', ...(sf.card_faces || []).map(f => f.oracle_text || '')].join(' ').toLowerCase()
-        : c.toLowerCase();
-      const typeLine = sf ? (sf.type_line || '').toLowerCase() : '';
-
-      if (pair.bOracle) return pair.bOracle.test(oracle);
-      if (pair.bType) return pair.bType.test(typeLine);
+    // Find all matching B cards
+    const matches = cards.filter(c => {
+      if (c.toLowerCase() === pair.a.toLowerCase()) return false;
+      const oracle = getOracle(c);
+      const type = getType(c);
+      if (pair.bOracle) return pair.bOracle.test(oracle) || pair.bOracle.test(type);
+      if (pair.bType) return pair.bType.test(type);
       return false;
     });
 
     if (!matches.length) continue;
 
-    const key = pair.a + '|' + (pair.bOracle || pair.bType).toString();
+    const key = pair.a.toLowerCase() + '||' + (pair.bOracle || pair.bType).toString();
     if (seenKeys.has(key)) continue;
     seenKeys.add(key);
 
-    found.push({ a: pair.a, cards: matches.slice(0, 4), count: matches.length, desc: pair.desc });
+    found.push({
+      a: cardAInDeck,
+      cards: matches.slice(0, 5),
+      count: matches.length,
+      desc: pair.desc
+    });
   }
+
+  // ALSO: run a general synergy scan for common patterns not in hardcoded pairs
+  // Find all cards with tap abilities and check for untap effects
+  const tapCards = cards.filter(c => /\{t\}:/i.test(getOracle(c)));
+  const untapCards = cards.filter(c => /untap (target|all|each|it)/i.test(getOracle(c)));
+  if (tapCards.length > 0 && untapCards.length > 0) {
+    for (const untapper of untapCards) {
+      // Only add if not already covered by hardcoded pairs
+      const alreadyCovered = found.some(f => 
+        f.a.toLowerCase() === untapper.toLowerCase() || 
+        f.cards.some(c => c.toLowerCase() === untapper.toLowerCase())
+      );
+      if (!alreadyCovered) {
+        const key = 'untap||' + untapper.toLowerCase();
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          found.push({
+            a: untapper,
+            cards: tapCards.slice(0, 4),
+            count: tapCards.length,
+            desc: "Untap effect synergizes with all your tap-activated abilities."
+          });
+        }
+      }
+    }
+  }
+
+  // Find token doublers + token generators
+  const tokenDoublers = cards.filter(c => {
+    const o = getOracle(c);
+    return /if .* would create .* token.*instead create twice/i.test(o) || 
+           /create twice that many/i.test(o) ||
+           /(parallel lives|anointed procession|doubling season)/i.test(c);
+  });
+  const tokenGens = cards.filter(c => {
+    const o = getOracle(c);
+    return /create (a|an|x|\d+) [^.]*token/i.test(o);
+  });
+  if (tokenDoublers.length > 0 && tokenGens.length > 2) {
+    for (const doubler of tokenDoublers) {
+      const key = 'tokendouble||' + doubler.toLowerCase();
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        found.push({
+          a: doubler,
+          cards: tokenGens.filter(c => c !== doubler).slice(0, 5),
+          count: tokenGens.length,
+          desc: "Token doubler multiplies output from all " + tokenGens.length + " token generators in your deck."
+        });
+      }
+    }
+  }
+
+  // Find sacrifice payoffs + sacrifice outlets
+  const sacPayoffs = cards.filter(c => {
+    const o = getOracle(c);
+    return /whenever (a|another|one or more) creature(s)? (you control )?(dies|die)/i.test(o) ||
+           /whenever ~ or another creature dies/i.test(o);
+  });
+  const sacOutlets = cards.filter(c => {
+    const o = getOracle(c);
+    return /\{[^}]*\}[,:]?\s*(sacrifice|sac)\b/i.test(o) || 
+           /as an additional cost[^.]*sacrifice/i.test(o);
+  });
+  if (sacPayoffs.length > 0 && sacOutlets.length > 0) {
+    for (const payoff of sacPayoffs) {
+      const alreadyCovered = found.some(f => f.a.toLowerCase() === payoff.toLowerCase());
+      if (!alreadyCovered) {
+        const key = 'sacpayoff||' + payoff.toLowerCase();
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          found.push({
+            a: payoff,
+            cards: sacOutlets.slice(0, 4),
+            count: sacOutlets.length,
+            desc: "Death payoff triggers whenever you use any of your " + sacOutlets.length + " sacrifice outlets."
+          });
+        }
+      }
+    }
+  }
+
+  // Find ETB triggers + blink effects
+  const etbTriggers = cards.filter(c => /when(ever)? (~ )?enters the battlefield/i.test(getOracle(c)));
+  const blinkEffects = cards.filter(c => /exile [^.]*(you control|target creature)[^.]*\. return (it|that card)/i.test(getOracle(c)));
+  if (etbTriggers.length > 2 && blinkEffects.length > 0) {
+    for (const blinker of blinkEffects) {
+      const key = 'blink||' + blinker.toLowerCase();
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        found.push({
+          a: blinker,
+          cards: etbTriggers.filter(c => c !== blinker).slice(0, 4),
+          count: etbTriggers.length,
+          desc: "Blink effect re-triggers all " + etbTriggers.length + " ETB triggers in your deck."
+        });
+      }
+    }
+  }
+
+  // Sort by number of matching cards (most impactful first)
+  found.sort((a, b) => b.count - a.count);
   return found;
 }
+
 
 function calcSynergyScore(themes, synergies, totalCards) {
   const themeCount = Object.keys(themes).length;
