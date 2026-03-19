@@ -1680,17 +1680,24 @@ function scryfallToCardData(sf) {
 function initTooltip() {
   const tooltip = document.getElementById('card-tooltip');
   const img = document.getElementById('card-tooltip-img');
+  let currentRow = null;
 
   document.addEventListener('mouseover', async (e) => {
     const row = e.target.closest('.crd-row');
-    if (!row) { tooltip.style.display = 'none'; return; }
+    if (!row) return;
+    if (row === currentRow) return; // already showing for this row
+    currentRow = row;
+
+    // Extract card name: get first text span, strip qty prefix and badge labels
     const nameEl = row.querySelector('span');
     if (!nameEl) return;
-    // Extract card name (remove qty prefix and flag spans)
-    let name = nameEl.textContent.replace(/^\d+x\s*/, '').replace(/GC|MLD|CMB/g, '').trim();
-    if (!name) return;
+    let name = nameEl.childNodes[0]
+      ? nameEl.childNodes[0].textContent.replace(/^\d+x\s*/, '').trim()
+      : nameEl.textContent.replace(/^\d+x\s*/, '').replace(/GC|MLD|CMB/g, '').trim();
+    if (!name || name.length < 2) return;
 
     const sf = await fetchCardData(name);
+    if (row !== currentRow) return; // mouse moved on while fetching
     if (!sf) { tooltip.style.display = 'none'; return; }
 
     let imageUrl = null;
@@ -1703,18 +1710,21 @@ function initTooltip() {
   });
 
   document.addEventListener('mousemove', (e) => {
-    const tooltip = document.getElementById('card-tooltip');
     if (tooltip.style.display === 'none') return;
-    const x = e.clientX + 16;
-    const y = e.clientY - 60;
-    const maxX = window.innerWidth - 220;
-    const maxY = window.innerHeight - 300;
+    const x = e.clientX + 20;
+    const y = e.clientY - 80;
+    const maxX = window.innerWidth - 215;
+    const maxY = window.innerHeight - 295;
     tooltip.style.left = Math.min(x, maxX) + 'px';
-    tooltip.style.top = Math.min(y, maxY) + 'px';
+    tooltip.style.top  = Math.max(8, Math.min(y, maxY)) + 'px';
   });
 
   document.addEventListener('mouseout', (e) => {
-    if (!e.target.closest('.crd-row')) return;
+    const row = e.target.closest('.crd-row');
+    if (!row) return;
+    // Only hide if we're actually leaving the row (not entering a child)
+    if (row.contains(e.relatedTarget)) return;
+    currentRow = null;
     tooltip.style.display = 'none';
   });
 }
@@ -3057,8 +3067,22 @@ Respond ONLY in valid JSON:
   });
 })();
 </script>
+<!-- Card image tooltip -->
+<div id="card-tooltip" style="display:none;position:fixed;z-index:9999;pointer-events:none;filter:drop-shadow(0 8px 32px rgba(0,0,0,0.8));">
+  <img id="card-tooltip-img" src="" alt="" style="width:200px;border-radius:10px;display:block;">
+</div>
+
 <div style="text-align:center;padding:28px 20px 20px;border-top:1px solid #28283a;margin-top:40px;">
   <p style="font-family:'DM Mono',monospace;font-size:11px;color:#3a3a5a;letter-spacing:2px;">© 2026 POKÉSTOP. ALL RIGHTS RESERVED.</p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  initTooltip();
+  initAutocomplete();
+  loadFromURL();
+  updateModeUI();
+});
+</script>
 </body>
 </html>
