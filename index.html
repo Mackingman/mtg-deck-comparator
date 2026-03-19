@@ -366,29 +366,7 @@ textarea::placeholder { color: #5a5a7a; }
 <body>
 
 <div class="header">
-  <!-- Logo -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;">
-    <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-      <!-- Outer hex shape -->
-      <polygon points="26,2 48,14 48,38 26,50 4,38 4,14" fill="none" stroke="#e8c94a" stroke-width="2"/>
-      <!-- Inner hex -->
-      <polygon points="26,8 43,18 43,34 26,44 9,34 9,18" fill="#1a1a0a" stroke="#e8c94a" stroke-width="1" opacity="0.6"/>
-      <!-- P letter for PokeStop -->
-      <text x="26" y="33" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="22" fill="#e8c94a" letter-spacing="1">P</text>
-      <!-- Corner gems -->
-      <circle cx="26" cy="2" r="2.5" fill="#e8c94a"/>
-      <circle cx="48" cy="14" r="2.5" fill="#e8c94a"/>
-      <circle cx="48" cy="38" r="2.5" fill="#e8c94a"/>
-      <circle cx="26" cy="50" r="2.5" fill="#e8c94a"/>
-      <circle cx="4" cy="38" r="2.5" fill="#e8c94a"/>
-      <circle cx="4" cy="14" r="2.5" fill="#e8c94a"/>
-    </svg>
-    <div style="text-align:left;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:4px;color:#e8c94a;opacity:0.7;line-height:1;">POKESTOP COLLECTABLES</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:#e8c94a;line-height:1;margin-top:2px;">PRESENTS</div>
-    </div>
-  </div>
-  <h1>Deck Comparator</h1>
+    <h1>Deck Comparator</h1>
   <p>Compare · Power Level · Bracket · Built on <a href="https://edhpowerlevel.ca" style="color:#e8c94a;text-decoration:none;border-bottom:1px solid rgba(232,201,74,0.3);" onmouseover="this.style.borderBottomColor='#e8c94a'" onmouseout="this.style.borderBottomColor='rgba(232,201,74,0.3)'">EDHPowerLevel</a> Algorithm</p>
 </div>
 
@@ -495,6 +473,9 @@ textarea::placeholder { color: #5a5a7a; }
 
   </div><!-- /results -->
 </div><!-- /compare panel -->
+<div style="width:100%;max-width:900px;margin:20px auto;text-align:center;">
+<ins class="adsbygoogle" style="display:block;min-width:300px;width:100%;" data-ad-client="ca-pub-2816476613820323" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
+</div>
 
 <!-- SYNERGIES PANEL -->
 <div class="panel" id="panel-synergy">
@@ -514,6 +495,10 @@ textarea::placeholder { color: #5a5a7a; }
 
     <div id="syn-results" style="display:none;"></div>
   </div>
+
+</div>
+<div style="width:100%;max-width:900px;margin:20px auto;text-align:center;">
+<ins class="adsbygoogle" style="display:block;min-width:300px;width:100%;" data-ad-client="ca-pub-2816476613820323" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
 </div>
 
 <!-- RECOMMENDATIONS PANEL -->
@@ -562,6 +547,10 @@ textarea::placeholder { color: #5a5a7a; }
     <div id="rec-results" style="display:none;"></div>
 
   </div>
+
+</div>
+<div style="width:100%;max-width:900px;margin:20px auto;text-align:center;">
+<ins class="adsbygoogle" style="display:block;min-width:300px;width:100%;" data-ad-client="ca-pub-2816476613820323" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
 </div>
 
 <!-- ABOUT PANEL -->
@@ -628,6 +617,7 @@ textarea::placeholder { color: #5a5a7a; }
     <div class="section-hdr">&#x1F4CA; Power Score</div>
     <p style="font-size:13px;color:#5a5a7a;">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
   </div>
+
 </div>
 
 <script>
@@ -3058,6 +3048,14 @@ Respond ONLY in valid JSON:
   btn.disabled = false;
   btn.textContent = '🔍 FIND MISSING SYNERGIES';
 }
+</script>
+<script>
+(function() {
+  var ads = document.querySelectorAll('.adsbygoogle');
+  ads.forEach(function() {
+    try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+  });
+})();
 </script>
 </body>
 </html>
