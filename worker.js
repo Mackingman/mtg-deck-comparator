@@ -1,8 +1,8 @@
 addEventListener("fetch", function(event) {
-  event.respondWith(handleRequest(event.request));
+  event.respondWith(handleRequest(event.request, event));
 });
 
-async function handleRequest(request) {
+async function handleRequest(request, env) {
   var allow = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -27,7 +27,7 @@ async function handleRequest(request) {
       return await getEdhrec(url, allow);
     }
     if (path === "/claude") {
-      return await callClaude(request, allow);
+      return await callClaude(request, allow, env);
     }
     return new Response("OK", { status: 200, headers: allow });
   } catch (e) {
@@ -157,14 +157,24 @@ async function getEdhrec(url, allow) {
   });
 }
 
-async function callClaude(request, allow) {
+async function callClaude(request, allow, env) {
   var body = await request.json();
+
+  // Use secret from Cloudflare Worker environment
+  var apiKey = (env && env.ANTHROPIC_API_KE) || body.apiKey || "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";
+
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "No API key configured" }), {
+      status: 401,
+      headers: Object.assign({ "Content-Type": "application/json" }, allow)
+    });
+  }
 
   var upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": body.apiKey || "",
+      "x-api-key": apiKey,
       "anthropic-version": "2023-06-01"
     },
     body: JSON.stringify({
