@@ -2450,9 +2450,13 @@ async function getRecommendations() {
       })
     });
 
-    if (!res.ok) throw new Error('API error: ' + res.status);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('API error ' + res.status + ': ' + errText.substring(0, 200));
+    }
     const data = await res.json();
     const text = data.content && data.content[0] && data.content[0].text || '';
+    if (!text) throw new Error('Empty response from AI. Raw: ' + JSON.stringify(data).substring(0, 200));
 
     // Parse and render recommendations
     renderRecommendations(text, commander, mode, !!edhrecData);
