@@ -145,6 +145,7 @@ textarea::placeholder { color: #5a5a7a; }
   transition: all 0.2s;
 }
 .btn-secondary:hover { border-color: #e8c94a; color: #e8c94a; }
+.btn-clear:hover { border-color: #e84a6a !important; color: #e84a6a !important; }
 
 /* RESULTS */
 #results { display: none; }
@@ -354,13 +355,22 @@ textarea::placeholder { color: #5a5a7a; }
 .tag:hover { border-color: #e8c94a; color: #e8c94a; }
 .tag.active { background: rgba(232,201,74,0.12); border-color: #e8c94a; color: #e8c94a; }
 
+/* INLINE BADGES */
+.badge-gc  { color:#e8c94a; font-size:9px; }
+.badge-mld { color:#e84a6a; font-size:9px; }
+.badge-cmb { color:#b86ae8; font-size:9px; }
+
+/* AUTOCOMPLETE ITEMS */
+.ac-item { padding:8px 12px;cursor:pointer;color:#e8e8f0;border-bottom:1px solid rgba(255,255,255,0.04); }
+.ac-item:hover { background:rgba(232,201,74,0.1); }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #28283a; border-radius: 2px; }
 
 </style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2816476613820323" crossorigin="anonymous"></script>
+<script async defer src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2816476613820323" crossorigin="anonymous"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MiA1MiI+CiAgPHBvbHlnb24gcG9pbnRzPSIyNiwyIDQ4LDE0IDQ4LDM4IDI2LDUwIDQsMzggNCwxNCIgZmlsbD0iIzFhMWEwYSIgc3Ryb2tlPSIjZThjOTRhIiBzdHJva2Utd2lkdGg9IjIuNSIvPgogIDx0ZXh0IHg9IjI2IiB5PSIzNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNlOGM5NGEiPlA8L3RleHQ+Cjwvc3ZnPg==">
 </head>
 <body>
@@ -939,22 +949,30 @@ const DEFAULT_CMC = 3;
 // ══════════════════════════════════════════════════════
 // PARSE DECK
 // ══════════════════════════════════════════════════════
+// Pre-compiled parseDeck regexes (avoid recompile per-line)
+const _RE_SECTION = /^(Deck|Sideboard|Maybeboard|Commander|Companion|Planes|Schemes|Attractions|Stickers|Tokens|About|Lands|Creatures|Instants|Sorceries|Artifacts|Enchantments|Planeswalkers)$/i;
+const _RE_SET_PAREN = /\([A-Z0-9]{2,6}\)\s*\d*/g;
+const _RE_SET_BRACKET = /\[[A-Z0-9]{2,6}\]/g;
+const _RE_STAR_TAG = /\*[A-Z]\*/gi;
+const _RE_ARCHIDEKT = /^[+\-]?\d+:\s*/;
+const _RE_FOIL = /\s*[-\u2013]\s*(Foil|Etched|Extended Art|Borderless|Showcase|Alternate Art)\s*$/i;
+const _RE_QTY1 = /^(\d+)[xX]?\s+(.+)$/;
+const _RE_QTY2 = /^[xX](\d+)\s+(.+)$/;
+const _RE_TRAILING_PAREN = /\s*\([^)]*\)\s*$/;
+
 function parseDeck(raw) {
   const result = new Map();
   for (const line of raw.split('\n')) {
     let t = line.trim();
     if (!t) continue;
-    // Skip comment lines and section headers
     if (t.startsWith('//') || t.startsWith('#')) continue;
-    // Skip common section headers from various sites
-    if (/^(Deck|Sideboard|Maybeboard|Commander|Companion|Planes|Schemes|Attractions|Stickers|Tokens|About|Lands|Creatures|Instants|Sorceries|Artifacts|Enchantments|Planeswalkers)$/i.test(t)) continue;
+    if (_RE_SECTION.test(t)) continue;
 
-    // Strip set codes like (SET) 123, [SET], *F*, *E*, *P*
-    t = t.replace(/\([A-Z0-9]{2,6}\)\s*\d*/g, '');
-    t = t.replace(/\[[A-Z0-9]{2,6}\]/g, '');
-    t = t.replace(/\*[A-Z]\*/gi, '');
+    t = t.replace(_RE_SET_PAREN, '');
+    t = t.replace(_RE_SET_BRACKET, '');
+    t = t.replace(_RE_STAR_TAG, '');
     // Strip Archidekt tags like +1: or category labels
-    t = t.replace(/^[+\-]?\d+:\s*/, '');
+    t = t.replace(_RE_ARCHIDEKT, '');
     // Strip trailing set info like " - Foil" or " (Foil)"
     t = t.replace(/\s*[-–]\s*(Foil|Etched|Extended Art|Borderless|Showcase|Alternate Art)\s*$/i, '');
     t = t.replace(/\s+/g, ' ').trim();
@@ -963,14 +981,14 @@ function parseDeck(raw) {
 
     // Match quantity - handles: "1 Card", "1x Card", "1X Card", "x1 Card"
     let qty = 1, name;
-    const m1 = t.match(/^(\d+)[xX]?\s+(.+)$/);  // "1 Card" or "1x Card"
-    const m2 = t.match(/^[xX](\d+)\s+(.+)$/);    // "x1 Card"
+    const m1 = t.match(_RE_QTY1);  // "1 Card" or "1x Card"
+    const m2 = t.match(_RE_QTY2);    // "x1 Card"
     if (m1) { qty = parseInt(m1[1]); name = m1[2].trim(); }
     else if (m2) { qty = parseInt(m2[1]); name = m2[2].trim(); }
     else { name = t; }
 
     // Remove any remaining trailing parenthetical info
-    name = name.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    name = name.replace(_RE_TRAILING_PAREN, '').trim();
     if (!name || name.length < 2) continue;
     if (result.has(name)) result.get(name).qty += qty;
     else {
@@ -992,14 +1010,39 @@ function parseDeck(raw) {
   return result;
 }
 
+// Pre-compiled guessType regexes
+const _GT_LAND = /mountain|island|plains|swamp|forest|mesa|mire|tarn|foothills|strand|vista|tomb|cavern|citadel|furnace|saga|ruin|needle|vein|ruins|palace|city|nykthos|inventors|wasteland|strip mine|orchard|hub|gate|temple|tower|nexus|haven|river|grove|bog|moor|prairie|coast|delta|heath|scryland|triome|canopy|wilds|badlands|bayou|taiga|savannah|tundra|tropical|plateau|scrubland/;
+const _GT_ARTIFACT = /mox|ring|vault|staff|altar|clamp|medallion|mirror|banner|boots|greaves|incubator|domination|signet|petal|diamond|opal|top|mantle|bracers|curio|lantern|relic|helm|crown|wand|chalice|orb/;
+const _GT_INSTANT = /ritual|warp|blast|bolt|counterspell|negate|trickery|swat|will|fortune|pact|duplication|brainstorm|ponder|preordain/;
+const _GT_ENCHANT = /blood moon|contamination|hysteria|purphoros|tremors|animosity|stasis|smothering|rhystic|necropotence|sylvan/;
+
 function guessType(name) {
   const n = name.toLowerCase();
-  if (/(mountain|island|plains|swamp|forest|mesa|mire|tarn|foothills|strand|vista|tomb|cavern|citadel|furnace|saga|ruin|needle|vein|ruins|palace|city|nykthos|inventors|wasteland|strip mine|orchard|hub|gate|temple|tower|nexus|haven|river|grove|bog|moor|prairie|coast|delta|heath|scryland|triome|canopy|wilds|badlands|bayou|taiga|savannah|tundra|tropical|plateau|scrubland)/.test(n)) return 'land';
-  if (/(mox|ring|vault|staff|altar|clamp|medallion|mirror|banner|boots|greaves|incubator|domination|signet|petal|diamond|opal|top|mantle|bracers|curio|lantern|relic|helm|crown|wand|chalice|orb)/.test(n)) return 'artifact';
-  if (/(ritual|warp|blast|bolt|counterspell|negate|trickery|swat|will|fortune|pact|duplication|brainstorm|ponder|preordain)/.test(n)) return 'instant';
-  if (/(blood moon|contamination|hysteria|purphoros|tremors|animosity|stasis|smothering|rhystic|necropotence|sylvan)/.test(n)) return 'enchantment';
+  if (_GT_LAND.test(n)) return 'land';
+  if (_GT_ARTIFACT.test(n)) return 'artifact';
+  if (_GT_INSTANT.test(n)) return 'instant';
+  if (_GT_ENCHANT.test(n)) return 'enchantment';
   return 'creature';
 }
+
+// ── Static lookup Sets (hoisted for performance) ───────
+const FETCHES = new Set(["Arid Mesa","Bloodstained Mire","Flooded Strand","Marsh Flats",
+  "Misty Rainforest","Polluted Delta","Scalding Tarn","Verdant Catacombs","Windswept Heath",
+  "Wooded Foothills","Prismatic Vista","Fabled Passage","Evolving Wilds","Terramorphic Expanse"]);
+const DUALS = new Set(["Underground Sea","Volcanic Island","Badlands","Bayou","Taiga",
+  "Savannah","Tundra","Tropical Island","Plateau","Scrubland",
+  "Steam Vents","Blood Crypt","Overgrown Tomb","Godless Shrine","Sacred Foundry",
+  "Watery Grave","Stomping Ground","Temple Garden","Breeding Pool","Hallowed Fountain",
+  "Sulfurous Springs","Karplusan Forest","Caves of Koilos","Brushland","Underground River",
+  "City of Brass","Mana Confluence","Reflecting Pool","Cavern of Souls"]);
+const DRAW_CARDS = new Set(["Rhystic Study","Necropotence","Smothering Tithe","The One Ring",
+  "Wheel of Fortune","Skullclamp","Consecrated Sphinx","Ad Nauseam","Mystic Remora",
+  "Sylvan Library","Brainstorm","Ponder","Preordain","Faithless Looting","Sensei Divining Top",
+  "Sensei's Divining Top","Dark Confidant","Phyrexian Arena","Bolas's Citadel"]);
+const TUTORS = new Set(["Demonic Tutor","Imperial Seal","Vampiric Tutor","Mystical Tutor",
+  "Enlightened Tutor","Worldly Tutor","Natural Order","Intuition","Gamble","Crop Rotation",
+  "Goblin Matron","Goblin Recruiter","Imperial Recruiter","Fauna Shaman","Survival of the Fittest",
+  "Chord of Calling","Green Sun's Zenith","Finale of Devastation","Eldritch Evolution"]);
 
 // ══════════════════════════════════════════════════════
 // POWER LEVEL ALGORITHM
@@ -1018,27 +1061,7 @@ function analyzeDeck(deck) {
   // confirmedCombos will be updated after API call; start at 0
   let confirmedCombos = 0;
 
-  // Fetch lands set
-  const FETCHES = new Set(["Arid Mesa","Bloodstained Mire","Flooded Strand","Marsh Flats",
-    "Misty Rainforest","Polluted Delta","Scalding Tarn","Verdant Catacombs","Windswept Heath",
-    "Wooded Foothills","Prismatic Vista","Fabled Passage","Evolving Wilds","Terramorphic Expanse"]);
-  // Shock/dual lands
-  const DUALS = new Set(["Underground Sea","Volcanic Island","Badlands","Bayou","Taiga",
-    "Savannah","Tundra","Tropical Island","Plateau","Scrubland",
-    "Steam Vents","Blood Crypt","Overgrown Tomb","Godless Shrine","Sacred Foundry",
-    "Watery Grave","Stomping Ground","Temple Garden","Breeding Pool","Hallowed Fountain",
-    "Sulfurous Springs","Karplusan Forest","Caves of Koilos","Brushland","Underground River",
-    "City of Brass","Mana Confluence","Reflecting Pool","Cavern of Souls"]);
-  // High-value draw spells
-  const DRAW_CARDS = new Set(["Rhystic Study","Necropotence","Smothering Tithe","The One Ring",
-    "Wheel of Fortune","Skullclamp","Consecrated Sphinx","Ad Nauseam","Mystic Remora",
-    "Sylvan Library","Brainstorm","Ponder","Preordain","Faithless Looting","Sensei Divining Top",
-    "Sensei's Divining Top","Dark Confidant","Phyrexian Arena","Bolas's Citadel"]);
-  // Tutors
-  const TUTORS = new Set(["Demonic Tutor","Imperial Seal","Vampiric Tutor","Mystical Tutor",
-    "Enlightened Tutor","Worldly Tutor","Natural Order","Intuition","Gamble","Crop Rotation",
-    "Goblin Matron","Goblin Recruiter","Imperial Recruiter","Fauna Shaman","Survival of the Fittest",
-    "Chord of Calling","Green Sun's Zenith","Finale of Devastation","Eldritch Evolution"]);
+  // (Sets hoisted to module scope for performance)
 
   for (const [name, card] of deck) {
     const qty = card.qty;
@@ -1288,78 +1311,19 @@ function renderPowerCard(elId, analysis, deckName, colorClass) {
 let S = {};
 let activeTag = 'all';
 
-function runAnalysis() {
-  const rawA = document.getElementById('deck-a').value;
-  const rawB = document.getElementById('deck-b').value;
-  if (!rawA.trim() || !rawB.trim()) { alert('Please paste both decklists.'); return; }
-
-  const nameA = document.getElementById('name-a').value || 'Deck A';
-  const nameB = document.getElementById('name-b').value || 'Deck B';
-
-  const deckA = parseDeck(rawA);
-  const deckB = parseDeck(rawB);
-  const analysisA = analyzeDeck(deckA);
-  const analysisB = analyzeDeck(deckB);
-
-  renderPowerCard('pcard-a', analysisA, nameA, 'a');
-  renderPowerCard('pcard-b', analysisB, nameB, 'b');
-
-  // Comparison
-  const allNames = new Set([...deckA.keys(), ...deckB.keys()]);
-  const onlyA = [], onlyB = [], shared = [];
-  for (const name of allNames) {
-    const inA = deckA.has(name), inB = deckB.has(name);
-    if (inA && inB) {
-      const ca = deckA.get(name);
-      const cb = deckB.get(name);
-      shared.push({ name, type: ca.type, typeA: ca.type, typeB: cb.type,
-        combo: ca.combo || cb.combo, gc: ca.gc || cb.gc, mld: ca.mld || cb.mld,
-        xt: ca.xt || cb.xt, banned: ca.banned || cb.banned });
-    }
-    else if (inA) onlyA.push({ name, ...deckA.get(name) });
-    else onlyB.push({ name, ...deckB.get(name) });
-  }
-  const sf = (a,b) => a.name.localeCompare(b.name);
-  onlyA.sort(sf); onlyB.sort(sf); shared.sort(sf);
-
-  const total = allNames.size;
-  const pct = Math.round((shared.length / total) * 100);
-  document.getElementById('s-shared').textContent = shared.length;
-  document.getElementById('s-onlya').textContent = onlyA.length;
-  document.getElementById('s-onlyb').textContent = onlyB.length;
-  document.getElementById('s-pct').textContent = pct + '%';
-  document.getElementById('lbl-a').textContent = `Only ${nameA}`;
-  document.getElementById('lbl-b').textContent = `Only ${nameB}`;
-
-  const pA = Math.round((onlyA.length/total)*100);
-  const pS = Math.round((shared.length/total)*100);
-  const pB = 100 - pA - pS;
-  document.getElementById('ob-a').style.width = pA + '%';
-  document.getElementById('ob-s').style.width = pS + '%';
-  document.getElementById('ob-b').style.width = pB + '%';
-  document.getElementById('ol-a').textContent = `${nameA} only (${onlyA.length})`;
-  document.getElementById('ol-s').textContent = `Shared (${shared.length})`;
-  document.getElementById('ol-b').textContent = `${nameB} only (${onlyB.length})`;
-
-  document.getElementById('colhdr-a').textContent = nameA + ' Only';
-  document.getElementById('colhdr-b').textContent = nameB + ' Only';
-
-  buildCatBreakdown(deckA, deckB, nameA, nameB);
-  buildTagFilters();
-
-  S = { onlyA, onlyB, shared, nameA, nameB, deckA, deckB };
-  renderLists();
-
-  document.getElementById('results').style.display = 'block';
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+// runAnalysis: defined below as async version
+let runAnalysis;
 
 function buildCatBreakdown(dA, dB, nA, nB) {
   const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
-  const ct = (d,t) => { let n=0; for(const [,v] of d) if(v.type===t) n+=v.qty; return n; };
   const max = 40;
+  // Count each type for both decks in one pass each
+  const countA = {}, countB = {};
+  for (const [,v] of dA) countA[v.type] = (countA[v.type] || 0) + v.qty;
+  for (const [,v] of dB) countB[v.type] = (countB[v.type] || 0) + v.qty;
+  const legA = nA.slice(0,6), legB = nB.slice(0,6);
   const rows = cats.map(c => {
-    const a = ct(dA,c), b = ct(dB,c);
+    const a = countA[c] || 0, b = countB[c] || 0;
     return `<div class="cat-grid">
       <div class="cat-nm">${c}</div>
       <div class="cat-bw"><div class="cat-bf-a" style="width:${Math.min(100,(a/max)*100)}%"></div></div>
@@ -1367,7 +1331,7 @@ function buildCatBreakdown(dA, dB, nA, nB) {
         <span class="cat-nn a">${a}</span><span style="color:#5a5a7a;font-size:12px;padding-top:3px">/</span><span class="cat-nn b">${b}</span>
       </div>
       <div class="cat-bw"><div class="cat-bf-b" style="width:${Math.min(100,(b/max)*100)}%"></div></div>
-      <div class="cat-leg">${nA.slice(0,6)} / ${nB.slice(0,6)}</div>
+      <div class="cat-leg">${legA} / ${legB}</div>
     </div>`;
   }).join('');
   document.getElementById('cat-rows').innerHTML = rows;
@@ -1421,42 +1385,47 @@ function renderLists() {
 const TYPE_ORDER = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land','other'];
 const DOT_CLASS = {creature:'tc',artifact:'ta',enchantment:'te',instant:'ti',sorcery:'ts',land:'tl',planeswalker:'tp',other:'ta'};
 
+function _buildFlags(c) {
+  const f = [];
+  if (c.gc)    f.push('<span class="badge-gc">GC</span>');
+  if (c.mld)   f.push('<span class="badge-mld">MLD</span>');
+  if (c.combo) f.push('<span class="badge-cmb">CMB</span>');
+  return f.join(' ');
+}
+
 function renderTypeList(id, cards, cls) {
   const el = document.getElementById(id);
   if (!cards.length) { el.innerHTML = '<div class="empty-msg">No cards</div>'; return; }
   const groups = {};
-  for (const c of cards) { const t = c.type||'other'; if(!groups[t]) groups[t]=[]; groups[t].push(c); }
-  let html = '';
+  for (const c of cards) { const t = c.type||'other'; (groups[t] = groups[t]||[]).push(c); }
+  const parts = [];
   for (const t of TYPE_ORDER) {
     if (!groups[t]) continue;
-    html += `<div class="sec-div">${t} (${groups[t].length})</div>`;
+    parts.push(`<div class="sec-div">${t} (${groups[t].length})</div>`);
     for (const c of groups[t]) {
-      const flags = [c.gc?'<span style="color:#e8c94a;font-size:9px">GC</span>':'', c.mld?'<span style="color:#e84a6a;font-size:9px">MLD</span>':'', c.combo?'<span style="color:#b86ae8;font-size:9px">CMB</span>':''].filter(Boolean).join(' ');
-      html += `<div class="crd-row ${cls}"><span>${c.qty>1?c.qty+'x ':''}<span style="color:${c.known?'inherit':'#5a5a7a'}">${c.name}</span>${flags?' '+flags:''}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`;
+      const flags = _buildFlags(c);
+      const nameStyle = c.known === false ? 'style="color:#5a5a7a"' : '';
+      parts.push(`<div class="crd-row ${cls}"><span>${c.qty>1?c.qty+'x ':''}<span ${nameStyle}>${c.name}</span>${flags?' '+flags:''}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`);
     }
   }
-  el.innerHTML = html;
+  el.innerHTML = parts.join('');
 }
 
 function renderSharedList(id, cards) {
   const el = document.getElementById(id);
   if (!cards.length) { el.innerHTML = '<div class="empty-msg">No shared cards</div>'; return; }
   const groups = {};
-  for (const c of cards) { const t=c.type||'other'; if(!groups[t]) groups[t]=[]; groups[t].push(c); }
-  let html = '';
+  for (const c of cards) { const t = c.type||'other'; (groups[t] = groups[t]||[]).push(c); }
+  const parts = [];
   for (const t of TYPE_ORDER) {
     if (!groups[t]) continue;
-    html += `<div class="sec-div">${t} (${groups[t].length})</div>`;
+    parts.push(`<div class="sec-div">${t} (${groups[t].length})</div>`);
     for (const c of groups[t]) {
-      const flags = [
-        c.gc ? '<span style="color:#e8c94a;font-size:9px">GC</span>' : '',
-        c.mld ? '<span style="color:#e84a6a;font-size:9px">MLD</span>' : '',
-        c.combo ? '<span style="color:#b86ae8;font-size:9px">CMB</span>' : ''
-      ].filter(Boolean).join(' ');
-      html += `<div class="crd-row rs"><span>${c.name}${flags ? ' ' + flags : ''}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`;
+      const flags = _buildFlags(c);
+      parts.push(`<div class="crd-row rs"><span>${c.name}${flags?' '+flags:''}</span><div class="tdot ${DOT_CLASS[t]||'ta'}"></div></div>`);
     }
   }
-  el.innerHTML = html;
+  el.innerHTML = parts.join('');
 }
 
 // ══════════════════════════════════════════════════════
@@ -1498,6 +1467,7 @@ function exportTxt() {
 const SCRYFALL_CACHE = new Map();
 const COMBO_CACHE = new Map();
 let autocompleteTimeout = null;
+let autocompleteActive = null;
 
 // ── LOADING STATE ──────────────────────────────────────
 function showLoading(text) {
@@ -1550,31 +1520,28 @@ async function fetchDeckDataBatch(cardNames) {
     chunks.push(unknown.slice(i, i + 75));
   }
 
-  for (const chunk of chunks) {
-    try {
-      const body = JSON.stringify({ identifiers: chunk.map(n => ({ name: n })) });
-      const res = await fetch('https://api.scryfall.com/cards/collection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      // Store found cards
-      for (const card of (data.data || [])) {
-        SCRYFALL_CACHE.set(card.name, card);
-      }
-      // Mark not-found as null
-      const found = new Set((data.data || []).map(c => c.name.toLowerCase()));
-      for (const name of chunk) {
-        if (!SCRYFALL_CACHE.has(name)) {
-          SCRYFALL_CACHE.set(name, null);
+  // Fetch all chunks with 100ms stagger (respects Scryfall rate limit)
+  const chunkFetchers = chunks.map((chunk, i) => new Promise(resolve => {
+    setTimeout(async () => {
+      try {
+        const res = await fetch('https://api.scryfall.com/cards/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifiers: chunk.map(n => ({ name: n })) })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          for (const card of (data.data || [])) SCRYFALL_CACHE.set(card.name, card);
         }
+      } catch(e) { /* ignore */ }
+      // Mark any still-uncached names as null
+      for (const name of chunk) {
+        if (!SCRYFALL_CACHE.has(name)) SCRYFALL_CACHE.set(name, null);
       }
-    } catch(e) { continue; }
-    // Rate limit: 100ms between requests
-    await new Promise(r => setTimeout(r, 100));
-  }
+      resolve();
+    }, i * 110); // 110ms stagger keeps us under 10 req/s limit
+  }));
+  await Promise.all(chunkFetchers);
 }
 
 // Extract useful data from Scryfall card
@@ -1618,16 +1585,22 @@ function scryfallToCardData(sf) {
     else impact = 3.5;
 
     // ── Positive modifiers ──────────────────────────────────────────────
+    // Pre-compute frequently reused flags
+    const oHasAdd = oracle.includes('add {') || oracle.includes('adds mana');
+    const oHasUntap = oracle.includes('untap');
+    const oHasDraw = oracle.includes('draw');
+    const oHasSearch = oracle.includes('search your library');
+    const oHasSacrifice = oracle.includes('sacrifice');
     // Mana generation / ramp
-    if (oracle.includes('add {') || oracle.includes('adds mana') || oracle.includes('untap all')) impact += 1.0;
+    if (oHasAdd || oracle.includes('untap all')) impact += 1.0;
     // Card advantage
-    if ((oracle.match(/draw \d+ card/g) || []).length > 0 || oracle.includes('draw a card')) impact += 0.8;
-    if (oracle.includes('draw cards') || oracle.includes('draws cards')) impact += 1.0;
+    if ((oracle.match(/draw \d+ card/g) || []).length > 0 || oHasDraw && oracle.includes('a card')) impact += 0.8;
+    if (oHasDraw && (oracle.includes('draw cards') || oracle.includes('draws cards'))) impact += 1.0;
     // Tutoring
-    if (oracle.includes('search your library') && oracle.includes('put it into your hand')) impact += 1.2;
-    if (oracle.includes('search your library') && (oracle.includes('put it onto') || oracle.includes('put them onto'))) impact += 1.0;
+    if (oHasSearch && oracle.includes('put it into your hand')) impact += 1.2;
+    if (oHasSearch && (oracle.includes('put it onto') || oracle.includes('put them onto'))) impact += 1.0;
     // Infinite combo enablers
-    if (oracle.includes('untap') && (oracle.includes('whenever') || oracle.includes('at the beginning'))) impact += 0.8;
+    if (oHasUntap && (oracle.includes('whenever') || oracle.includes('at the beginning'))) impact += 0.8;
     if (oracle.includes('infinite') || (oracle.includes('untap') && oracle.includes('add {') )) impact += 0.5;
     // Free/cost reduction
     if (oracle.includes('without paying its mana cost') || oracle.includes('you may cast') && oracle.includes('free')) impact += 1.0;
@@ -1639,7 +1612,7 @@ function scryfallToCardData(sf) {
     if (oracle.includes('wins the game') || oracle.includes('lose the game') && oracle.includes('opponent')) impact += 1.5;
     if (oracle.includes('deal damage to each opponent') || oracle.includes('damage to all opponents')) impact += 0.8;
     // Sacrifice outlet (combo enabler)
-    if (oracle.includes('sacrifice') && oracle.includes(': add') ) impact += 0.7;
+    if (oHasSacrifice && oHasAdd ) impact += 0.7;
     if (oracle.includes('sacrifice a creature') && oracle.includes('{')) impact += 0.5;
     // Evasion / haste granting (relevant for aggro cEDH like Krenko)
     if (oracle.includes('haste') && (oracle.includes('each') || oracle.includes('all') || oracle.includes('creatures you control'))) impact += 0.7;
@@ -1649,13 +1622,13 @@ function scryfallToCardData(sf) {
     if (oracle.includes('counter target spell') || oracle.includes('counter that spell')) impact += 0.9;
     if (oracle.includes("can't be countered") || oracle.includes('hexproof') || oracle.includes('shroud')) impact += 0.4;
     // Wheel effects
-    if (oracle.includes('discard your hand') && oracle.includes('draw')) impact += 0.8;
+    if (oracle.includes('discard your hand') && oHasDraw) impact += 0.8;
 
     // ── Negative modifiers ──────────────────────────────────────────────
     // High CMC penalty for pure beaters with no text value
-    if (cmc >= 6 && !oracle.includes('search') && !oracle.includes('draw') && !oracle.includes('add {')) impact -= 1.0;
+    if (cmc >= 6 && !oHasSearch && !oHasDraw && !oHasAdd) impact -= 1.0;
     // Symmetrical effects are weaker
-    if (oracle.includes('each player') && oracle.includes('draw') ) impact -= 0.3;
+    if (oracle.includes('each player') && oHasDraw ) impact -= 0.3;
     // Enters tapped
     if (oracle.includes('enters the battlefield tapped') || oracle.includes('enters tapped')) impact -= 0.3;
   }
@@ -1910,176 +1883,98 @@ const COMBO_DB = [
     {c:["Flare of Duplication","Wheel of Fortune"],r:["Massive card draw","Double wheel effect"],s:"1. Cast Flare of Duplication copying Wheel of Fortune. 2. Both wheels resolve - opponents discard twice, you draw 14 cards total."},
     {c:["Gravecrawler","Phyrexian Altar"],r:["Infinite ETB","Infinite death triggers","Infinite black mana"],s:"1. Sacrifice Gravecrawler to Phyrexian Altar for {B}. 2. Recast Gravecrawler from graveyard for {B}. Repeat infinitely with another zombie in play."},
     {c:["Goblin Bombardment","Impact Tremors"],r:["Double damage","Win the game"],s:"1. With tokens in play, Impact Tremors deals 1 per token entering. 2. Goblin Bombardment sacrifices them for 1 damage each. Double damage from same token pool."},
-    // ── THASSA'S ORACLE COMBOS ────────────────────────────────────────────
-    {c:["Thassa's Oracle","Demonic Consultation"],r:["Win the game"],s:"1. Cast Demonic Consultation naming a card not in your deck. 2. Exile your entire library. 3. Cast Thassa's Oracle with empty library. Win immediately."},
-    {c:["Thassa's Oracle","Tainted Pact"],r:["Win the game"],s:"1. Cast Tainted Pact, exile cards one by one until you can't continue. 2. Cast Thassa's Oracle with empty or near-empty library. Win."},
-    {c:["Thassa's Oracle","Doomsday"],r:["Win the game"],s:"1. Cast Doomsday, build a 5-card pile with Thassa's Oracle on top. 2. Draw into the pile. 3. Cast Thassa's Oracle with 0 cards in library. Win."},
-    // ── ISOCHRON SCEPTER ──────────────────────────────────────────────────
-    {c:["Isochron Scepter","Dramatic Reversal"],r:["Infinite mana","Infinite untap","Win the game"],s:"1. Imprint Dramatic Reversal on Isochron Scepter. 2. Tap mana rocks for mana. 3. Activate Scepter to copy Dramatic Reversal, untapping all nonland permanents. Repeat for infinite mana."},
     {c:["Isochron Scepter","Dramatic Reversal","Sol Ring"],r:["Infinite colorless mana"],s:"1. Imprint Dramatic Reversal. 2. Tap Sol Ring for {2}. 3. Activate Scepter for {2} to copy Dramatic Reversal, untapping Sol Ring and Scepter. Net mana each time."},
-    // ── FOOD CHAIN ────────────────────────────────────────────────────────
     {c:["Food Chain","Eternal Scourge"],r:["Infinite mana","Win the game"],s:"1. Exile Eternal Scourge to Food Chain for {4}. 2. Cast Eternal Scourge from exile for {3}. Net {1} each time. Repeat for infinite mana. Cast win condition."},
     {c:["Food Chain","Misthollow Griffin"],r:["Infinite mana","Win the game"],s:"1. Exile Misthollow Griffin to Food Chain for {5}. 2. Cast from exile for {3}{U}{U}. Net mana. Repeat for infinite colored mana."},
-    // ── GRENZO ────────────────────────────────────────────────────────────
     {c:["Grenzo, Dungeon Warden","Murderous Redcap"],r:["Infinite damage","Win the game"],s:"1. Persist triggers on Murderous Redcap when it dies. 2. Grenzo puts it back into play from the bottom of library. 3. Redcap enters, deals 2 damage. Sacrifice to Grenzo. Repeat."},
-    // ── MIKAEUS ───────────────────────────────────────────────────────────
-    {c:["Mikaeus, the Unhallowed","Triskelion"],r:["Infinite damage","Win the game"],s:"1. Triskelion has undying via Mikaeus. 2. Remove 2 counters to deal 2 damage to opponents, 1 to itself. 3. Dies, returns with +1/+1 counter via undying. Remove counters again. Repeat."},
     {c:["Mikaeus, the Unhallowed","Walking Ballista"],r:["Infinite damage","Win the game"],s:"1. Mikaeus gives Walking Ballista undying. 2. Remove last counter - Ballista dies with 0 counters. 3. Undying returns it with a +1/+1 counter. 4. Remove counter for 1 damage. Repeat."},
     {c:["Mikaeus, the Unhallowed","Murderous Redcap"],r:["Infinite damage","Win the game"],s:"1. Mikaeus gives Murderous Redcap undying. 2. Sacrifice Redcap - it deals 2 damage. 3. Returns with +1/+1 counter via undying. 4. Sacrifice again for 2 more damage. Repeat with sac outlet."},
-    // ── HELIOD ────────────────────────────────────────────────────────────
-    {c:["Heliod, Sun-Crowned","Walking Ballista"],r:["Infinite damage","Infinite life"],s:"1. Heliod gives Walking Ballista lifelink. 2. Remove a counter from Ballista to deal 1 damage. 3. Lifelink triggers Heliod to put a counter back on Ballista. Repeat for infinite damage."},
-    // ── KIKI-JIKI ─────────────────────────────────────────────────────────
-    {c:["Kiki-Jiki, Mirror Breaker","Deceiver Exarch"],r:["Infinite creature tokens","Win the game"],s:"1. Kiki-Jiki copies Deceiver Exarch. 2. New Exarch untaps Kiki-Jiki. 3. Kiki-Jiki copies again. Repeat for infinite hasty tokens."},
-    {c:["Kiki-Jiki, Mirror Breaker","Pestermite"],r:["Infinite creature tokens","Win the game"],s:"1. Kiki-Jiki copies Pestermite. 2. New Pestermite untaps Kiki-Jiki. 3. Kiki-Jiki copies again. Repeat for infinite hasty tokens."},
     {c:["Kiki-Jiki, Mirror Breaker","Zealous Conscripts"],r:["Infinite creature tokens","Win the game"],s:"1. Kiki-Jiki copies Zealous Conscripts. 2. New Conscripts untaps Kiki-Jiki. 3. Kiki-Jiki copies again. Repeat for infinite hasty tokens."},
     {c:["Kiki-Jiki, Mirror Breaker","Restoration Angel"],r:["Infinite creature tokens","Win the game"],s:"1. Kiki-Jiki copies Restoration Angel. 2. Angel blinks Kiki-Jiki, untapping it. 3. Kiki-Jiki copies Angel again. Repeat for infinite tokens."},
-    // ── SPLINTER TWIN ─────────────────────────────────────────────────────
-    {c:["Splinter Twin","Deceiver Exarch"],r:["Infinite creature tokens","Win the game"],s:"1. Enchant Deceiver Exarch with Splinter Twin. 2. Tap to copy Deceiver Exarch. 3. New Exarch untaps the original. 4. Tap original again. Repeat."},
     {c:["Splinter Twin","Pestermite"],r:["Infinite creature tokens","Win the game"],s:"1. Enchant Pestermite with Splinter Twin. 2. Tap to copy it. 3. New Pestermite untaps the original. Repeat."},
-    // ── DEADEYE NAVIGATOR ─────────────────────────────────────────────────
-    {c:["Deadeye Navigator","Peregrine Drake"],r:["Infinite mana","Infinite ETB"],s:"1. Soulbond Deadeye Navigator with Peregrine Drake. 2. Pay {1}{U} to blink Peregrine Drake. 3. Drake enters untapping 5 lands. Net mana each time. Repeat."},
     {c:["Deadeye Navigator","Palinchron"],r:["Infinite mana","Win the game"],s:"1. Soulbond Deadeye with Palinchron. 2. Blink Palinchron for {1}{U}. 3. Palinchron untaps 7 lands on entry. Net mana. Repeat for infinite mana."},
     {c:["Deadeye Navigator","Mulldrifter"],r:["Infinite card draw"],s:"1. Soulbond Deadeye with Mulldrifter. 2. Pay {1}{U} to blink Mulldrifter. 3. Mulldrifter enters drawing 2 cards. Repeat with enough mana."},
     {c:["Deadeye Navigator","Eternal Witness"],r:["Return entire graveyard","Infinite recursion"],s:"1. Soulbond Deadeye with Eternal Witness. 2. Pay {1}{U} to blink Eternal Witness. 3. Return any card from graveyard to hand each time. Repeat."},
-    // ── PALINCHRON ────────────────────────────────────────────────────────
     {c:["Palinchron","Phantasmal Image"],r:["Infinite mana","Win the game"],s:"1. Cast Phantasmal Image copying Palinchron. 2. Both enter untapping 7 lands each. 3. Bounce and recast for infinite mana with High Tide effects."},
     {c:["Palinchron","High Tide"],r:["Infinite mana"],s:"1. Cast High Tide to double island mana. 2. Palinchron untaps 7 lands on entry producing 14 mana. 3. Bounce and recast Palinchron for 7. Net mana. Repeat."},
-    // ── DRAMATIC REVERSAL ─────────────────────────────────────────────────
-    {c:["Dramatic Reversal","Isochron Scepter"],r:["Infinite mana","Infinite untap"],s:"1. Imprint Dramatic Reversal on Isochron Scepter. 2. Tap artifacts and creatures for mana. 3. Activate Scepter to untap everything. 4. Repeat for infinite mana."},
-    // ── DOOMSDAY ──────────────────────────────────────────────────────────
-    {c:["Doomsday","Thassa's Oracle"],r:["Win the game"],s:"1. Cast Doomsday. Build pile: Oracle on top. 2. Draw into pile. 3. Cast Oracle with 0 cards left. Win."},
     {c:["Doomsday","Laboratory Maniac"],r:["Win the game"],s:"1. Cast Doomsday. Build 5-card pile with draw spells and Laboratory Maniac. 2. Draw into the pile. 3. Cast Lab Maniac then draw with empty library. Win."},
-    // ── UNDERWORLD BREACH ─────────────────────────────────────────────────
     {c:["Underworld Breach","Brain Freeze","Lion's Eye Diamond"],r:["Win the game","Infinite storm"],s:"1. Cast Underworld Breach. 2. Crack Lion's Eye Diamond for {R}{R}{R}. 3. Escape Brain Freeze targeting yourself to mill more. 4. Repeat until you win."},
-    {c:["Underworld Breach","Wheel of Fortune"],r:["Infinite card draw","Win the game"],s:"1. Cast Underworld Breach. 2. Escape Wheel of Fortune repeatedly. 3. Draw and discard infinitely, generating storm count. Win with a payoff."},
-    // ── EXQUISITE BLOOD ───────────────────────────────────────────────────
-    {c:["Exquisite Blood","Sanguine Bond"],r:["Win the game","Infinite life drain"],s:"1. Have both in play. 2. Gain any life to trigger Exquisite Blood. 3. Exquisite Blood drains an opponent, triggering Sanguine Bond. Loop kills all opponents."},
     {c:["Exquisite Blood","Vito, Thorn of the Dusk Rose"],r:["Win the game","Infinite life drain"],s:"1. Have both in play. 2. Gain any life to trigger Vito to drain an opponent. 3. Exquisite Blood triggers from that life loss, gaining you life. Loop kills all opponents."},
-    // ── GRAVECRAWLER ──────────────────────────────────────────────────────
-    {c:["Gravecrawler","Phyrexian Altar"],r:["Infinite ETB","Infinite death triggers","Infinite black mana"],s:"1. Sacrifice Gravecrawler to Phyrexian Altar for {B}. 2. Recast Gravecrawler from graveyard for {B} with another zombie in play. Repeat infinitely."},
     {c:["Gravecrawler","Phyrexian Altar","Zulaport Cutthroat"],r:["Win the game","Infinite damage"],s:"1. Sacrifice Gravecrawler, Zulaport Cutthroat triggers for 1 damage. 2. Recast Gravecrawler. 3. Repeat for infinite damage and life drain."},
     {c:["Gravecrawler","Goblin Bombardment"],r:["Infinite damage","Infinite ETB"],s:"1. Sacrifice Gravecrawler to Goblin Bombardment for 1 damage. 2. Recast from graveyard for {B} with another zombie. Repeat."},
     {c:["Gravecrawler","Rooftop Storm"],r:["Free infinite ETB","Infinite death triggers"],s:"1. Rooftop Storm makes zombie spells free. 2. Sacrifice Gravecrawler to any sac outlet. 3. Recast from graveyard for {0}. Repeat infinitely."},
-    // ── TWIN COMBO VARIANTS ───────────────────────────────────────────────
     {c:["Wandering Archaic","Boseiju, Who Endures"],r:["Copy opponent spells","Interaction"],s:"Wandering Archaic forces opponents to pay {2} or you copy their instants and sorceries."},
-    // ── PROTEAN HULK ──────────────────────────────────────────────────────
     {c:["Protean Hulk","Flash"],r:["Win the game","Immediate tutor"],s:"1. Cast Flash putting Protean Hulk into play. 2. Don't pay the additional cost - Hulk dies. 3. Search library for creatures totaling 6 power. Find combo pieces to win immediately."},
-    // ── ANIMATE DEAD COMBO ────────────────────────────────────────────────
     {c:["Animate Dead","Worldgorger Dragon"],r:["Infinite mana","Win the game"],s:"1. Animate Dead on Worldgorger Dragon. 2. Dragon exiles all your permanents including Animate Dead. 3. Animate Dead leaves, Dragon dies, all permanents return. 4. Repeat for infinite mana with a damage outlet."},
     {c:["Necromancy","Worldgorger Dragon"],r:["Infinite mana","Win the game"],s:"1. Cast Necromancy on Worldgorger Dragon. 2. Dragon exiles all permanents including Necromancy. 3. Permanents return, Dragon dies. Repeat for infinite ETB triggers and mana."},
-    // ── STAX / LOCK PIECES ────────────────────────────────────────────────
     {c:["Drannith Magistrate","Hullbreacher"],r:["Soft lock","Hand denial"],s:"1. Drannith Magistrate prevents casting from anywhere except hand. 2. Hullbreacher turns draw effects into Treasures. 3. Opponents can't draw or cast from other zones."},
     {c:["Winter Orb","Unwinding Clock"],r:["Asymmetric lock","Free untap"],s:"1. Winter Orb limits land untaps to 1. 2. Unwinding Clock untaps all your artifacts on each player's untap. 3. Your mana rocks untap freely while opponents are locked."},
     {c:["Static Orb","Unwinding Clock"],r:["Asymmetric lock"],s:"1. Static Orb prevents untapping of permanents. 2. Unwinding Clock untaps your artifacts each turn. 3. You untap freely while opponents are fully locked."},
-    // ── ELSHA / TOP COMBOS ────────────────────────────────────────────────
-    {c:["Sensei's Divining Top","Bolas's Citadel"],r:["Infinite card draw","Win the game"],s:"1. Bolas's Citadel lets you cast from top of library paying life. 2. Tap Sensei's Divining Top to draw, put back on top. 3. Cast it again from top via Citadel. Repeat with each artifact on top."},
     {c:["Sensei's Divining Top","Elsha of the Infinite"],r:["Infinite card draw","Win the game"],s:"1. Elsha lets you cast noncreature, nonland cards from top of library. 2. Tap Top to draw, put it back. Cast Top for free from top. Repeat."},
-    // ── ORACLE / CONSULTATION ─────────────────────────────────────────────
-    {c:["Thassa's Oracle","Demonic Consultation"],r:["Win the game"],s:"1. Cast Demonic Consultation naming a card not in your deck. Exile entire library. 2. Cast Thassa's Oracle. Win on the spot with devotion check or empty library."},
-    // ── URZA / MANA ROCKS ─────────────────────────────────────────────────
     {c:["Urza, Lord High Artificer","Grim Monolith"],r:["Infinite colorless mana"],s:"1. Urza taps artifacts for {U}. 2. Tap Grim Monolith for {3}. Pay {4} to untap via Urza's ability. Repeat for infinite colored mana."},
     {c:["Urza, Lord High Artificer","Mana Vault"],r:["Infinite colorless mana"],s:"1. Urza taps Mana Vault for {U}. 2. Pay to untap. Net mana with enough artifacts. Repeat."},
-    // ── NIV-MIZZET ────────────────────────────────────────────────────────
     {c:["Niv-Mizzet, Parun","Curiosity"],r:["Win the game","Infinite card draw","Infinite damage"],s:"1. Enchant Niv-Mizzet with Curiosity. 2. Draw a card, Niv-Mizzet deals 1 damage. 3. Curiosity triggers to draw another card. 4. Repeat until all opponents are dead."},
     {c:["Niv-Mizzet, the Firemind","Curiosity"],r:["Win the game","Infinite card draw","Infinite damage"],s:"1. Enchant Niv-Mizzet with Curiosity. 2. Draw a card, Niv-Mizzet deals 1 damage to any target. 3. Curiosity triggers drawing another card. Repeat until opponents die."},
     {c:["Niv-Mizzet, Parun","Ophidian Eye"],r:["Win the game","Infinite card draw"],s:"1. Enchant Niv-Mizzet with Ophidian Eye. 2. Niv-Mizzet deals damage to a player, Ophidian Eye draws a card. 3. Drawing triggers Niv-Mizzet again. Repeat."},
-    // ── DRAMATIC SCEPTER ──────────────────────────────────────────────────
     {c:["Dramatic Reversal","Isochron Scepter","Mana Vault"],r:["Infinite mana","Win the game"],s:"1. Imprint Dramatic Reversal on Scepter. 2. Tap Mana Vault for {3}. 3. Activate Scepter for {2} to untap Mana Vault and Scepter. Net {1} per loop. Infinite mana."},
-    // ── PARADOX ENGINE ────────────────────────────────────────────────────
     {c:["Paradox Engine","Sol Ring"],r:["Infinite mana","Infinite untap"],s:"1. Cast any spell, Paradox Engine untaps all nonland permanents including Sol Ring. 2. Tap Sol Ring for {2}. Cast more spells to keep untapping. Repeat for infinite mana."},
-    // ── HERMIT DRUID ──────────────────────────────────────────────────────
     {c:["Hermit Druid","Thassa's Oracle"],r:["Win the game"],s:"1. Activate Hermit Druid with no basic lands in deck. Mill entire library. 2. Reanimate or flash in Thassa's Oracle. Win with empty library."},
-    // ── DEVOTED DRUID ─────────────────────────────────────────────────────
     {c:["Devoted Druid","Vizier of Remedies"],r:["Infinite green mana"],s:"1. Tap Devoted Druid for {G}. 2. Put a -1/-1 counter on it to untap. 3. Vizier of Remedies prevents the counter. 4. Repeat for infinite green mana."},
     {c:["Devoted Druid","Vizier of Remedies","Walking Ballista"],r:["Win the game","Infinite damage"],s:"1. Generate infinite green mana with Devoted Druid + Vizier. 2. Cast Walking Ballista for infinite counters. 3. Remove all counters dealing infinite damage to opponents."},
-    // ── SELVALA ───────────────────────────────────────────────────────────
     {c:["Selvala, Heart of the Wilds","Umbral Mantle"],r:["Infinite green mana","Infinitely large creature"],s:"1. Tap Selvala to generate mana based on the greatest power among creatures. 2. Pay {3} to activate Umbral Mantle, untapping Selvala and giving +2/+2. 3. Selvala generates more mana. Repeat."},
     {c:["Selvala, Heart of the Wilds","Sword of the Paruns"],r:["Infinite green mana","Infinite untap"],s:"1. Tap Selvala for mana. 2. Pay {3} to activate Sword of the Paruns untapping Selvala. 3. Net mana each time. Repeat."},
-    // ── STAFF OF DOMINATION ───────────────────────────────────────────────
     {c:["Staff of Domination","Selvala, Heart of the Wilds"],r:["Infinite mana","Infinite card draw"],s:"1. Tap Selvala for mana. 2. Pay {1} to untap Staff of Domination. 3. Tap Staff to untap Selvala. 4. Net mana each loop. Also tap Staff for draw. Repeat."},
-    // ── ELVES ─────────────────────────────────────────────────────────────
     {c:["Gaea's Cradle","Cloudstone Curio"],r:["Infinite mana","Infinite ETB"],s:"1. Tap Gaea's Cradle for massive green mana with many elves. 2. Play an elf, Cloudstone Curio bounces another back to hand. 3. Replay bounced elf for more ETB triggers. Repeat."},
     {c:["Wirewood Symbiote","Elvish Visionary"],r:["Infinite card draw","Infinite ETB"],s:"1. Bounce Elvish Visionary with Wirewood Symbiote to untap an elf. 2. Elvish Visionary enters, drawing a card. 3. Tap untapped elf for mana. Repeat with enough mana."},
-    // ── TWIN / COPY ───────────────────────────────────────────────────────
     {c:["Irenicus's Vile Duplication","Krenko, Mob Boss"],r:["Double token production","Additional combo piece"],s:"1. Irenicus's Vile Duplication creates a token copy of Krenko. 2. Both Krenkos activate each turn doubling tokens twice. Exponential token growth."},
-    // ── PERSIST COMBOS ────────────────────────────────────────────────────
     {c:["Murderous Redcap","Persist","Phyrexian Altar"],r:["Infinite damage","Win the game"],s:"1. Sacrifice Murderous Redcap to Phyrexian Altar. 2. Redcap returns via persist with -1/-1 counter. Deals 2 damage on ETB. 3. Sacrifice again. Repeat with Melira or Mikaeus."},
     {c:["Murderous Redcap","Melira, Sylvok Outcast","Phyrexian Altar"],r:["Infinite damage","Win the game"],s:"1. Melira prevents -1/-1 counters so Redcap persist never gets a counter. 2. Sacrifice to Phyrexian Altar for mana. 3. Redcap enters dealing 2 damage infinitely. Repeat."},
-    // ── TWIN COMBO ────────────────────────────────────────────────────────
     {c:["Felidar Guardian","Saheeli Rai"],r:["Infinite creature tokens","Win the game"],s:"1. Cast Felidar Guardian, blinking Saheeli Rai. 2. Saheeli's minus ability copies Felidar Guardian. 3. New Guardian blinks Saheeli. 4. Repeat for infinite hasty tokens."},
-    // ── PATTERN OF REBIRTH ────────────────────────────────────────────────
     {c:["Pattern of Rebirth","Goblin Bombardment"],r:["Tutor any creature","Sacrifice chain"],s:"1. Enchant a creature with Pattern of Rebirth. 2. Sacrifice it to Goblin Bombardment for 1 damage. 3. Pattern of Rebirth searches for any creature. Tutor chain for combo pieces."},
-    // ── NECROPOTENCE ──────────────────────────────────────────────────────
     {c:["Necropotence","Yawgmoth's Bargain"],r:["Draw entire deck"],s:"Note: Can't have both in play simultaneously. Each alone lets you draw massive cards by paying life."},
     {c:["Necropotence","Bolas's Citadel"],r:["Massive card advantage","Win the game"],s:"1. Pay life to draw cards with Necropotence. 2. Bolas's Citadel lets you cast from top paying life. 3. Use Sensei's Divining Top to cycle through deck. Win."},
-    // ── AD NAUSEAM ────────────────────────────────────────────────────────
     {c:["Ad Nauseam","Angel's Grace"],r:["Draw entire deck","Win the game"],s:"1. Cast Angel's Grace then Ad Nauseam. 2. Can't lose the game this turn, so reveal entire deck and put it in hand. 3. Win with Thassa's Oracle or Laboratory Maniac."},
     {c:["Ad Nauseam","Phyrexian Unlife"],r:["Draw entire deck","Win the game"],s:"1. Phyrexian Unlife lets you go to negative life without losing. 2. Cast Ad Nauseam, reveal entire deck. 3. Win with Laboratory Maniac or Thassa's Oracle."},
-    // ── WALKING BALLISTA ──────────────────────────────────────────────────
-    {c:["Walking Ballista","Heliod, Sun-Crowned"],r:["Infinite damage","Infinite life"],s:"1. Heliod gives Walking Ballista lifelink. 2. Remove a counter to deal 1 damage. 3. Lifelink triggers Heliod to add a counter back. 4. Repeat for infinite damage."},
-    {c:["Walking Ballista","Devoted Druid","Vizier of Remedies"],r:["Win the game","Infinite damage"],s:"1. Generate infinite green mana with Devoted Druid + Vizier of Remedies. 2. Cast Walking Ballista with infinite counters. 3. Remove all counters for infinite damage."},
-    // ── ORACLE / BREACH ───────────────────────────────────────────────────
     {c:["Underworld Breach","Lotus Petal","Brain Freeze"],r:["Win the game","Infinite storm"],s:"1. Cast Underworld Breach. 2. Escape Lotus Petal from graveyard for mana. 3. Cast Brain Freeze targeting yourself for mill. 4. Repeat with more petals. Win with Thassa's Oracle."},
-    // ── TEFERI ────────────────────────────────────────────────────────────
     {c:["Teferi, Time Raveler","Opposition Agent"],r:["Soft lock","Counter all tutors"],s:"1. Teferi prevents opponents from casting spells at instant speed. 2. Opposition Agent steals opponent tutors. 3. Together prevent most forms of interaction and searching."},
-    // ── YAWGMOTH ──────────────────────────────────────────────────────────
     {c:["Yawgmoth, Thran Physician","Geralf's Messenger","Woodfall Primus"],r:["Infinite death triggers","Win the game"],s:"1. Yawgmoth sacrifices undying creatures. 2. They return with +1/+1 counter. 3. Use Yawgmoth to put -1/-1 counter removing the +1/+1. 4. Repeat for infinite draw, damage, and board wipes."},
     {c:["Yawgmoth, Thran Physician","Geralf's Messenger","Strangleroot Geist"],r:["Infinite death triggers","Win the game"],s:"1. Two undying creatures and Yawgmoth. 2. Sacrifice one undying creature, draw a card and deal 1 damage. 3. Undying returns it. 4. Alternate sacrificing between the two. Infinite loop."},
-    // ── TEYSA KARLOV ──────────────────────────────────────────────────────
     {c:["Teysa Karlov","Ashnod's Altar"],r:["Double death triggers","Infinite mana"],s:"1. Teysa doubles death triggers. 2. Sacrifice creatures to Ashnod's Altar for {2} each trigger. 3. With token generators, produce infinite colorless mana."},
-    // ── CHATTERFANG ───────────────────────────────────────────────────────
     {c:["Chatterfang, Squirrel General","Pitiless Plunderer"],r:["Infinite Squirrel tokens","Infinite Treasure tokens"],s:"1. Create tokens, Pitiless Plunderer makes Treasures. 2. Sacrifice Treasures to create Squirrels via Chatterfang. 3. Each Squirrel death creates a Treasure. Repeat."},
-    // ── GODO ──────────────────────────────────────────────────────────────
     {c:["Godo, Bandit Warlord","Helm of the Host"],r:["Infinite combat steps","Win the game"],s:"1. Equip Helm of the Host to Godo. 2. At combat, create a copy of Godo. 3. Copy tutors for another Helm, creates another copy. 4. With enough copies and haste, attack for lethal."},
-    // ── MAGDA ─────────────────────────────────────────────────────────────
     {c:["Magda, Brazen Outlaw","Thornbite Staff"],r:["Infinite Treasure tokens","Tutor any artifact or dragon"],s:"1. Equip Thornbite Staff to Magda. 2. Tap a dwarf to trigger Magda's first ability adding a Treasure counter. 3. Sacrifice 5 Treasures to tutor. Thornbite Staff untaps Magda when triggered."},
-    // ── COPY COMBOS ───────────────────────────────────────────────────────
     {c:["Lithoform Engine","Gaea's Cradle"],r:["Infinite mana","Copy land abilities"],s:"1. Copy Gaea's Cradle tap ability with Lithoform Engine. 2. Generate double the green mana. 3. With cost reducers, this can become infinite."},
-    // ── SHARUUM ───────────────────────────────────────────────────────────
     {c:["Sharuum the Hegemon","Phyrexian Metamorph"],r:["Infinite ETB","Infinite death triggers","Win the game"],s:"1. Cast Phyrexian Metamorph copying Sharuum. 2. Legend rule kills one. 3. Sharuum's ETB returns the other from graveyard. 4. Repeat for infinite ETB triggers with a payoff."},
-    // ── MARCH OF THE MACHINES ─────────────────────────────────────────────
     {c:["Thopter Foundry","Sword of the Meek"],r:["Infinite Thopter tokens","Infinite life","Infinite colored mana"],s:"1. Sacrifice Sword of the Meek to Thopter Foundry for {1} life and a Thopter. 2. Sword of the Meek returns from graveyard attached to the Thopter. 3. Repeat with enough mana."},
-    // ── HIVE MIND ─────────────────────────────────────────────────────────
     {c:["Hive Mind","Pact of Negation"],r:["Win the game"],s:"1. Cast Hive Mind. 2. Cast Pact of Negation. 3. Hive Mind copies it for each opponent. 4. Opponents must pay the upkeep cost or lose. They can't all pay."},
-    // ── TWIN INFINITE ─────────────────────────────────────────────────────
     {c:["Basalt Monolith","Rings of Brighthearth"],r:["Infinite colorless mana"],s:"1. Tap Basalt Monolith for {3}. 2. Activate untap ability for {3}, copy with Rings of Brighthearth for {2}. 3. Original untap resolves, use copy to untap again. Net mana. Repeat."},
     {c:["Basalt Monolith","Power Artifact"],r:["Infinite colorless mana"],s:"1. Power Artifact reduces Basalt Monolith's untap cost to {0} or {1}. 2. Tap for {3}, untap for free. Repeat for infinite colorless mana."},
     {c:["Grim Monolith","Power Artifact"],r:["Infinite colorless mana"],s:"1. Power Artifact reduces Grim Monolith's untap cost to {1}. 2. Tap Grim Monolith for {3}. 3. Pay {1} to untap via Power Artifact. Net {2} each time. Repeat."},
-    // ── KENRITH ───────────────────────────────────────────────────────────
     {c:["Kenrith, the Returned King","Devoted Druid","Vizier of Remedies"],r:["Infinite mana","Win the game"],s:"1. Generate infinite green mana with Devoted Druid + Vizier. 2. Pay {G} repeatedly to give Kenrith trample/haste. 3. Pay {WUBRG} to win with Kenrith's draw ability or reanimation."},
-    // ── EMRY ──────────────────────────────────────────────────────────────
     {c:["Emry, Lurker of the Loch","Jeskai Ascendancy","Mox Amber"],r:["Infinite mana","Infinite card draw","Win the game"],s:"1. Cast Mox Amber, Jeskai Ascendancy untaps it and loots. 2. Emry reanimates Mox Amber each turn. 3. Each cast triggers Jeskai Ascendancy for untap and draw. Repeat for infinite storm."},
-    // ── OMNISCIENCE ───────────────────────────────────────────────────────
     {c:["Omniscience","Enter the Infinite"],r:["Win the game"],s:"1. Cast Omniscience for free with a cheat effect. 2. Cast Enter the Infinite for free, put entire library in hand except one card. 3. Cast everything for free. Win."},
-    // ── TEMPORAL ──────────────────────────────────────────────────────────
     {c:["Time Warp","Archaeomancer"],r:["Infinite extra turns"],s:"1. Cast Time Warp, take extra turn. 2. During that turn, cast Archaeomancer returning Time Warp to hand. 3. Cast Time Warp again. Repeat for infinite turns."},
     {c:["Nexus of Fate","Tamiyo, Collector of Tales"],r:["Infinite extra turns"],s:"1. Cast Nexus of Fate, shuffles itself back into library. 2. Tamiyo's minus ability returns Nexus from graveyard. 3. Draw and cast Nexus each turn. Repeat."},
-    // ── STORM ─────────────────────────────────────────────────────────────
     {c:["Aetherflux Reservoir","Bolas's Citadel","Sensei's Divining Top"],r:["Win the game","Infinite life"],s:"1. Bolas's Citadel lets you cast from top. 2. Sensei's Divining Top cycles to draw the right card. 3. Cast 50+ spells in a turn gaining massive life from Aetherflux Reservoir. 4. Pay 50 life to kill each opponent."},
-    // ── MIRROR ENTITY ─────────────────────────────────────────────────────
     {c:["Mirror Entity","Wirewood Symbiote"],r:["Infinite power","Win the game"],s:"1. Activate Mirror Entity for {1} to make all creatures any type including elves. 2. Wirewood Symbiote bounces itself to untap an elf. 3. Re-cast Wirewood for free with elf synergies. Repeat with mana engines."},
-    // ── ACADEMY RUINS ─────────────────────────────────────────────────────
-    {c:["Academy Ruins","Mindslaver"],r:["Infinite opponent control","Lock"],s:"1. Activate Mindslaver targeting an opponent. 2. Control their turn. 3. Academy Ruins puts Mindslaver back on top of library. 4. Draw and reactivate. Control one opponent every turn."},
+    {c:["Academy Ruins","Mindslaver"],r:["Infinite opponent control","Lock"],s:"1. Activate Mindslaver targeting an opponent. 2. Control their turn. 3. Academy Ruins puts Mindslaver back on top of library. 4. Draw and reactivate. Control one opponent every turn."}
 
   ];
 
 function findLocalCombos(cardSet) {
+  // cardSet is already lowercased by caller
   const results = [];
   const seenKeys = new Set();
   for (const combo of COMBO_DB) {
     if (combo.c.length < 2) continue;
-    if (!combo.c.every(c => cardSet.has(c.toLowerCase()))) continue;
-    const key = [...combo.c].sort().join('||');
+    // Check membership without allocating array each time
+    let allPresent = true;
+    for (const c of combo.c) { if (!cardSet.has(c.toLowerCase())) { allPresent = false; break; } }
+    if (!allPresent) continue;
+    const key = combo.c.slice().sort().join('||');
     if (seenKeys.has(key)) continue;
     seenKeys.add(key);
-    results.push({
-      key,
-      cards: combo.c,
-      results: combo.r || [],
-      steps: combo.s || '',
-      prereqs: '',
-      spellbookId: null
-    });
+    results.push({ key, cards: combo.c, results: combo.r || [], steps: combo.s || '', prereqs: '', spellbookId: null });
   }
   return results;
 }
@@ -2123,10 +2018,9 @@ function initAutocomplete() {
           if (!suggestions.length) { dropdown.style.display = 'none'; return; }
 
           dropdown.innerHTML = suggestions.map(s =>
-            '<div style="padding:8px 12px;cursor:pointer;color:#e8e8f0;border-bottom:1px solid rgba(255,255,255,0.04);"' +
-            ' onmousedown="selectAutocomplete(\'' + id + '\',\'' + s.replace(/'/g, "\\'") + '\')"' +
-            ' onmouseover="this.style.background=\'rgba(232,201,74,0.1)\'"' +
-            ' onmouseout="this.style.background=\'\'">' + s + '</div>'
+            '<div class="ac-item"' +
+            ' onmousedown="selectAutocomplete(\'' + id + '\',\'' + s.replace(/'/g, "\\'") + '\')">' +
+            s + '</div>'
           ).join('');
 
           dropdown.style.display = 'block';
@@ -2206,7 +2100,7 @@ function loadFromURL() {
 }
 
 // ── ENHANCED runAnalysis WITH ONLINE DATA ──────────────
-const _originalRunAnalysis = runAnalysis;
+// ── MAIN ANALYSIS (async — fetches Scryfall + Spellbook data) ──────────
 runAnalysis = async function() {
   const rawA = document.getElementById('deck-a').value;
   const rawB = document.getElementById('deck-b').value;
@@ -2442,8 +2336,8 @@ async function getRecommendations() {
     if (mode === 'accurate') {
       try {
         const cmdSlug = commander.toLowerCase()
-          .replace(/,/g, '').replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+          .replace(/[^a-z0-9\s]/g, '').trim()
+          .replace(/\s+/g, '-');
         const workerUrl = 'https://spellbook-proxy.work-macarthur.workers.dev/edhrec?commander=' + encodeURIComponent(cmdSlug);
         const res = await fetch(workerUrl);
         if (res.ok) {
