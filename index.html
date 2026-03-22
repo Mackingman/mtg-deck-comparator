@@ -364,6 +364,51 @@ textarea::placeholder { color: #5a5a7a; }
 .ac-item { padding:8px 12px;cursor:pointer;color:#e8e8f0;border-bottom:1px solid rgba(255,255,255,0.04); }
 .ac-item:hover { background:rgba(232,201,74,0.1); }
 
+
+/* ── NEW FEATURES ─────────────────────────────────── */
+/* Live counter */
+.deck-counter { display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:4px;font-family:'DM Mono',monospace;font-size:10px;color:#3a3a5a;letter-spacing:1px;transition:color 0.2s; }
+.deck-counter .cnt-num { color:#5a5a7a;font-weight:700;font-size:12px;transition:color 0.2s; }
+.deck-counter.ok   .cnt-num { color:#4ae87a; }
+.deck-counter.warn .cnt-num { color:#e8c94a; }
+.deck-counter.over .cnt-num { color:#e84a6a; }
+/* Mode toggle */
+.mode-toggle { display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap; }
+.mode-btn { background:#14141a;border:1px solid #28283a;border-radius:6px;color:#5a5a7a;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;padding:7px 16px;transition:all 0.2s; }
+.mode-btn:hover { color:#e8e8f0; }
+.mode-btn.active { border-color:#e8c94a;color:#e8c94a;background:rgba(232,201,74,0.06); }
+.mode-btn.sample { margin-left:auto;border-color:#28283a; }
+.mode-btn.sample:hover { border-color:#4ae8b0;color:#4ae8b0; }
+/* Keyboard hint in button */
+.btn-shortcut { font-size:11px;opacity:0.5;font-family:'DM Mono',monospace;letter-spacing:0;font-weight:400;text-transform:none; }
+/* Price panel */
+.price-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px; }
+@media(max-width:600px){ .price-grid { grid-template-columns:1fr; } }
+.price-card { background:#14141a;border:1px solid #28283a;border-radius:10px;padding:16px; }
+.price-card.a { border-color:rgba(232,201,74,0.25); }
+.price-card.b { border-color:rgba(74,232,176,0.25); }
+.price-total { font-family:'Bebas Neue',sans-serif;font-size:32px;margin-bottom:2px;line-height:1; }
+.price-total.a { color:#e8c94a; }
+.price-total.b { color:#4ae8b0; }
+.price-row { display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-family:'DM Mono',monospace;font-size:10px; }
+.price-row:last-child { border-bottom:none; }
+.price-cname { color:#b8b8d0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px; }
+.price-cval { flex-shrink:0;font-weight:700; }
+.price-cval.a { color:#e8c94a; }
+.price-cval.b { color:#4ae8b0; }
+/* Session drawer */
+.session-drawer { background:#14141a;border:1px solid #28283a;border-radius:8px;margin-bottom:14px;overflow:hidden; }
+.session-hdr { display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;user-select:none; }
+.session-hdr:hover { background:rgba(255,255,255,0.02); }
+.session-title { font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#5a5a7a; }
+.session-body { padding:0 12px 10px;display:none; }
+.session-item { display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;margin-bottom:6px;background:#0e0e14;border:1px solid #28283a;cursor:pointer;transition:border-color 0.15s; }
+.session-item:hover { border-color:#e8c94a; }
+.session-names { font-family:'DM Mono',monospace;font-size:11px;color:#e8e8f0; }
+.session-meta { font-size:10px;color:#3a3a5a;margin-top:2px; }
+.session-del { background:none;border:none;color:#3a3a5a;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;line-height:1; }
+.session-del:hover { color:#e84a6a; }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -390,31 +435,48 @@ textarea::placeholder { color: #5a5a7a; }
 <!-- COMPARE PANEL -->
 <div class="panel active" id="panel-compare">
 
-  <div class="input-grid">
+  <!-- SESSION MEMORY DRAWER -->
+  <div class="session-drawer" id="session-drawer" style="display:none;">
+    <div class="session-hdr" onclick="toggleSessionDrawer()">
+      <span class="session-title">&#x1F550; RECENT SESSIONS</span>
+      <span id="session-arrow" style="color:#5a5a7a;font-size:12px;">&#x25BC;</span>
+    </div>
+    <div class="session-body" id="session-body"></div>
+  </div>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-compare-btn" onclick="setCompareMode('compare')">&#x2694; COMPARE TWO DECKS</button>
+    <button class="mode-btn" id="mode-solo-btn" onclick="setCompareMode('solo')">&#x1F3AF; ANALYZE ONE DECK</button>
+    <button class="mode-btn sample" onclick="loadSampleDecks()">&#x1F4CB; LOAD SAMPLES</button>
+  </div>
+
+  <div class="input-grid" id="compare-grid">
     <div class="deck-col">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div class="deck-lbl a" style="margin-bottom:0">⚔ Deck A</div>
-        <button onclick="document.getElementById('deck-a').value='';document.getElementById('name-a').value='Deck A';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+        <div class="deck-lbl a" style="margin-bottom:0">&#x2694; Deck A</div>
+        <button onclick="clearDeck('a')" class="btn-clear" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;">&#x2715; CLEAR</button>
       </div>
-      <input type="text" id="name-a" value="Deck A" placeholder="Deck name">
-      <textarea id="deck-a" placeholder="Paste your decklist here... Format: 1 Card Name (set codes auto-stripped)"></textarea>
+      <input type="text" id="name-a" value="Deck A" placeholder="Deck name" oninput="saveSessionDraft()">
+      <textarea id="deck-a" placeholder="Paste your decklist here... Format: 1 Card Name (set codes auto-stripped)" oninput="updateCounter('a');saveSessionDraft()"></textarea>
+      <div class="deck-counter" id="counter-a"><span class="cnt-num" id="cnt-num-a">0</span>&nbsp;CARDS</div>
     </div>
-    <div class="vs-mid"><div class="vs-circle">VS</div></div>
-    <div class="deck-col">
+    <div class="vs-mid" id="vs-mid-el"><div class="vs-circle">VS</div></div>
+    <div class="deck-col" id="deck-b-col">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="deck-lbl b">🌀 Deck B</div>
-        <button onclick="document.getElementById('deck-b').value='';document.getElementById('name-b').value='Deck B';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+        <div class="deck-lbl b">&#x1F300; Deck B</div>
+        <button onclick="clearDeck('b')" class="btn-clear" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;">&#x2715; CLEAR</button>
       </div>
-      <input type="text" id="name-b" value="Deck B" placeholder="Deck name">
-      <textarea id="deck-b" placeholder="Paste decklist here..."></textarea>
+      <input type="text" id="name-b" value="Deck B" placeholder="Deck name" oninput="saveSessionDraft()">
+      <textarea id="deck-b" placeholder="Paste decklist here..." oninput="updateCounter('b');saveSessionDraft()"></textarea>
+      <div class="deck-counter" id="counter-b"><span class="cnt-num" id="cnt-num-b">0</span>&nbsp;CARDS</div>
     </div>
   </div>
 
-  
   <div class="btn-row">
-    <button class="btn-primary" onclick="runAnalysis()">⚡ Analyze &amp; Compare</button>
-    <button class="btn-secondary" onclick="downloadSelf()">⬇ Download App</button>
-    <button class="btn-secondary" id="share-btn" onclick="shareURL()">🔗 Share Decks</button>
+    <button class="btn-primary" id="analyze-btn" onclick="runAnalysis()">&#x26A1; ANALYZE &amp; COMPARE <span class="btn-shortcut">(Ctrl+Enter)</span></button>
+    <button class="btn-secondary" onclick="downloadSelf()">&#x2B07; Download App</button>
+    <button class="btn-secondary" id="share-btn" onclick="shareURL()">&#x1F517; Share Decks</button>
   </div>
 
   <div id="results">
@@ -427,8 +489,25 @@ textarea::placeholder { color: #5a5a7a; }
       <div class="power-card b" id="pcard-b"></div>
     </div>
 
+    <!-- PRICE ESTIMATES -->
+    <div class="section-hdr" id="price-section-hdr" style="display:none;">&#x1F4B0; Price Estimates <span style="font-size:10px;font-family:'DM Mono',monospace;color:#3a3a5a;letter-spacing:0;">via Scryfall</span></div>
+    <div class="price-grid" id="price-grid" style="display:none;">
+      <div class="price-card a" id="price-card-a">
+        <div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;margin-bottom:6px;" id="price-hdr-a">DECK A &middot; MARKET VALUE</div>
+        <div class="price-total a" id="price-total-a">&mdash;</div>
+        <div style="font-size:10px;color:#3a3a5a;margin-bottom:10px;margin-top:2px;" id="price-sub-a"></div>
+        <div id="price-top-a"></div>
+      </div>
+      <div class="price-card b" id="price-card-b">
+        <div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;margin-bottom:6px;" id="price-hdr-b">DECK B &middot; MARKET VALUE</div>
+        <div class="price-total b" id="price-total-b">&mdash;</div>
+        <div style="font-size:10px;color:#3a3a5a;margin-bottom:10px;margin-top:2px;" id="price-sub-b"></div>
+        <div id="price-top-b"></div>
+      </div>
+    </div>
+
     <!-- COMPARISON -->
-    <div class="section-hdr">Deck Comparison</div>
+    <div class="section-hdr" id="comparison-section-hdr">Deck Comparison</div>
     <div class="summary-bar">
       <div class="scard ss"><div class="n" id="s-shared">0</div><div class="l">Shared</div></div>
       <div class="scard sa"><div class="n" id="s-onlya">0</div><div class="l" id="lbl-a">Only A</div></div>
@@ -2103,15 +2182,17 @@ function loadFromURL() {
 // ── MAIN ANALYSIS (async — fetches Scryfall + Spellbook data) ──────────
 runAnalysis = async function() {
   const rawA = document.getElementById('deck-a').value;
-  const rawB = document.getElementById('deck-b').value;
-  if (!rawA.trim() || !rawB.trim()) { alert('Please paste both decklists.'); return; }
+  const isSolo = (typeof compareMode !== 'undefined') && compareMode === 'solo';
+  const rawB = isSolo ? '' : document.getElementById('deck-b').value;
+  if (!rawA.trim()) { alert('Please paste a decklist.'); return; }
+  if (!isSolo && !rawB.trim()) { alert('Please paste both decklists, or switch to Solo mode.'); return; }
 
   showLoading('Fetching card data from Scryfall...');
 
   try {
-    // Parse both decks
+    // Parse both decks (deckB is empty Map in solo mode)
     const deckA = parseDeck(rawA);
-    const deckB = parseDeck(rawB);
+    const deckB = isSolo ? new Map() : parseDeck(rawB);
     const allNames = [...new Set([...deckA.keys(), ...deckB.keys()])];
 
     // Batch fetch from Scryfall
@@ -2228,8 +2309,31 @@ runAnalysis = async function() {
     document.getElementById('results').style.display = 'block';
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+    // Solo mode: hide comparison sections, resize power grid
+    const pcardB = document.getElementById('pcard-b');
+    const powerGrid = document.querySelector('.power-grid');
+    const compSecHdr = document.getElementById('comparison-section-hdr');
+    if (isSolo) {
+      if (pcardB)    { pcardB.style.display = 'none'; }
+      if (powerGrid) { powerGrid.style.gridTemplateColumns = '1fr'; }
+      if (compSecHdr){ compSecHdr.style.display = 'none'; }
+      document.querySelectorAll('.summary-bar,.overlap-vis,.three-col').forEach(el => { el.style.display = 'none'; });
+    } else {
+      if (pcardB)    { pcardB.style.display = ''; }
+      if (powerGrid) { powerGrid.style.gridTemplateColumns = ''; }
+      if (compSecHdr){ compSecHdr.style.display = ''; }
+      document.querySelectorAll('.summary-bar,.overlap-vis,.three-col').forEach(el => { el.style.display = ''; });
+    }
+
     // Render combo panel after results div is visible in DOM
     renderComboDetails(combosA, combosB, nameA, nameB);
+
+    // Price estimates — uses already-fetched Scryfall cache (zero extra calls)
+    renderPricePanel(deckA, deckB);
+
+    // Save to session history
+    saveSession(nameA, isSolo ? null : nameB,
+      analysisA.powerLevel, isSolo ? null : analysisB.powerLevel);
 
   } catch(e) {
     hideLoading();
@@ -2970,12 +3074,291 @@ Respond ONLY in valid JSON:
   <p style="font-family:'DM Mono',monospace;font-size:11px;color:#3a3a5a;letter-spacing:2px;">© 2026 POKÉSTOP. ALL RIGHTS RESERVED.</p>
 </div>
 
+
+<script>
+// ════════════════════════════════════════════════════
+// FEATURE: LIVE CARD COUNTER
+// ════════════════════════════════════════════════════
+function updateCounter(side) {
+  const ta  = document.getElementById('deck-' + side);
+  const el  = document.getElementById('counter-' + side);
+  const num = document.getElementById('cnt-num-' + side);
+  if (!ta || !num) return;
+  const deck = parseDeck(ta.value);
+  let total = 0;
+  for (const [, v] of deck) total += v.qty;
+  num.textContent = total;
+  el.className = 'deck-counter' + (total === 0 ? '' : total === 100 ? ' ok' : total >= 95 && total <= 105 ? ' warn' : total > 105 ? ' over' : ' warn');
+}
+
+// ════════════════════════════════════════════════════
+// FEATURE: SINGLE DECK MODE
+// ════════════════════════════════════════════════════
+let compareMode = 'compare';
+
+function setCompareMode(mode) {
+  compareMode = mode;
+  const bCol = document.getElementById('deck-b-col');
+  const vsMid = document.getElementById('vs-mid-el');
+  const grid  = document.getElementById('compare-grid');
+  const btnA  = document.getElementById('mode-compare-btn');
+  const btnB  = document.getElementById('mode-solo-btn');
+  const abtn  = document.getElementById('analyze-btn');
+
+  if (mode === 'solo') {
+    if (bCol)  bCol.style.display  = 'none';
+    if (vsMid) vsMid.style.display = 'none';
+    if (grid)  grid.style.gridTemplateColumns = '1fr';
+    if (btnA)  btnA.classList.remove('active');
+    if (btnB)  btnB.classList.add('active');
+    if (abtn)  abtn.innerHTML = '&#x1F3AF; ANALYZE DECK <span class="btn-shortcut">(Ctrl+Enter)</span>';
+  } else {
+    if (bCol)  bCol.style.display  = '';
+    if (vsMid) vsMid.style.display = '';
+    if (grid)  grid.style.gridTemplateColumns = '';
+    if (btnA)  btnA.classList.add('active');
+    if (btnB)  btnB.classList.remove('active');
+    if (abtn)  abtn.innerHTML = '&#x26A1; ANALYZE &amp; COMPARE <span class="btn-shortcut">(Ctrl+Enter)</span>';
+  }
+}
+
+function clearDeck(side) {
+  const ta = document.getElementById('deck-' + side);
+  const nm = document.getElementById('name-' + side);
+  if (ta) ta.value = '';
+  if (nm) nm.value = side === 'a' ? 'Deck A' : 'Deck B';
+  updateCounter(side);
+  saveSessionDraft();
+}
+
+// ════════════════════════════════════════════════════
+// FEATURE: LOAD SAMPLE DECKS
+// ════════════════════════════════════════════════════
+const SAMPLE_A_NAME = "Krenko Goblin cEDH";
+const SAMPLE_A_LIST = [
+  "1 Sol Ring","1 Mana Vault","1 Ruby Medallion","1 Arcane Signet","1 Fellwar Stone",
+  "1 Jeska's Will","1 Gamble","1 Goblin Recruiter","1 Goblin Matron",
+  "1 Skirk Prospector","1 Thornbite Staff","1 Staff of Domination",
+  "1 Mana Echoes","1 Phyrexian Altar","1 Goblin Bombardment",
+  "1 Impact Tremors","1 Purphoros, God of the Forge","1 Shared Animosity",
+  "1 Intruder Alarm","1 Cloudstone Curio","1 Umbral Mantle",
+  "1 Aggravated Assault","1 Breath of Fury","1 Illusionist's Bracers",
+  "1 Goblin Warchief","1 Goblin Chieftain","1 Warren Instigator",
+  "1 Goblin Lackey","1 Goblin Guide","1 Legion Loyalist",
+  "1 Mass Hysteria","1 Hammer of Purphoros","1 Lightning Greaves",
+  "1 Swiftfoot Boots","1 Conspicuous Snoop","1 Kiki-Jiki, Mirror Breaker",
+  "1 Pashalik Mons","1 Goblin Sharpshooter","1 Imperial Recruiter",
+  "1 Pyroblast","1 Red Elemental Blast","1 Deflecting Swat",
+  "1 Chaos Warp","1 Vandalblast","1 Wheel of Fortune",
+  "1 Faithless Looting","1 Seething Song","1 Ancient Tomb",
+  "1 Nykthos, Shrine to Nyx","1 Cavern of Souls","1 Hall of the Bandit Lord",
+  "1 Crystal Vein","1 Sandstone Needle","20 Mountain"
+].join("\n");
+
+const SAMPLE_B_NAME = "Sliver Overlord 5C";
+const SAMPLE_B_LIST = [
+  "1 Sliver Overlord","1 Thassa's Oracle","1 Tainted Pact",
+  "1 Demonic Tutor","1 Vampiric Tutor","1 Mystical Tutor",
+  "1 Enlightened Tutor","1 Worldly Tutor","1 Force of Will",
+  "1 Force of Negation","1 Fierce Guardianship","1 Cyclonic Rift",
+  "1 Swan Song","1 Counterspell","1 Pact of Negation",
+  "1 Rhystic Study","1 Smothering Tithe","1 Necropotence",
+  "1 Ad Nauseam","1 Sylvan Library","1 Sol Ring",
+  "1 Mana Vault","1 Chrome Mox","1 Mox Diamond","1 Arcane Signet",
+  "1 Fellwar Stone","1 Brainstorm","1 Ponder","1 Preordain",
+  "1 The One Ring","1 Sensei's Divining Top",
+  "1 Gemhide Sliver","1 Manaweft Sliver","1 Crystalline Sliver",
+  "1 Diffusion Sliver","1 Sliver Legion","1 Sliver Hivelord",
+  "1 Winged Sliver","1 Quick Sliver","1 Aura Shards",
+  "1 Kindred Discovery","1 Command Tower","1 Underground Sea",
+  "1 Volcanic Island","1 Tropical Island","1 Bayou",
+  "1 Savannah","1 Tundra","1 Badlands","1 Taiga","1 Scrubland",
+  "1 Plateau","1 Arid Mesa","1 Scalding Tarn","1 Polluted Delta",
+  "1 Bloodstained Mire","1 Verdant Catacombs","1 Flooded Strand",
+  "1 City of Brass","1 Mana Confluence","1 Reflecting Pool",
+  "1 Prismatic Vista"
+].join("\n");
+
+function loadSampleDecks() {
+  document.getElementById('name-a').value = SAMPLE_A_NAME;
+  document.getElementById('deck-a').value = SAMPLE_A_LIST;
+  updateCounter('a');
+  if (compareMode !== 'solo') {
+    document.getElementById('name-b').value = SAMPLE_B_NAME;
+    document.getElementById('deck-b').value = SAMPLE_B_LIST;
+    updateCounter('b');
+  }
+  saveSessionDraft();
+}
+
+// ════════════════════════════════════════════════════
+// FEATURE: SESSION MEMORY
+// ════════════════════════════════════════════════════
+const _SK  = 'mtg_sessions_v1';
+const _DK  = 'mtg_draft_v1';
+const _MAX = 5;
+
+function saveSessionDraft() {
+  try {
+    sessionStorage.setItem(_DK, JSON.stringify({
+      na: document.getElementById('name-a').value,
+      nb: document.getElementById('name-b').value,
+      da: document.getElementById('deck-a').value,
+      db: document.getElementById('deck-b').value
+    }));
+  } catch(e) {}
+}
+
+function loadSessionDraft() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem(_DK) || 'null');
+    if (!d) return;
+    if (d.da) { document.getElementById('name-a').value = d.na || 'Deck A'; document.getElementById('deck-a').value = d.da; updateCounter('a'); }
+    if (d.db) { document.getElementById('name-b').value = d.nb || 'Deck B'; document.getElementById('deck-b').value = d.db; updateCounter('b'); }
+  } catch(e) {}
+}
+
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem(_SK) || '[]'); } catch(e) { return []; }
+}
+
+function saveSession(nameA, nameB, plA, plB) {
+  try {
+    const sessions = getSessions();
+    sessions.unshift({
+      id: Date.now(), nameA, nameB, plA, plB,
+      da: document.getElementById('deck-a').value,
+      db: plB != null ? document.getElementById('deck-b').value : '',
+      ts: new Date().toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+    });
+    if (sessions.length > _MAX) sessions.pop();
+    localStorage.setItem(_SK, JSON.stringify(sessions));
+    renderSessionDrawer();
+  } catch(e) {}
+}
+
+function deleteSession(id) {
+  try {
+    localStorage.setItem(_SK, JSON.stringify(getSessions().filter(s => s.id !== id)));
+    renderSessionDrawer();
+  } catch(e) {}
+}
+
+function loadSession(id) {
+  const s = getSessions().find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('name-a').value = s.nameA;
+  document.getElementById('deck-a').value = s.da;
+  updateCounter('a');
+  if (s.db) {
+    document.getElementById('name-b').value = s.nameB;
+    document.getElementById('deck-b').value = s.db;
+    updateCounter('b');
+    if (compareMode === 'solo') setCompareMode('compare');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderSessionDrawer() {
+  const sessions = getSessions();
+  const drawer = document.getElementById('session-drawer');
+  const body   = document.getElementById('session-body');
+  if (!sessions.length) { if (drawer) drawer.style.display = 'none'; return; }
+  if (drawer) drawer.style.display = '';
+  if (!body)  return;
+  body.innerHTML = sessions.map(s => `
+    <div class="session-item">
+      <div onclick="loadSession(${s.id})" style="flex:1;min-width:0;">
+        <div class="session-names">${s.nameA}${s.nameB && s.nameB !== '—' ? ' <span style="color:#3a3a5a;">vs</span> ' + s.nameB : ''}</div>
+        <div class="session-meta">PL ${s.plA}${s.plB != null ? ' &middot; PL ' + s.plB : ''} &nbsp;&middot;&nbsp; ${s.ts}</div>
+      </div>
+      <button class="session-del" onclick="event.stopPropagation();deleteSession(${s.id})" title="Remove">&times;</button>
+    </div>`).join('');
+}
+
+function toggleSessionDrawer() {
+  const body  = document.getElementById('session-body');
+  const arrow = document.getElementById('session-arrow');
+  if (!body) return;
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.innerHTML = open ? '&#x25BC;' : '&#x25B2;';
+}
+
+// ════════════════════════════════════════════════════
+// FEATURE: PRICE ESTIMATES (zero extra API calls)
+// ════════════════════════════════════════════════════
+function computeDeckPrice(deck) {
+  let total = 0;
+  const priced = [];
+  for (const [name, card] of deck) {
+    const sf  = SCRYFALL_CACHE.get(name);
+    const usd = sf && sf.prices && sf.prices.usd ? parseFloat(sf.prices.usd) : 0;
+    if (usd > 0) {
+      const lineTotal = usd * card.qty;
+      total += lineTotal;
+      priced.push({ name, usd, qty: card.qty, lineTotal });
+    }
+  }
+  priced.sort((a,b) => b.lineTotal - a.lineTotal);
+  return { total, top: priced.slice(0, 8), priced: priced.length };
+}
+
+function renderPricePanel(deckA, deckB) {
+  const pA = computeDeckPrice(deckA);
+  const pB = computeDeckPrice(deckB);
+  const hdr  = document.getElementById('price-section-hdr');
+  const grid = document.getElementById('price-grid');
+  if (!pA.total && !pB.total) {
+    if (hdr) hdr.style.display = 'none';
+    if (grid) grid.style.display = 'none';
+    return;
+  }
+  if (hdr) hdr.style.display = '';
+  if (grid) grid.style.display = '';
+
+  const fmt = v => v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k' : '$' + v.toFixed(2);
+  const colorClass = { a: 'a', b: 'b' };
+
+  [['a', pA], ['b', pB]].forEach(([side, p]) => {
+    const deckNameEl = document.getElementById('name-' + side);
+    const deckLabel  = (deckNameEl ? deckNameEl.value : 'Deck ' + side.toUpperCase()).toUpperCase();
+    const hdrEl  = document.getElementById('price-hdr-' + side);
+    const totEl  = document.getElementById('price-total-' + side);
+    const subEl  = document.getElementById('price-sub-' + side);
+    const topEl  = document.getElementById('price-top-' + side);
+    if (hdrEl) hdrEl.textContent = deckLabel + ' · MARKET VALUE';
+    if (totEl) totEl.textContent = p.total > 0 ? fmt(p.total) : '—';
+    if (subEl) subEl.textContent = p.priced > 0 ? p.priced + ' cards priced' : 'No price data available';
+    if (topEl) topEl.innerHTML = p.top.map(c =>
+      `<div class="price-row"><span class="price-cname">${c.qty > 1 ? c.qty + 'x ' : ''}${c.name}</span><span class="price-cval ${side}">${fmt(c.lineTotal)}</span></div>`
+    ).join('');
+  });
+}
+
+// ════════════════════════════════════════════════════
+// FEATURE: KEYBOARD SHORTCUT  Ctrl/Cmd + Enter
+// ════════════════════════════════════════════════════
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    const panel = document.getElementById('panel-compare');
+    if (panel && panel.classList.contains('active')) runAnalysis();
+  }
+});
+
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   initTooltip();
   initAutocomplete();
   loadFromURL();
   updateModeUI();
+  loadSessionDraft();
+  renderSessionDrawer();
+  updateCounter('a');
+  updateCounter('b');
 });
 </script>
 </body>
