@@ -2329,7 +2329,7 @@ runAnalysis = async function() {
     renderComboDetails(combosA, combosB, nameA, nameB);
 
     // Price estimates — uses already-fetched Scryfall cache (zero extra calls)
-    renderPricePanel(deckA, deckB);
+    renderPricePanel(deckA, deckB, nameA, isSolo ? null : nameB);
 
     // Save to session history
     saveSession(nameA, isSolo ? null : nameB,
@@ -3134,10 +3134,13 @@ function clearDeck(side) {
 // ════════════════════════════════════════════════════
 // FEATURE: LOAD SAMPLE DECKS
 // ════════════════════════════════════════════════════
-const SAMPLE_A_NAME = "Krenko Goblin cEDH";
+const SAMPLE_A_NAME = "Krenko, Mob Boss";
 const SAMPLE_A_LIST = [
-  "1 Sol Ring","1 Mana Vault","1 Ruby Medallion","1 Arcane Signet","1 Fellwar Stone",
-  "1 Jeska's Will","1 Gamble","1 Goblin Recruiter","1 Goblin Matron",
+  "1 Krenko, Mob Boss",
+  "1 Sol Ring","1 Mana Vault","1 Ruby Medallion","1 Arcane Signet",
+  "1 Fellwar Stone","1 Cursed Mirror","1 Defense Grid",
+  "1 Jeska's Will","1 Gamble","1 Seething Song","1 Pyretic Ritual",
+  "1 Goblin Recruiter","1 Goblin Matron","1 Imperial Recruiter",
   "1 Skirk Prospector","1 Thornbite Staff","1 Staff of Domination",
   "1 Mana Echoes","1 Phyrexian Altar","1 Goblin Bombardment",
   "1 Impact Tremors","1 Purphoros, God of the Forge","1 Shared Animosity",
@@ -3147,36 +3150,69 @@ const SAMPLE_A_LIST = [
   "1 Goblin Lackey","1 Goblin Guide","1 Legion Loyalist",
   "1 Mass Hysteria","1 Hammer of Purphoros","1 Lightning Greaves",
   "1 Swiftfoot Boots","1 Conspicuous Snoop","1 Kiki-Jiki, Mirror Breaker",
-  "1 Pashalik Mons","1 Goblin Sharpshooter","1 Imperial Recruiter",
+  "1 Pashalik Mons","1 Goblin Sharpshooter","1 Hobgoblin Bandit Lord",
+  "1 Rundvelt Hordemaster","1 Goblin Trashmaster","1 Goblin King",
+  "1 Broadside Bombardiers","1 General Kreat, the Boltbringer",
+  "1 Metallic Mimic","1 Patchwork Banner",
   "1 Pyroblast","1 Red Elemental Blast","1 Deflecting Swat",
   "1 Chaos Warp","1 Vandalblast","1 Wheel of Fortune",
-  "1 Faithless Looting","1 Seething Song","1 Ancient Tomb",
-  "1 Nykthos, Shrine to Nyx","1 Cavern of Souls","1 Hall of the Bandit Lord",
-  "1 Crystal Vein","1 Sandstone Needle","20 Mountain"
+  "1 Faithless Looting","1 Valakut Awakening",
+  "1 Skullclamp","1 Sensei's Divining Top",
+  "1 Battle Hymn","1 Brightstone Ritual",
+  "1 Final Fortune","1 Flare of Duplication",
+  "1 Ancient Tomb","1 Nykthos, Shrine to Nyx",
+  "1 Cavern of Souls","1 Hall of the Bandit Lord",
+  "1 Crystal Vein","1 Sandstone Needle","1 Dwarven Ruins",
+  "1 Inventors' Fair","1 Fire Nation Palace",
+  "1 Buried Ruin","1 Three Tree City",
+  "1 Arid Mesa","1 Bloodstained Mire","1 Scalding Tarn",
+  "1 Wooded Foothills",
+  "1 Goblin Bushwhacker",
+  "18 Mountain"
 ].join("\n");
 
 const SAMPLE_B_NAME = "Sliver Overlord 5C";
 const SAMPLE_B_LIST = [
-  "1 Sliver Overlord","1 Thassa's Oracle","1 Tainted Pact",
+  "1 Sliver Overlord",
+  "1 Thassa's Oracle","1 Tainted Pact",
   "1 Demonic Tutor","1 Vampiric Tutor","1 Mystical Tutor",
-  "1 Enlightened Tutor","1 Worldly Tutor","1 Force of Will",
-  "1 Force of Negation","1 Fierce Guardianship","1 Cyclonic Rift",
-  "1 Swan Song","1 Counterspell","1 Pact of Negation",
+  "1 Enlightened Tutor","1 Worldly Tutor","1 Natural Order",
+  "1 Intuition","1 Crop Rotation",
+  "1 Force of Will","1 Force of Negation","1 Fierce Guardianship",
+  "1 Cyclonic Rift","1 Swan Song","1 Counterspell",
+  "1 Pact of Negation","1 Flusterstorm",
+  "1 Swords to Plowshares","1 Abrupt Decay","1 Assassin's Trophy",
   "1 Rhystic Study","1 Smothering Tithe","1 Necropotence",
-  "1 Ad Nauseam","1 Sylvan Library","1 Sol Ring",
-  "1 Mana Vault","1 Chrome Mox","1 Mox Diamond","1 Arcane Signet",
-  "1 Fellwar Stone","1 Brainstorm","1 Ponder","1 Preordain",
+  "1 Ad Nauseam","1 Sylvan Library","1 Mystic Remora",
+  "1 Kindred Discovery","1 Aura Shards",
+  "1 Sol Ring","1 Mana Vault","1 Chrome Mox","1 Mox Diamond",
+  "1 Arcane Signet","1 Fellwar Stone","1 Talisman of Indulgence",
+  "1 Brainstorm","1 Ponder","1 Preordain",
   "1 The One Ring","1 Sensei's Divining Top",
+  "1 Seedborn Muse",
   "1 Gemhide Sliver","1 Manaweft Sliver","1 Crystalline Sliver",
-  "1 Diffusion Sliver","1 Sliver Legion","1 Sliver Hivelord",
-  "1 Winged Sliver","1 Quick Sliver","1 Aura Shards",
-  "1 Kindred Discovery","1 Command Tower","1 Underground Sea",
-  "1 Volcanic Island","1 Tropical Island","1 Bayou",
-  "1 Savannah","1 Tundra","1 Badlands","1 Taiga","1 Scrubland",
-  "1 Plateau","1 Arid Mesa","1 Scalding Tarn","1 Polluted Delta",
-  "1 Bloodstained Mire","1 Verdant Catacombs","1 Flooded Strand",
-  "1 City of Brass","1 Mana Confluence","1 Reflecting Pool",
-  "1 Prismatic Vista"
+  "1 Diffusion Sliver","1 Quick Sliver","1 Winged Sliver",
+  "1 Sliver Legion","1 Sliver Hivelord",
+  "1 Command Tower","1 Path of Ancestry","1 Reflecting Pool",
+  "1 Exotic Orchard","1 Forbidden Orchard",
+  "1 Underground Sea","1 Volcanic Island","1 Tropical Island",
+  "1 Bayou","1 Savannah","1 Tundra","1 Badlands",
+  "1 Taiga","1 Scrubland","1 Plateau",
+  "1 Arid Mesa","1 Scalding Tarn","1 Polluted Delta",
+  "1 Bloodstained Mire","1 Verdant Catacombs",
+  "1 Flooded Strand","1 Windswept Heath","1 Wooded Foothills",
+  "1 Marsh Flats","1 Misty Rainforest",
+  "1 City of Brass","1 Mana Confluence","1 Prismatic Vista",
+  "1 Cavern of Souls","1 Urza's Saga",
+  "1 Serra's Sanctum","1 Cabal Coffers",
+  "1 Wasteland","1 Strip Mine",
+  "1 Teferi's Protection","1 Notion Thief","1 Opposition Agent",
+  "1 Narset, Parter of Veils","1 Drannith Magistrate",
+  "1 Survival of the Fittest","1 Fauna Shaman",
+  "1 Negate","1 An Offer You Can't Refuse",
+  "1 Doomsday","1 Underworld Breach",
+  "1 Phyrexian Altar","1 Ashnod's Altar",
+  "1 Isochron Scepter","1 Dramatic Reversal"
 ].join("\n");
 
 function loadSampleDecks() {
@@ -3304,9 +3340,9 @@ function computeDeckPrice(deck) {
   return { total, top: priced.slice(0, 8), priced: priced.length };
 }
 
-function renderPricePanel(deckA, deckB) {
+function renderPricePanel(deckA, deckB, nameA, nameB) {
   const pA = computeDeckPrice(deckA);
-  const pB = computeDeckPrice(deckB);
+  const pB = deckB && deckB.size ? computeDeckPrice(deckB) : { total: 0, top: [], priced: 0 };
   const hdr  = document.getElementById('price-section-hdr');
   const grid = document.getElementById('price-grid');
   if (!pA.total && !pB.total) {
@@ -3318,18 +3354,23 @@ function renderPricePanel(deckA, deckB) {
   if (grid) grid.style.display = '';
 
   const fmt = v => v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k' : '$' + v.toFixed(2);
-  const colorClass = { a: 'a', b: 'b' };
 
-  [['a', pA], ['b', pB]].forEach(([side, p]) => {
-    const deckNameEl = document.getElementById('name-' + side);
-    const deckLabel  = (deckNameEl ? deckNameEl.value : 'Deck ' + side.toUpperCase()).toUpperCase();
-    const hdrEl  = document.getElementById('price-hdr-' + side);
-    const totEl  = document.getElementById('price-total-' + side);
-    const subEl  = document.getElementById('price-sub-' + side);
-    const topEl  = document.getElementById('price-top-' + side);
-    if (hdrEl) hdrEl.textContent = deckLabel + ' · MARKET VALUE';
+  // Use passed-in names (resolved from runAnalysis, not re-read from DOM)
+  const labelA = (nameA || 'Deck A').toUpperCase();
+  const labelB = (nameB || 'Deck B').toUpperCase();
+
+  [['a', pA, labelA], ['b', pB, labelB]].forEach(([side, p, label]) => {
+    const cardB = document.getElementById('price-card-' + side);
+    // In solo mode hide Deck B price card
+    if (side === 'b' && !nameB) { if (cardB) cardB.style.display = 'none'; return; }
+    if (cardB) cardB.style.display = '';
+    const hdrEl = document.getElementById('price-hdr-' + side);
+    const totEl = document.getElementById('price-total-' + side);
+    const subEl = document.getElementById('price-sub-' + side);
+    const topEl = document.getElementById('price-top-' + side);
+    if (hdrEl) hdrEl.textContent = label + ' · MARKET VALUE';
     if (totEl) totEl.textContent = p.total > 0 ? fmt(p.total) : '—';
-    if (subEl) subEl.textContent = p.priced > 0 ? p.priced + ' cards priced' : 'No price data available';
+    if (subEl) subEl.textContent = p.priced > 0 ? p.priced + ' cards priced' : 'No price data';
     if (topEl) topEl.innerHTML = p.top.map(c =>
       `<div class="price-row"><span class="price-cname">${c.qty > 1 ? c.qty + 'x ' : ''}${c.name}</span><span class="price-cval ${side}">${fmt(c.lineTotal)}</span></div>`
     ).join('');
