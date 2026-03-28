@@ -4227,161 +4227,258 @@ function shareScanURL(name, bracket, score) {
 }
 
 // ── SINGLE DECK SCANNER ────────────────────────────────────────
-function runSingleScan() {
+async function runSingleScan() {
   const raw = document.getElementById('scan-deck').value;
   if (!raw.trim()) { alert('Please paste a decklist first.'); return; }
-  const name = document.getElementById('scan-name').value || 'My Deck';
+  const deckName = document.getElementById('scan-name').value || 'My Deck';
+  const cmdHint = document.getElementById('scan-name').value || null;
 
-  const deck = parseDeck(raw);
-  const analysis = analyzeDeck(deck);
-
-  // Normalize property names to match what analyzeDeck actually returns
-  const score = analysis.powerLevel || 0;
-  const bracket = (analysis.bracket && analysis.bracket.recommended) || analysis.bracket || 1;
-  const avgCmc = analysis.avgCmc || 0;
-  const cardCount = analysis.cardCount || 0;
-  const gcCount = analysis.gcCount || 0;
-  const comboCount = analysis.comboCount || 0;
-  const hasMLD = (analysis.mldCount || 0) > 0;
-  const hasXTChain = (analysis.xtChainCount || 0) > 0;
+  const btn = document.getElementById('scan-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Fetching card data...';
 
   const resultsEl = document.getElementById('scan-results');
-  resultsEl.style.display = 'block';
+  resultsEl.style.display = 'none';
 
-  const bracketNum = bracket;
-  const bracketColors = {1:'#4ae8b0',2:'#4a9ee8',3:'#9e4ae8',4:'#e8c94a',5:'#e84a6a'};
-  const bracketLabels = {1:'Bracket 1 — Precon',2:'Bracket 2 — Casual',3:'Bracket 3 — Optimized',4:'Bracket 4 — High Power',5:'Bracket 5 — cEDH'};
-  const col = bracketColors[bracketNum] || '#e8c94a';
+  try {
+    // ── STEP 1: Parse ──────────────────────────────────────────────────────
+    const deck = parseDeck(raw);
+    const cardNames = [...deck.keys()];
 
-  const gcCards    = (analysis.gcCards && analysis.gcCards.length) ? analysis.gcCards : [...deck.entries()].filter(([,v])=>v.gc).map(([n])=>n);
-  const mldCards   = (analysis.mldCards && analysis.mldCards.length) ? analysis.mldCards : [...deck.entries()].filter(([,v])=>v.mld).map(([n])=>n);
-  const comboCards = (analysis.comboCards && analysis.comboCards.length) ? analysis.comboCards : [...deck.entries()].filter(([,v])=>v.combo).map(([n])=>n);
-  const xtCards    = [...deck.entries()].filter(([,v])=>v.xt).map(([n])=>n);
-  const bannedCards= (analysis.bannedCards && analysis.bannedCards.length) ? analysis.bannedCards : [...deck.entries()].filter(([,v])=>v.banned).map(([n])=>n);
+    // ── STEP 2: Scryfall batch fetch (same as Compare tab) ─────────────────
+    btn.textContent = '⏳ Scryfall: fetching ' + cardNames.length + ' cards...';
+    await fetchDeckDataBatch(cardNames);
 
-  analysis.gcCards = gcCards;
-  analysis.comboCards = comboCards;
-  analysis.mldCards = mldCards;
+    // ── STEP 3: Enrich deck with Scryfall data (same as Compare tab) ───────
+    btn.textContent = '⏳ Enriching card data...';
+    for (const [name, card] of deck) {
+      const sf = SCRYFALL_CACHE.get(name);
+      if (sf) {
+        const sfData = scryfallToCardData(sf);
+        if (sfData) {
+          card.cmc    = sfData.cmc;
+          card.type   = sfData.type;
+          card.impact = sfData.impact;
+          card.known  = true;
+          card.imageUrl  = sfData.imageUrl;
+          card.typeLine  = sfData.typeLine;
+          card.colors    = sfData.colors;
+          card.colorIdentity = sfData.colorIdentity;
+          card.oracleText    = sfData.oracleText;
+        }
+      }
+    }
 
-  const chipHtml = (arr, cls) => arr.map(n =>
-    `<span class="flag-chip ${cls}" data-card="${n}" onmouseover="showTooltip(event,'${n.replace(/'/g,"\\'")}',this)" onmouseout="hideTooltip()">${n}</span>`
-  ).join('');
+    // ── STEP 4: Commander Spellbook combos (same as Compare tab) ───────────
+    btn.textContent = '⏳ Checking combos...';
+    const cmdName = (cmdHint && cmdHint !== 'My Deck' && cmdHint.length > 3) ? cmdHint : null;
+    let combos = [];
+    try {
+      combos = await fetchCombosFromSpellbook(cardNames, cmdName);
+    } catch(e) { /* silently fail, combos stay empty */ }
 
-  const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
-  const ct = t => { let n=0; for(const[,v] of deck) if(v.type===t) n+=(v.qty||1); return n; };
-  const catRows = cats.map(c => {
-    const n = ct(c);
-    if (!n) return '';
-    return `<div style="display:grid;grid-template-columns:90px 1fr 36px;gap:8px;align-items:center;margin-bottom:6px;">
-      <div style="font-family:DM Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--text-2);text-transform:uppercase;text-align:right;">${c}</div>
-      <div style="background:var(--bg-3);border-radius:3px;height:7px;overflow:hidden;">
-        <div style="background:${col};width:${Math.min(100,(n/40)*100)}%;height:7px;border-radius:3px;transition:width 0.7s;"></div>
-      </div>
-      <div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:${col};text-align:center;">${n}</div>
-    </div>`;
-  }).join('');
+    // ── STEP 5: Run analysis (identical to Compare tab) ────────────────────
+    btn.textContent = '⏳ Calculating power level...';
+    const analysis = analyzeDeck(deck);
+    if (combos.length > 0) analysis.confirmedCombos = combos.length;
 
-  const checks = [
-    { ok:!hasXTChain, pass:'No chaining extra turns', fail:'Chaining extra turns (Bracket 4+)' },
-    { ok:!hasMLD, pass:'No mass land denial', fail:'MLD detected (Bracket 4+)' },
-    { ok:comboCount===0, warn:comboCount>0&&comboCount<=2,
-      pass:'No 2-card combos', fail:'2-card combos (Bracket 4+)', warnMsg:`${comboCount} combo piece(s) detected` },
-    { ok:gcCount===0, warn:gcCount>0&&gcCount<=3,
-      pass:'No Game Changers', fail:`${gcCount} Game Changers (Bracket 4+)`, warnMsg:`${gcCount} Game Changer(s) — max 3 for Bracket 3` },
-  ];
-  const checksHtml = checks.map(c => {
-    if (c.ok) return `<div class="bcheck pass"><span class="icon">&#x2713;</span>${c.pass}</div>`;
-    if (c.warn) return `<div class="bcheck warn"><span class="icon">&#x26A0;</span>${c.warnMsg||c.fail}</div>`;
-    return `<div class="bcheck fail"><span class="icon">&#x2715;</span>${c.fail}</div>`;
-  }).join('');
+    // ── STEP 6: Render results ─────────────────────────────────────────────
+    const score      = analysis.powerLevel || 0;
+    const bracket    = (analysis.bracket && analysis.bracket.recommended) || analysis.bracket || 1;
+    const avgCmc     = analysis.avgCmc || 0;
+    const cardCount  = analysis.cardCount || 0;
+    const gcCount    = analysis.gcCount || 0;
+    const comboCount = analysis.comboCount || 0;
+    const hasMLD     = (analysis.mldCount || 0) > 0;
+    const hasXTChain = (analysis.xtChainCount || 0) > 0;
 
-  const safeN = name.replace(/'/g,"\\'");
+    const bracketColors = {1:'var(--teal)',2:'var(--blue)',3:'var(--purple)',4:'var(--gold)',5:'var(--red)'};
+    const bracketHex    = {1:'#3de8a8',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#f0516a'};
+    const bracketLabels = {1:'Bracket 1 — Precon',2:'Bracket 2 — Casual',3:'Bracket 3 — Optimized',4:'Bracket 4 — High Power',5:'Bracket 5 — cEDH'};
+    const col    = bracketColors[bracket] || 'var(--gold)';
+    const colHex = bracketHex[bracket] || '#e8c94a';
 
-  // Extended stats
-  const tutorCount = analysis.tutorCount || 0;
-  const drawCount = analysis.drawCount || 0;
-  const confirmedCombos = analysis.confirmedCombos || 0;
+    const gcCards     = analysis.gcCards    && analysis.gcCards.length    ? analysis.gcCards    : [...deck.entries()].filter(([,v])=>v.gc).map(([n])=>n);
+    const mldCards    = analysis.mldCards   && analysis.mldCards.length   ? analysis.mldCards   : [...deck.entries()].filter(([,v])=>v.mld).map(([n])=>n);
+    const comboCards  = analysis.comboCards && analysis.comboCards.length ? analysis.comboCards : [...deck.entries()].filter(([,v])=>v.combo).map(([n])=>n);
+    const xtCards     = [...deck.entries()].filter(([,v])=>v.xt).map(([n])=>n);
+    const bannedCards = analysis.bannedCards && analysis.bannedCards.length ? analysis.bannedCards : [...deck.entries()].filter(([,v])=>v.banned).map(([n])=>n);
 
-  resultsEl.innerHTML = `
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    analysis.gcCards    = gcCards;
+    analysis.comboCards = comboCards;
+    analysis.mldCards   = mldCards;
 
-    <!-- LEFT: Main results card -->
-    <div style="background:var(--bg-2);border:1px solid ${col}44;border-radius:12px;padding:22px;position:relative;overflow:hidden;grid-column:1/-1;">
-      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${col},${col}22);"></div>
+    // Build chip HTML using safe helper
+    function chip(n, cls) {
+      var s = n.replace(/['"<>&]/g, function(c) {
+        return {'\'':'&#39;','"':'&quot;','<':'&lt;','>':'&gt;','&':'&amp;'}[c];
+      });
+      return '<span class="flag-chip ' + cls + '" data-card="' + s + '" ' +
+        'onmouseover="showTooltip(event,\'' + s + '\',this)" ' +
+        'onmouseout="hideTooltip()">' + n + '</span>';
+    }
+    function chips(arr, cls) { return arr.map(function(n){ return chip(n, cls); }).join(''); }
 
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:4px;color:${col};">${name}</div>
-          <div style="font-size:10px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;margin-top:2px;">${cardCount} cards analyzed</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:16px;">
-          <div style="text-align:right;">
-            <div style="font-family:Bebas Neue,sans-serif;font-size:48px;line-height:1;color:${col};">${score.toFixed(1)}</div>
-            <div style="font-size:9px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;">POWER / 10</div>
-          </div>
-          <div style="text-align:center;background:${col}11;border:1px solid ${col}44;border-radius:10px;padding:10px 16px;">
-            <div style="font-family:Bebas Neue,sans-serif;font-size:44px;line-height:1;color:${col};">${bracketNum}</div>
-            <div style="font-size:9px;color:${col};letter-spacing:1px;margin-top:3px;text-transform:uppercase;">BRACKET</div>
-          </div>
-        </div>
-      </div>
+    // Category breakdown bars
+    const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
+    function ct(t) { var n=0; for(var e of deck) if(e[1].type===t) n+=(e[1].qty||1); return n; }
+    var catRows = '';
+    for (var c of cats) {
+      var n = ct(c);
+      if (!n) continue;
+      catRows += '<div style="display:grid;grid-template-columns:90px 1fr 36px;gap:8px;align-items:center;margin-bottom:7px;">' +
+        '<div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;text-align:right;">' + c + '</div>' +
+        '<div style="background:var(--bg-3);border-radius:4px;height:8px;overflow:hidden;">' +
+          '<div style="background:' + colHex + ';width:' + Math.min(100,(n/40)*100) + '%;height:8px;border-radius:4px;transition:width 0.8s cubic-bezier(.34,1.4,.64,1);"></div>' +
+        '</div>' +
+        '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:' + colHex + ';text-align:center;">' + n + '</div>' +
+        '</div>';
+    }
 
-      <!-- Power bar -->
-      <div style="margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-2);margin-bottom:5px;letter-spacing:1px;">
-          <span>CASUAL</span><span style="color:${col};">${bracketLabels[bracketNum]||''}</span><span>cEDH</span>
-        </div>
-        <div style="background:var(--bg-3);border-radius:4px;height:10px;overflow:hidden;position:relative;">
-          <div style="background:linear-gradient(90deg,${col}88,${col});width:${Math.min(100,(score/10)*100)}%;height:10px;border-radius:4px;transition:width 1s ease;"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#3a3a5a;margin-top:3px;"><span>1</span><span>10</span></div>
-      </div>
+    // Bracket checks
+    var checkItems = [
+      { ok: !analysis.bannedCount, pass: 'No banned cards', fail: analysis.bannedCount + ' banned card(s) — deck is ILLEGAL' },
+      { ok: !hasXTChain, pass: 'No chaining extra turns', fail: 'Chaining extra turns (Bracket 4+)' },
+      { ok: !hasMLD, pass: 'No mass land denial', fail: 'MLD detected (Bracket 4+)' },
+      { ok: comboCount === 0,
+        warn: comboCount > 0 && analysis.confirmedCombos === 0,
+        pass: 'No 2-card combos', fail: comboCount + ' combo piece(s) (Bracket 4+)',
+        warnMsg: comboCount + ' combo piece(s) — no confirmed full combos' },
+      { ok: gcCount === 0, warn: gcCount > 0 && gcCount <= 3,
+        pass: 'No Game Changers', fail: gcCount + ' Game Changers (Bracket 4+)',
+        warnMsg: gcCount + ' Game Changer(s) — Bracket 3 max is 3' },
+    ];
+    if (combos.length > 0) {
+      checkItems.push({ ok: false, warn: true, warnMsg: combos.length + ' confirmed combo(s) via Spellbook (Bracket 4+)' });
+    }
+    var checksHtml = '';
+    for (var ch of checkItems) {
+      if (ch.ok) checksHtml += '<div class="bcheck pass"><span class="icon">&#x2713;</span>' + ch.pass + '</div>';
+      else if (ch.warn) checksHtml += '<div class="bcheck warn"><span class="icon">&#x26A0;</span>' + (ch.warnMsg || ch.fail) + '</div>';
+      else checksHtml += '<div class="bcheck fail"><span class="icon">&#x2715;</span>' + ch.fail + '</div>';
+    }
 
-      <!-- Stats grid -->
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;">
-        ${[
-          {v:avgCmc.toFixed(2), l:'Avg CMC'},
-          {v:gcCount, l:'Game Changers'},
-          {v:comboCount, l:'Combo Pieces'},
-          {v:tutorCount, l:'Tutors'},
-          {v:drawCount, l:'Draw Engines'},
-          {v:confirmedCombos, l:'Full Combos'},
-        ].map(s=>`<div style="background:var(--bg-1);border-radius:6px;padding:8px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--text);">${s.v}</div><div style="font-size:8px;color:var(--text-2);letter-spacing:1px;text-transform:uppercase;margin-top:1px;">${s.l}</div></div>`).join('')}
-      </div>
+    // Spellbook combos display
+    var combosHtml = '';
+    if (combos.length > 0) {
+      combosHtml = '<div class="flagged-section"><div class="flagged-title" style="color:var(--purple)">&#x1F52E; ' + combos.length + ' Confirmed Combo(s) via Spellbook</div>';
+      for (var combo of combos.slice(0, 5)) {
+        combosHtml += '<div style="background:var(--bg-3);border:1px solid rgba(168,85,247,0.2);border-radius:6px;padding:8px 10px;margin-bottom:6px;">' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--purple);">' + (combo.cards || []).join(' + ') + '</div>' +
+          (combo.result ? '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-3);margin-top:3px;">→ ' + combo.result + '</div>' : '') +
+          '</div>';
+      }
+      if (combos.length > 5) combosHtml += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-3);padding:4px 0;">+ ' + (combos.length - 5) + ' more combos</div>';
+      combosHtml += '</div>';
+    }
 
-      <!-- Checks -->
-      <div class="bracket-checks" style="margin-bottom:14px;">${checksHtml}</div>
+    // Scryfall-resolved card count
+    var sfResolved = cardNames.filter(function(n){ return SCRYFALL_CACHE.get(n) !== null; }).length;
+    var sfNote = sfResolved > 0
+      ? '<span style="color:var(--teal);">&#x2713; ' + sfResolved + '/' + cardNames.length + ' cards resolved via Scryfall</span>'
+      : '';
 
-      <!-- Flagged cards -->
-      ${bannedCards.length?`<div class="flagged-section"><div class="flagged-title" style="color:#e84a6a">&#x26D4; Banned Cards</div>${chipHtml(bannedCards,'mld')}</div>`:''}
-      ${gcCards.length?`<div class="flagged-section"><div class="flagged-title">&#x26A0; Game Changers</div>${chipHtml(gcCards,'gc')}</div>`:''}
-      ${comboCards.length?`<div class="flagged-section"><div class="flagged-title">&#x1F300; Combo Pieces</div>${chipHtml(comboCards,'combo')}</div>`:''}
-      ${mldCards.length?`<div class="flagged-section"><div class="flagged-title">&#x1F30B; MLD Cards</div>${chipHtml(mldCards,'mld')}</div>`:''}
-      ${xtCards.length?`<div class="flagged-section"><div class="flagged-title">&#x23F1; Extra Turns</div>${chipHtml(xtCards,'xt')}</div>`:''}
+    // Safe name for inline JS
+    var safeN = deckName.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
 
-      <!-- Action buttons -->
-      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;border-top:1px solid #1c1c24;padding-top:14px;">
-        <button onclick="exportScanTxt('${safeN}', window._lastScanAnalysis)" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#e8c94a';this.style.color='#e8c94a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2193; EXPORT TXT</button>
-        <button onclick="shareScanURL('${safeN}',${bracketNum},${score.toFixed(1)})" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#4ae8b0';this.style.color='#4ae8b0'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F517; SHARE LINK</button>
-        <button onclick="fetchAndShowPrices()" id="price-btn" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#9e4ae8';this.style.color='#9e4ae8'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F4B0; PRICE ESTIMATE</button>
-        <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';window.scrollTo({top:0,behavior:'smooth'});" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;margin-left:auto;transition:all 0.15s;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x21BA; SCAN ANOTHER</button>
-      </div>
-      <div id="price-results"></div>
-    </div>
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML =
+      '<div style="background:var(--bg-2);border:1px solid ' + colHex + '44;border-radius:var(--r-lg);padding:24px;position:relative;overflow:hidden;margin-bottom:16px;">' +
+        '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,' + colHex + ',' + colHex + '22);box-shadow:0 0 20px ' + colHex + '80;"></div>' +
+        '<div style="position:absolute;bottom:-20px;right:-10px;font-size:150px;opacity:0.025;pointer-events:none;user-select:none;">&#x2B21;</div>' +
 
-    <!-- Category Breakdown -->
-    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;">
-      <div style="font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:var(--text-2);margin-bottom:14px;">&#x1F4CA; CATEGORY BREAKDOWN</div>
-      ${catRows}
-    </div>
+        // Header row
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">' +
+          '<div>' +
+            '<div style="font-family:Cinzel,serif;font-size:22px;font-weight:700;letter-spacing:3px;color:' + colHex + ';">' + deckName + '</div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--text-3);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">' +
+              cardCount + ' cards &nbsp;·&nbsp; ' + sfNote +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:14px;">' +
+            '<div style="text-align:right;">' +
+              '<div style="font-family:Bebas Neue,sans-serif;font-size:52px;line-height:1;color:' + colHex + ';text-shadow:0 0 30px ' + colHex + '80;">' + score.toFixed(1) + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:8px;color:var(--text-3);letter-spacing:2px;text-transform:uppercase;">POWER / 10</div>' +
+            '</div>' +
+            '<div style="text-align:center;background:' + colHex + '11;border:1px solid ' + colHex + '44;border-radius:10px;padding:10px 18px;box-shadow:inset 0 0 20px ' + colHex + '22;">' +
+              '<div style="font-family:Bebas Neue,sans-serif;font-size:48px;line-height:1;color:' + colHex + ';text-shadow:0 0 20px ' + colHex + '60;">' + bracket + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:8px;color:' + colHex + ';letter-spacing:2px;margin-top:4px;text-transform:uppercase;">BRACKET</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
 
-  </div>`;
+        // Bracket label + power bar
+        '<div style="margin-bottom:18px;">' +
+          '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;color:var(--text-3);margin-bottom:6px;letter-spacing:1px;">' +
+            '<span>CASUAL</span>' +
+            '<span style="color:' + colHex + ';font-size:10px;">' + (bracketLabels[bracket] || '') + '</span>' +
+            '<span>cEDH</span>' +
+          '</div>' +
+          '<div style="background:var(--bg-1);border-radius:5px;height:10px;overflow:hidden;border:1px solid var(--border);">' +
+            '<div style="background:linear-gradient(90deg,' + colHex + '88,' + colHex + ');width:' + Math.min(100,(score/10)*100) + '%;height:10px;border-radius:5px;transition:width 1.2s cubic-bezier(.34,1.4,.64,1);position:relative;">' +
+              '<div style="position:absolute;top:0;right:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25));animation:barShine 2s ease-in-out infinite;"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
 
-  window._lastScanAnalysis = analysis;
-  window._lastScanDeck = deck;
+        // Stats grid — 6 columns
+        '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;">' +
+          [
+            {v:avgCmc.toFixed(2), l:'Avg CMC'},
+            {v:gcCount, l:'Game Changers'},
+            {v:comboCount, l:'Combo Pieces'},
+            {v:analysis.tutorCount||0, l:'Tutors'},
+            {v:analysis.drawCount||0, l:'Draw Engines'},
+            {v:analysis.confirmedCombos||0, l:'Confirmed Combos'},
+          ].map(function(s){
+            return '<div style="background:var(--bg-1);border-radius:8px;padding:10px 4px;text-align:center;border:1px solid var(--border);">' +
+              '<div style="font-family:Bebas Neue,sans-serif;font-size:26px;color:var(--text);letter-spacing:1px;">' + s.v + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:8px;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;">' + s.l + '</div>' +
+              '</div>';
+          }).join('') +
+        '</div>' +
 
-  saveToHistory(name, bracketNum, score, gcCount, cardCount);
-  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Bracket checks
+        '<div class="bracket-checks" style="margin-bottom:14px;">' + checksHtml + '</div>' +
+
+        // Flagged cards
+        (bannedCards.length ? '<div class="flagged-section"><div class="flagged-title" style="color:var(--red)">&#x26D4; Banned Cards</div>' + chips(bannedCards,'mld') + '</div>' : '') +
+        (gcCards.length    ? '<div class="flagged-section"><div class="flagged-title">&#x26A0; Game Changers</div>' + chips(gcCards,'gc') + '</div>' : '') +
+        combosHtml +
+        (comboCards.length ? '<div class="flagged-section"><div class="flagged-title">&#x1F300; Combo Pieces</div>' + chips(comboCards,'combo') + '</div>' : '') +
+        (mldCards.length   ? '<div class="flagged-section"><div class="flagged-title">&#x1F30B; MLD Cards</div>' + chips(mldCards,'mld') + '</div>' : '') +
+        (xtCards.length    ? '<div class="flagged-section"><div class="flagged-title">&#x23F1; Extra Turns</div>' + chips(xtCards,'xt') + '</div>' : '') +
+
+        // Action buttons
+        '<div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:14px;">' +
+          '<button class="btn-secondary" onclick="exportScanTxt(\'' + safeN + '\', window._lastScanAnalysis)" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x2193; EXPORT</button>' +
+          '<button class="btn-secondary" onclick="shareScanURL(\'' + safeN + '\',' + bracket + ',' + score.toFixed(1) + ')" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F517; SHARE</button>' +
+          '<button class="btn-secondary" onclick="fetchAndShowPrices()" id="price-btn" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4B0; PRICES</button>' +
+          '<button class="btn-secondary" onclick="document.getElementById(\'scan-deck\').value=\'\';document.getElementById(\'scan-name\').value=\'\';document.getElementById(\'scan-counter\').textContent=\'0\';document.getElementById(\'scan-results\').style.display=\'none\';window.scrollTo({top:0,behavior:\'smooth\'});" style="padding:8px 14px;font-size:10px;letter-spacing:2px;margin-left:auto;">&#x21BA; NEW SCAN</button>' +
+        '</div>' +
+        '<div id="price-results"></div>' +
+      '</div>' +
+
+      // Category breakdown
+      '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">' +
+        '<div style="font-family:Cinzel,serif;font-size:11px;font-weight:700;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);">&#x1F4CA; Category Breakdown</div>' +
+        catRows +
+      '</div>';
+
+    window._lastScanAnalysis = analysis;
+    window._lastScanDeck = deck;
+
+    saveToHistory(deckName, bracket, score, gcCount, cardCount);
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(err) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div style="background:var(--bg-2);border:1px solid rgba(240,81,106,0.3);border-radius:var(--r-lg);padding:24px;color:var(--red);font-family:DM Mono,monospace;font-size:12px;">&#x26D4; Error during scan: ' + err.message + '</div>';
+    console.error('runSingleScan error:', err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ SCAN DECK';
+  }
 }
 
 
