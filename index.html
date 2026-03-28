@@ -598,9 +598,9 @@ textarea::placeholder { color: #5a5a7a; }
     <div class="section-hdr">&#x26A0; Game Changers (Updated Feb 9, 2026)</div>
     <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Legal in Commander. Not permitted in Bracket 1 or 2. Up to <strong style="color:#e8e8f0">3 allowed in Bracket 3</strong>. Unlimited at Bracket 4+. <strong style="color:#e8c94a">Note: Sol Ring is intentionally NOT a Game Changer</strong> — WotC considers it a Commander tradition.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8c94a;line-height:2.2;columns:2;column-gap:20px;">
-      Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
+      Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mox Opal · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
     </div>
-    <p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Mox Opal, Counterspell, Pact of Negation, Food Chain, Deflecting Swat, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
+    <p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Counterspell, Pact of Negation, Food Chain, Deflecting Swat, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
 
     <div class="section-hdr">&#x1F504; Chaining Extra Turns (Not Allowed Below Bracket 4)</div>
     <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">These cards enable repeated extra turns and are restricted below Bracket 4.</p>
@@ -636,7 +636,7 @@ const CARD_DB = {
   "Mana Vault":            {impact:17, cmc:1,  gc:true,  type:'artifact'},
   "Mox Diamond":           {impact:17, cmc:0,  gc:true,  type:'artifact'},
   "Chrome Mox":            {impact:16, cmc:0,  gc:true,  type:'artifact'},
-  "Mox Opal":              {impact:16, cmc:0,  type:'artifact'},
+  "Mox Opal":              {impact:16, cmc:0,  gc:true,  type:'artifact'},
   "Jeweled Lotus":         {impact:18, cmc:0,  banned:true, type:'artifact'},
   // === BANNED IN COMMANDER ===
   "Black Lotus":           {impact:20, cmc:0,  banned:true, type:'artifact'},
