@@ -219,6 +219,227 @@ textarea::placeholder { color: #5a5a7a; }
 .bar-gold { background: linear-gradient(90deg, #c8a030, #e8c94a); }
 .bar-teal { background: linear-gradient(90deg, #30b890, #4ae8b0); }
 .power-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: #5a5a7a; margin-top: 3px; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTG Deck Comparator + Power Level</title>
+<style>
+/* fonts loaded via link tag */
+
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0c0c0e;
+  color: #e8e8f0;
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 100% 50% at 50% -5%, rgba(232,201,74,0.06) 0%, transparent 65%);
+}
+
+/* HEADER */
+.header {
+  text-align: center;
+  padding: 36px 20px 24px;
+  border-bottom: 1px solid #28283a;
+}
+.header h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(32px, 6vw, 64px);
+  letter-spacing: 6px;
+  color: #e8c94a;
+  text-shadow: 0 0 40px rgba(232,201,74,0.2);
+}
+.header p { color: #5a5a7a; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #28283a;
+  background: #14141a;
+  overflow-x: auto;
+}
+.tab {
+  padding: 14px 22px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #5a5a7a;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tab:hover { color: #e8e8f0; }
+.tab.active { color: #e8c94a; border-bottom-color: #e8c94a; }
+
+.panel { display: none; padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
+.panel.active { display: block; }
+
+/* INPUTS */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 44px 1fr;
+  gap: 0;
+  margin-bottom: 20px;
+}
+@media(max-width:640px){ .input-grid { grid-template-columns: 1fr; } .vs-mid { display: none; } }
+
+.deck-col { display: flex; flex-direction: column; gap: 8px; }
+.deck-lbl { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; }
+.deck-lbl.a { color: #e8c94a; }
+.deck-lbl.b { color: #4ae8b0; }
+
+input[type=text] {
+  background: #14141a;
+  border: 1px solid #28283a;
+  border-radius: 6px;
+  color: #e8e8f0;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+input[type=text]:focus { border-color: #e8c94a; }
+
+textarea {
+  background: #14141a;
+  border: 1px solid #28283a;
+  border-radius: 8px;
+  color: #e8e8f0;
+  font-family: 'DM Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.75;
+  padding: 14px;
+  resize: vertical;
+  height: 260px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+textarea:focus { border-color: rgba(232,201,74,0.3); }
+textarea::placeholder { color: #5a5a7a; }
+
+.vs-mid { display: flex; align-items: center; justify-content: center; padding-top: 48px; }
+.vs-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid #28283a;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px; color: #5a5a7a; letter-spacing: 1px;
+}
+
+.btn-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+
+.btn-primary {
+  background: #e8c94a;
+  border: none; border-radius: 8px;
+  color: #0c0c0e;
+  cursor: pointer;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 4px;
+  padding: 12px 40px;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: #f5d84e; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,201,74,0.25); }
+
+.btn-secondary {
+  background: #14141a;
+  border: 1px solid #28283a;
+  border-radius: 8px;
+  color: #5a5a7a;
+  cursor: pointer;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 700; font-size: 12px; letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #e8c94a; color: #e8c94a; }
+
+/* RESULTS */
+#results { display: none; }
+
+/* POWER LEVEL CARDS */
+.power-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media(max-width:600px){ .power-grid { grid-template-columns: 1fr; } }
+
+.power-card {
+  background: #14141a;
+  border: 1px solid #28283a;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.power-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.power-card.a::before { background: linear-gradient(90deg, #e8c94a, rgba(232,201,74,0.3)); }
+.power-card.b::before { background: linear-gradient(90deg, #4ae8b0, rgba(74,232,176,0.3)); }
+
+.power-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 16px;
+}
+.power-card-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; }
+.power-card-name.a { color: #e8c94a; }
+.power-card-name.b { color: #4ae8b0; }
+
+.bracket-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.br1 { color: #4ae8b0; border-color: #4ae8b0; background: rgba(74,232,176,0.08); }
+.br2 { color: #4a9ee8; border-color: #4a9ee8; background: rgba(74,158,232,0.08); }
+.br3 { color: #9e4ae8; border-color: #9e4ae8; background: rgba(158,74,232,0.08); }
+.br4 { color: #e8c94a; border-color: #e8c94a; background: rgba(232,201,74,0.08); }
+.br5 { color: #e84a6a; border-color: #e84a6a; background: rgba(232,74,106,0.08); }
+
+.power-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 16px;
+}
+.pstat { text-align: center; }
+.pstat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #e8e8f0; }
+.pstat-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5a5a7a; }
+
+.bracket-checks { display: flex; flex-direction: column; gap: 5px; }
+.bcheck {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; letter-spacing: 1px;
+}
+.bcheck .icon { font-size: 13px; }
+.bcheck.pass { color: #4ae87a; }
+.bcheck.fail { color: #e84a6a; }
+.bcheck.warn { color: #e8c94a; }
+
+.power-bar-wrap { margin-top: 12px; }
+.power-bar-bg { height: 8px; background: #1c1c24; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.power-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.bar-gold { background: linear-gradient(90deg, #c8a030, #e8c94a); }
+.bar-teal { background: linear-gradient(90deg, #30b890, #4ae8b0); }
+.power-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: #5a5a7a; margin-top: 3px; }
 
 /* FLAGGED CARDS */
 .flagged-section {
@@ -522,6 +743,14 @@ textarea::placeholder { color: #5a5a7a; }
       <textarea id="scan-deck" placeholder="Paste your decklist here..." style="width:100%;height:220px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;margin-bottom:4px;" oninput="updateCounter('scan-deck','scan-counter')"></textarea>
       <div style="text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#5a5a7a;margin-bottom:12px;letter-spacing:1px;">
         <span id="scan-counter" style="color:#e8c94a;font-weight:700;">0</span> cards
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">&#x1F9EA; Load Sample Deck</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="loadSampleDeck('krenko')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#e8c94a;font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e8c94a'" onmouseout="this.style.borderColor='#3a3a5a'">Krenko cEDH</button>
+          <button onclick="loadSampleDeck('slivers')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#4ae8b0;font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#4ae8b0'" onmouseout="this.style.borderColor='#3a3a5a'">Sliver Overlord</button>
+          <button onclick="loadSampleDeck('casual')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#9e4ae8;font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#9e4ae8'" onmouseout="this.style.borderColor='#3a3a5a'">Casual Precon+</button>
+        </div>
       </div>
       <button onclick="runSingleScan()" id="scan-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;font-weight:700;">&#x26A1; SCAN DECK</button>
     </div>
@@ -961,6 +1190,288 @@ const CARD_DB = {
   "Urza's Saga":           {impact:16, cmc:0,  type:'land'},
   "Buried Ruin":           {impact:9,  cmc:0,  type:'land'},
   "Hall of the Bandit Lord":{impact:9,  cmc:0,  type:'land'},
+
+  // === cEDH / HIGH POWER STAPLES ===
+  "Ragavan, Nimble Pilferer":  {impact:17, cmc:1,  type:'creature'},
+  "Esper Sentinel":            {impact:14, cmc:1,  type:'creature'},
+  "Ledger Shredder":           {impact:13, cmc:2,  type:'creature'},
+  "Bowmasters":                {impact:15, cmc:2,  gc:true, type:'creature'},
+  "Dauthi Voidwalker":         {impact:14, cmc:2,  type:'creature'},
+  "Collector Ouphe":           {impact:13, cmc:2,  type:'creature'},
+  "Thrasios, Triton Hero":     {impact:15, cmc:2,  type:'creature'},
+  "Tymna the Weaver":          {impact:16, cmc:3,  type:'creature'},
+  "Jeska, Thrice Reborn":      {impact:13, cmc:3,  type:'planeswalker'},
+  "Tevita, Radiant Voyager":   {impact:12, cmc:3,  type:'creature'},
+  "Magda, Brazen Outlaw":      {impact:13, cmc:2,  type:'creature'},
+  "Ranger-Captain of Eos":     {impact:13, cmc:3,  type:'creature'},
+  "Elesh Norn, Mother of Machines":{impact:15, cmc:5, type:'creature'},
+  "Jin-Gitaxias, Progress Tyrant":{impact:15,cmc:7, type:'creature'},
+  "Sheoldred, the Apocalypse": {impact:16, cmc:4,  type:'creature'},
+  "Atraxa, Praetors' Voice":   {impact:14, cmc:4,  type:'creature'},
+  "Zur the Enchanter":         {impact:14, cmc:4,  type:'creature'},
+  "Breya, Etherium Shaper":    {impact:13, cmc:4,  type:'creature'},
+  "Prossh, Skyraider of Kher": {impact:13, cmc:6,  type:'creature'},
+  "Selvala, Heart of the Wilds":{impact:15,cmc:3,  type:'creature'},
+  "Selvala, Explorer Returned":{impact:12, cmc:3,  type:'creature'},
+  "Arcum Dagsson":             {impact:15, cmc:4,  type:'creature'},
+  "Teferi, Temporal Archmage": {impact:14, cmc:6,  type:'planeswalker'},
+  "Teferi, Time Raveler":      {impact:14, cmc:3,  type:'planeswalker'},
+  "Minsc & Boo, Timeless Heroes":{impact:12,cmc:4, type:'planeswalker'},
+  "Wanderer, Wildwood Intuitive":{impact:11,cmc:4, type:'creature'},
+
+  // === INTERACTION / PROTECTION ===
+  "Silence":                   {impact:13, cmc:1,  type:'instant'},
+  "Orim's Chant":              {impact:12, cmc:2,  type:'instant'},
+  "Veil of Summer":            {impact:14, cmc:1,  type:'instant'},
+  "Autumn's Veil":             {impact:11, cmc:1,  type:'instant'},
+  "Mental Misstep":            {impact:14, cmc:0,  type:'instant'},
+  "Spell Pierce":              {impact:13, cmc:1,  type:'instant'},
+  "Dispel":                    {impact:11, cmc:1,  type:'instant'},
+  "Mana Drain":                {impact:17, cmc:2,  type:'instant'},
+  "Delay":                     {impact:11, cmc:2,  type:'instant'},
+  "Narset's Reversal":         {impact:13, cmc:2,  type:'instant'},
+  "Boseiju, Who Endures":      {impact:15, cmc:0,  type:'land'},
+  "Cavern of Souls":           {impact:15, cmc:0,  type:'land'},
+  "Slaughter Pact":            {impact:12, cmc:0,  type:'instant'},
+  "Deadly Rollick":            {impact:13, cmc:4,  type:'instant'},
+  "Fierce Guardianship":       {impact:17, cmc:3,  gc:true, type:'instant'},
+  "Saw It Coming":             {impact:10, cmc:3,  type:'instant'},
+
+  // === FAST MANA / ROCKS ===
+  "Mana Vault":                {impact:17, cmc:1,  gc:true, type:'artifact'},
+  "Grim Monolith":             {impact:14, cmc:2,  gc:true, combo:true, type:'artifact'},
+  "Basalt Monolith":           {impact:12, cmc:3,  combo:true, type:'artifact'},
+  "Mox Amber":                 {impact:14, cmc:0,  type:'artifact'},
+  "Mox Tantalite":             {impact:10, cmc:0,  type:'artifact'},
+  "Jeweled Amulet":            {impact:9,  cmc:0,  type:'artifact'},
+  "Coldsteel Heart":           {impact:9,  cmc:2,  type:'artifact'},
+  "Mind Stone":                {impact:10, cmc:2,  type:'artifact'},
+  "Thought Vessel":            {impact:10, cmc:2,  type:'artifact'},
+  "Worn Powerstone":           {impact:8,  cmc:3,  type:'artifact'},
+  "Coalition Relic":           {impact:11, cmc:3,  type:'artifact'},
+  "Gilded Lotus":              {impact:12, cmc:5,  type:'artifact'},
+  "Mana Geode":                {impact:7,  cmc:3,  type:'artifact'},
+  "Inspiring Statuary":        {impact:10, cmc:3,  type:'artifact'},
+  "Extraplanar Lens":          {impact:12, cmc:3,  type:'artifact'},
+  "Gauntlet of Power":         {impact:11, cmc:5,  type:'artifact'},
+
+  // === DRAW / VALUE ===
+  "Windfall":                  {impact:14, cmc:3,  type:'sorcery'},
+  "Timetwister":               {impact:19, cmc:3,  banned:true, type:'sorcery'},
+  "Memory Jar":                {impact:14, cmc:5,  type:'artifact'},
+  "Diminishing Returns":       {impact:12, cmc:4,  type:'sorcery'},
+  "Frantic Search":            {impact:11, cmc:3,  type:'instant'},
+  "Fact or Fiction":           {impact:12, cmc:4,  type:'instant'},
+  "Treasure Cruise":           {impact:12, cmc:8,  type:'sorcery'},
+  "Dig Through Time":          {impact:13, cmc:8,  type:'instant'},
+  "Night's Whisper":           {impact:10, cmc:2,  type:'sorcery'},
+  "Sign in Blood":             {impact:9,  cmc:2,  type:'sorcery'},
+  "Read the Bones":            {impact:9,  cmc:3,  type:'sorcery'},
+  "Phyrexian Arena":           {impact:12, cmc:3,  type:'enchantment'},
+  "Painful Truths":            {impact:10, cmc:3,  type:'sorcery'},
+  "Peer into the Abyss":       {impact:13, cmc:7,  type:'sorcery'},
+  "Tainted Pact":              {impact:14, cmc:2,  combo:true, type:'instant'},
+  "Tymna the Weaver":          {impact:16, cmc:3,  type:'creature'},
+
+  // === COMBO PIECES ===
+  "Isochron Scepter":          {impact:13, cmc:2,  combo:true, type:'artifact'},
+  "Dramatic Reversal":         {impact:12, cmc:2,  combo:true, type:'instant'},
+  "Paradox Engine":            {impact:16, cmc:5,  combo:true, type:'artifact'},
+  "Power Artifact":            {impact:12, cmc:2,  combo:true, type:'enchantment'},
+  "Rings of Brighthearth":     {impact:13, cmc:3,  combo:true, type:'artifact'},
+  "Voltaic Key":               {impact:10, cmc:1,  combo:true, type:'artifact'},
+  "Pili-Pala":                 {impact:11, cmc:2,  combo:true, type:'creature'},
+  "Grand Architect":           {impact:12, cmc:3,  combo:true, type:'creature'},
+  "Peregrine Drake":           {impact:11, cmc:5,  combo:true, type:'creature'},
+  "Deadeye Navigator":         {impact:12, cmc:6,  combo:true, type:'creature'},
+  "Dualcaster Mage":           {impact:11, cmc:3,  combo:true, type:'creature'},
+  "Labman":                    {impact:14, cmc:3,  combo:true, type:'creature'},
+  "Laboratory Maniac":         {impact:14, cmc:3,  combo:true, type:'creature'},
+  "Jace, Wielder of Mysteries":{impact:14, cmc:4,  combo:true, type:'planeswalker'},
+  "Demonic Consultation":      {impact:14, cmc:1,  combo:true, type:'instant'},
+  "Tainted Pact":              {impact:14, cmc:2,  combo:true, type:'instant'},
+  "Hermit Druid":              {impact:15, cmc:2,  combo:true, type:'creature'},
+  "Protean Hulk":              {impact:16, cmc:7,  combo:true, type:'creature'},
+  "Mikaeus, the Unhallowed":   {impact:15, cmc:6,  combo:true, type:'creature'},
+  "Walking Ballista":          {impact:14, cmc:0,  combo:true, type:'artifact'},
+  "Triskelion":                {impact:11, cmc:6,  combo:true, type:'artifact'},
+  "Devoted Druid":             {impact:12, cmc:2,  combo:true, type:'creature'},
+  "Vizier of Remedies":        {impact:11, cmc:2,  combo:true, type:'creature'},
+  "Heliod, Sun-Crowned":       {impact:13, cmc:3,  combo:true, type:'enchantment'},
+  "Auriok Champion":           {impact:11, cmc:2,  combo:true, type:'creature'},
+  "Felidar Guardian":          {impact:12, cmc:4,  combo:true, type:'creature'},
+  "Saheeli Rai":               {impact:12, cmc:3,  combo:true, type:'planeswalker'},
+  "Melira, Sylvok Outcast":    {impact:12, cmc:2,  combo:true, type:'creature'},
+  "Viscera Seer":              {impact:10, cmc:1,  combo:true, type:'creature'},
+  "Murderous Redcap":          {impact:10, cmc:4,  combo:true, type:'creature'},
+  "Splinter Twin":             {impact:14, cmc:4,  combo:true, type:'enchantment'},
+  "Pestermite":                {impact:9,  cmc:3,  combo:true, type:'creature'},
+  "Deceiver Exarch":           {impact:10, cmc:3,  combo:true, type:'creature'},
+  "Niv-Mizzet, Parun":         {impact:14, cmc:6,  combo:true, type:'creature'},
+  "Curiosity":                 {impact:10, cmc:1,  combo:true, type:'enchantment'},
+  "Tandem Lookout":            {impact:10, cmc:3,  combo:true, type:'creature'},
+  "Freed from the Real":       {impact:11, cmc:3,  combo:true, type:'enchantment'},
+  "Pemmin's Aura":             {impact:11, cmc:3,  combo:true, type:'enchantment'},
+  "Sliver Queen":              {impact:16, cmc:5,  combo:true, type:'creature'},
+  "Mana Reflection":           {impact:14, cmc:6,  type:'enchantment'},
+  "Doubling Season":           {impact:15, cmc:5,  type:'enchantment'},
+  "Parallel Lives":            {impact:13, cmc:4,  type:'enchantment'},
+  "Anointed Procession":       {impact:12, cmc:4,  type:'enchantment'},
+
+  // === SLIVER SUPPORT ===
+  "Sliver Overlord":           {impact:16, cmc:5,  type:'creature'},
+  "Sliver Hivelord":           {impact:14, cmc:5,  type:'creature'},
+  "Sliver Legion":             {impact:14, cmc:5,  type:'creature'},
+  "Crystalline Sliver":        {impact:13, cmc:2,  type:'creature'},
+  "Harmonic Sliver":           {impact:11, cmc:3,  type:'creature'},
+  "Gemhide Sliver":            {impact:10, cmc:2,  type:'creature'},
+  "Manaweft Sliver":           {impact:10, cmc:2,  type:'creature'},
+  "Hivestone":                 {impact:9,  cmc:2,  type:'artifact'},
+
+  // === TUTORS / SEARCH ===
+  "Beseech the Mirror":        {impact:14, cmc:4,  type:'sorcery'},
+  "Wishclaw Talisman":         {impact:13, cmc:2,  type:'artifact'},
+  "Lim-Dul's Vault":           {impact:12, cmc:2,  type:'instant'},
+  "Scheming Symmetry":         {impact:12, cmc:1,  type:'sorcery'},
+  "Personal Tutor":            {impact:12, cmc:1,  type:'sorcery'},
+  "Moonsilver Key":            {impact:9,  cmc:2,  type:'artifact'},
+  "Goblin Engineer":           {impact:11, cmc:2,  type:'creature'},
+  "Trophy Mage":               {impact:10, cmc:3,  type:'creature'},
+  "Trinket Mage":              {impact:10, cmc:3,  type:'creature'},
+  "Fabricate":                 {impact:10, cmc:3,  type:'sorcery'},
+  "Inventors' Fair":           {impact:11, cmc:0,  type:'land'},
+  "Woodland Bellower":         {impact:11, cmc:6,  type:'creature'},
+  "Green Sun's Zenith":        {impact:13, cmc:1,  type:'sorcery'},
+  "Chord of Calling":          {impact:13, cmc:3,  type:'instant'},
+  "Eldritch Evolution":        {impact:12, cmc:3,  type:'sorcery'},
+  "Birthing Pod":              {impact:14, cmc:4,  type:'artifact'},
+  "Yisan, the Wanderer Bard":  {impact:12, cmc:3,  type:'creature'},
+  "Tooth and Nail":            {impact:16, cmc:9,  combo:true, type:'sorcery'},
+  "Finale of Devastation":     {impact:14, cmc:1,  type:'sorcery'},
+
+  // === LANDS (MORE) ===
+  "Tainted Isle":              {impact:8,  cmc:0,  type:'land'},
+  "Tainted Field":             {impact:8,  cmc:0,  type:'land'},
+  "Tainted Peak":              {impact:8,  cmc:0,  type:'land'},
+  "Tainted Wood":              {impact:8,  cmc:0,  type:'land'},
+  "Urborg, Tomb of Yawgmoth":  {impact:14, cmc:0,  type:'land'},
+  "Cabal Coffers":             {impact:15, cmc:2,  type:'land'},
+  "Gemstone Caverns":          {impact:13, cmc:0,  type:'land'},
+  "Gemstone Mine":             {impact:10, cmc:0,  type:'land'},
+  "Mana Confluence":           {impact:13, cmc:0,  type:'land'},
+  "Forbidden Orchard":         {impact:10, cmc:0,  type:'land'},
+  "Spire of Industry":         {impact:11, cmc:0,  type:'land'},
+  "Seat of the Synod":         {impact:9,  cmc:0,  type:'land'},
+  "Vault of Whispers":         {impact:9,  cmc:0,  type:'land'},
+  "Great Furnace":             {impact:9,  cmc:0,  type:'land'},
+  "Tree of Tales":             {impact:9,  cmc:0,  type:'land'},
+  "Ancient Den":               {impact:9,  cmc:0,  type:'land'},
+  "Darksteel Citadel":         {impact:8,  cmc:0,  type:'land'},
+  "Inventors Fair":            {impact:11, cmc:0,  type:'land'},
+  "Emergence Zone":            {impact:10, cmc:0,  type:'land'},
+  "Rishadan Port":             {impact:11, cmc:0,  type:'land'},
+  "Maze of Ith":               {impact:11, cmc:0,  type:'land'},
+  "Homeward Path":             {impact:8,  cmc:0,  type:'land'},
+  "Exotic Orchard":            {impact:10, cmc:0,  type:'land'},
+  "Shizo, Death's Storehouse":  {impact:9,  cmc:0,  type:'land'},
+  "Minamo, School at Water's Edge":{impact:9,cmc:0,type:'land'},
+  "Okina, Temple to the Grandfathers":{impact:8,cmc:0,type:'land'},
+  "Oboro, Palace in the Clouds":{impact:8, cmc:0,  type:'land'},
+  "Strip Mine":                {impact:14, cmc:0,  type:'land'},
+  "Wasteland":                 {impact:14, cmc:0,  type:'land'},
+  "Dust Bowl":                 {impact:10, cmc:0,  type:'land'},
+  "Volrath's Stronghold":      {impact:11, cmc:0,  type:'land'},
+  "Bazaar of Baghdad":         {impact:15, cmc:0,  type:'land'},
+  "Phyrexian Tower":           {impact:12, cmc:0,  type:'land'},
+  "High Market":               {impact:9,  cmc:0,  type:'land'},
+  "Haunted Fengraf":           {impact:6,  cmc:0,  type:'land'},
+  "Reliquary Tower":           {impact:9,  cmc:0,  type:'land'},
+  "Winding Canyons":           {impact:9,  cmc:0,  type:'land'},
+  "Yavimaya, Cradle of Growth":{impact:13, cmc:0,  type:'land'},
+  "Dryad Arbor":               {impact:9,  cmc:0,  type:'land'},
+  "Dark Depths":               {impact:12, cmc:0,  combo:true, type:'land'},
+  "Thespian's Stage":          {impact:11, cmc:0,  combo:true, type:'land'},
+  "Vesuva":                    {impact:10, cmc:0,  type:'land'},
+
+  // === MISC STAPLES ===
+  "Cyclonic Rift":             {impact:18, cmc:2,  gc:true, type:'instant'},
+  "Toxic Deluge":              {impact:14, cmc:3,  type:'sorcery'},
+  "Damnation":                 {impact:14, cmc:4,  type:'sorcery'},
+  "Wrath of God":              {impact:13, cmc:4,  type:'sorcery'},
+  "Blasphemous Act":           {impact:12, cmc:9,  type:'sorcery'},
+  "Vandalblast":               {impact:11, cmc:1,  type:'sorcery'},
+  "Austere Command":           {impact:12, cmc:6,  type:'sorcery'},
+  "Anguished Unmaking":        {impact:13, cmc:3,  type:'instant'},
+  "Vindicate":                 {impact:12, cmc:3,  type:'sorcery'},
+  "Mortify":                   {impact:10, cmc:3,  type:'instant'},
+  "Nature's Claim":            {impact:10, cmc:1,  type:'instant'},
+  "Krosan Grip":               {impact:11, cmc:3,  type:'instant'},
+  "Return to Nature":          {impact:9,  cmc:2,  type:'instant'},
+  "Disenchant":                {impact:9,  cmc:2,  type:'instant'},
+  "Wear // Tear":              {impact:10, cmc:1,  type:'instant'},
+  "Pyroclasm":                 {impact:9,  cmc:2,  type:'sorcery'},
+  "Anger of the Gods":         {impact:10, cmc:3,  type:'sorcery'},
+  "Rolling Earthquake":        {impact:11, cmc:1,  type:'sorcery'},
+  "Earthquake":                {impact:10, cmc:1,  type:'sorcery'},
+  "Mizzium Mortars":           {impact:10, cmc:2,  type:'sorcery'},
+  "Electrodominance":          {impact:10, cmc:3,  type:'instant'},
+  "Price of Progress":         {impact:11, cmc:2,  type:'instant'},
+  "Stranglehold":              {impact:13, cmc:4,  type:'enchantment'},
+  "Hullbreacher":              {impact:15, cmc:3,  banned:true, type:'creature'},
+  "Aven Mindcensor":           {impact:12, cmc:3,  type:'creature'},
+  "Cursed Totem":              {impact:12, cmc:2,  type:'artifact'},
+  "Null Rod":                  {impact:12, cmc:2,  type:'artifact'},
+  "Stony Silence":             {impact:12, cmc:2,  type:'enchantment'},
+  "Grafdigger's Cage":         {impact:11, cmc:1,  type:'artifact'},
+  "Rest in Peace":             {impact:12, cmc:2,  type:'enchantment'},
+  "Leyline of the Void":       {impact:12, cmc:4,  type:'enchantment'},
+  "Tormod's Crypt":            {impact:8,  cmc:0,  type:'artifact'},
+  "Relic of Progenitus":       {impact:9,  cmc:1,  type:'artifact'},
+  "Yixlid Jailer":             {impact:9,  cmc:2,  type:'creature'},
+  "Pithing Needle":            {impact:10, cmc:1,  type:'artifact'},
+  "Phyrexian Revoker":         {impact:11, cmc:2,  type:'creature'},
+  "Linvala, Keeper of Silence":{impact:14, cmc:4,  type:'creature'},
+  "Spirit of the Labyrinth":   {impact:12, cmc:2,  type:'creature'},
+  "Hushbringer":               {impact:11, cmc:2,  type:'creature'},
+  "Hushwing Gryff":            {impact:10, cmc:3,  type:'creature'},
+  "Ethersworn Canonist":       {impact:12, cmc:2,  type:'artifact'},
+  "Rule of Law":               {impact:11, cmc:3,  type:'enchantment'},
+  "Arcane Laboratory":         {impact:10, cmc:3,  type:'enchantment'},
+  "Eidolon of Rhetoric":       {impact:11, cmc:3,  type:'creature'},
+  "Grand Abolisher":           {impact:13, cmc:2,  type:'creature'},
+  "City of Solitude":          {impact:11, cmc:3,  type:'enchantment'},
+  "Notion Thief":              {impact:13, cmc:4,  gc:true, type:'creature'},
+  "Hullbreaker Horror":        {impact:14, cmc:7,  type:'creature'},
+  "Jin-Gitaxias, Core Augur":  {impact:15, cmc:10, type:'creature'},
+  "Vorinclex, Voice of Hunger":{impact:13, cmc:8,  mld:true, type:'creature'},
+  "Kozilek, Butcher of Truth": {impact:17, cmc:10, type:'creature'},
+  "Emrakul, the Promised End": {impact:17, cmc:13, type:'creature'},
+  "Ulamog, the Ceaseless Hunger":{impact:17,cmc:10,type:'creature'},
+  "It That Betrays":           {impact:12, cmc:12, type:'creature'},
+  "Panharmonicon":             {impact:13, cmc:4,  type:'artifact'},
+  "Strionic Resonator":        {impact:11, cmc:2,  combo:true, type:'artifact'},
+  "Copy Artifact":             {impact:12, cmc:2,  type:'enchantment'},
+  "Reshape":                   {impact:11, cmc:3,  type:'sorcery'},
+  "Transmute Artifact":        {impact:12, cmc:2,  type:'sorcery'},
+  "Whir of Invention":         {impact:12, cmc:3,  type:'instant'},
+  "Trash for Treasure":        {impact:9,  cmc:3,  type:'instant'},
+  "Second Sunrise":            {impact:10, cmc:3,  type:'instant'},
+  "Faith's Reward":            {impact:10, cmc:4,  type:'instant'},
+  "Hurkyl's Recall":           {impact:12, cmc:2,  type:'instant'},
+  "Rebuild":                   {impact:10, cmc:3,  type:'instant'},
+  "Chain of Vapor":            {impact:11, cmc:1,  type:'instant'},
+  "Evacuation":                {impact:11, cmc:5,  type:'instant'},
+  "Snap":                      {impact:10, cmc:2,  type:'instant'},
+  "Kaervek's Torch":           {impact:8,  cmc:2,  type:'sorcery'},
+  "Grapeshot":                 {impact:9,  cmc:2,  combo:true, type:'sorcery'},
+  "Brain Freeze":              {impact:9,  cmc:2,  combo:true, type:'instant'},
+  "Tendrils of Agony":         {impact:12, cmc:4,  combo:true, type:'sorcery'},
+  "Mind's Desire":             {impact:13, cmc:6,  combo:true, type:'sorcery'},
+  "Aetherflux Reservoir":      {impact:14, cmc:4,  combo:true, type:'artifact'},
+  "Reckless Fireweaver":       {impact:9,  cmc:2,  combo:true, type:'creature'},
+  "Reckless Pyrosurfer":       {impact:8,  cmc:2,  type:'creature'},
+  "Altar of the Brood":        {impact:9,  cmc:1,  combo:true, type:'artifact'},
+
 };
 
 // Default for unknown cards
@@ -3050,27 +3561,30 @@ function runSingleScan() {
   const resultsEl = document.getElementById('scan-results');
   resultsEl.style.display = 'block';
 
-  // Build a standalone power card display
   const bracket = analysis.bracket;
   const bracketColors = {1:'#4ae8b0',2:'#4a9ee8',3:'#9e4ae8',4:'#e8c94a',5:'#e84a6a'};
   const bracketLabels = {1:'Bracket 1',2:'Bracket 2',3:'Bracket 3',4:'Bracket 4',5:'Bracket 5 (cEDH)'};
   const col = bracketColors[bracket] || '#e8c94a';
 
-  // Flagged cards
-  const gcCards   = [...deck.entries()].filter(([,v])=>v.gc).map(([n])=>n);
-  const mldCards  = [...deck.entries()].filter(([,v])=>v.mld).map(([n])=>n);
-  const comboCards= [...deck.entries()].filter(([,v])=>v.combo).map(([n])=>n);
-  const xtCards   = [...deck.entries()].filter(([,v])=>v.xt).map(([n])=>n);
-  const bannedCards=[...deck.entries()].filter(([,v])=>v.banned).map(([n])=>n);
+  const gcCards    = [...deck.entries()].filter(([,v])=>v.gc).map(([n])=>n);
+  const mldCards   = [...deck.entries()].filter(([,v])=>v.mld).map(([n])=>n);
+  const comboCards = [...deck.entries()].filter(([,v])=>v.combo).map(([n])=>n);
+  const xtCards    = [...deck.entries()].filter(([,v])=>v.xt).map(([n])=>n);
+  const bannedCards= [...deck.entries()].filter(([,v])=>v.banned).map(([n])=>n);
 
-  const chipHtml = (arr, cls) => arr.map(n => `<span class="flag-chip ${cls}" data-card="${n}" onmouseover="showTooltip(event,'${n.replace(/'/g,"\\'")}',this)" onmouseout="hideTooltip()">${n}</span>`).join('');
+  // Enrich analysis object for export
+  analysis.gcCards = gcCards;
+  analysis.comboCards = comboCards;
+  analysis.mldCards = mldCards;
 
-  // Category breakdown for single deck
+  const chipHtml = (arr, cls) => arr.map(n => `<span class="flag-chip ${cls}" data-card="${n}" onmouseover="showTooltip(event,'${n.replace(/'/g,"\'")}',this)" onmouseout="hideTooltip()">${n}</span>`).join('');
+
   const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
   const ct = (t) => { let n=0; for(const[,v] of deck) if(v.type===t) n+=(v.qty||1); return n; };
   const maxCat = 40;
   const catRows = cats.map(c => {
     const n = ct(c);
+    if (!n) return '';
     return `<div style="display:grid;grid-template-columns:90px 1fr 40px;gap:8px;align-items:center;margin-bottom:6px;">
       <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:#5a5a7a;text-transform:uppercase;text-align:right;">${c}</div>
       <div style="background:#1c1c24;border-radius:3px;height:7px;overflow:hidden;">
@@ -3080,16 +3594,14 @@ function runSingleScan() {
     </div>`;
   }).join('');
 
-  // Bracket checks
   const checks = [
-    { ok: !analysis.hasXTChain,  pass:'No chaining extra turns', fail:'Chaining extra turns detected (Bracket 4+)' },
-    { ok: !analysis.hasMLD,      pass:'No mass land denial', fail:'MLD detected (Bracket 4+)' },
+    { ok: !analysis.hasXTChain, pass:'No chaining extra turns', fail:'Chaining extra turns detected (Bracket 4+)' },
+    { ok: !analysis.hasMLD, pass:'No mass land denial', fail:'MLD detected (Bracket 4+)' },
     { ok: analysis.comboCount===0, warn: analysis.comboCount>0 && analysis.comboCount<=2,
-      pass:'No 2-card combos', fail:'2-card combos present (Bracket 4+)', warnMsg:`${analysis.comboCount} combo piece(s) — check assembly cost` },
-    { ok: analysis.gcCount===0,  warn: analysis.gcCount>0 && analysis.gcCount<=3,
-      pass:'No Game Changers', fail:`${analysis.gcCount} Game Changer(s) (Bracket 4+)`, warnMsg:`${analysis.gcCount} Game Changer(s) — Bracket 3 allows up to 3` },
+      pass:'No 2-card combos', fail:'2-card combos present (Bracket 4+)', warnMsg:`${analysis.comboCount} combo piece(s) detected` },
+    { ok: analysis.gcCount===0, warn: analysis.gcCount>0 && analysis.gcCount<=3,
+      pass:'No Game Changers', fail:`${analysis.gcCount} Game Changer(s) (Bracket 4+)`, warnMsg:`${analysis.gcCount} Game Changer(s) — Bracket 3 max is 3` },
   ];
-
   const checksHtml = checks.map(c => {
     if (c.ok) return `<div class="bcheck pass"><span class="icon">&#x2713;</span>${c.pass}</div>`;
     if (c.warn) return `<div class="bcheck warn"><span class="icon">&#x26A0;</span>${c.warnMsg || c.fail}</div>`;
@@ -3099,7 +3611,6 @@ function runSingleScan() {
   let html = `
   <div style="background:#14141a;border:1px solid ${col}44;border-radius:12px;padding:24px;position:relative;overflow:hidden;margin-bottom:16px;">
     <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${col},${col}44);"></div>
-
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
       <div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:${col};">${name}</div>
@@ -3110,35 +3621,423 @@ function runSingleScan() {
         <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:${col};margin-top:3px;">${bracketLabels[bracket]||'Unknown'}</div>
       </div>
     </div>
-
     <div class="power-stats" style="margin-bottom:20px;">
       <div class="pstat"><div class="pstat-val">${analysis.score.toFixed(1)}</div><div class="pstat-lbl">Power Score</div></div>
       <div class="pstat"><div class="pstat-val">${analysis.avgCmc.toFixed(2)}</div><div class="pstat-lbl">Avg CMC</div></div>
       <div class="pstat"><div class="pstat-val">${analysis.gcCount}</div><div class="pstat-lbl">Game Changers</div></div>
     </div>
-
     <div class="power-bar-wrap">
       <div style="display:flex;justify-content:space-between;font-size:11px;color:#5a5a7a;margin-bottom:4px;"><span>Power</span><span>${analysis.score.toFixed(1)} / 10</span></div>
       <div class="power-bar-bg"><div class="power-bar-fill" style="background:${col};width:${Math.min(100,(analysis.score/10)*100)}%;"></div></div>
       <div class="power-bar-labels"><span>Casual</span><span>High Power</span><span>cEDH</span></div>
     </div>
-
     <div class="bracket-checks" style="margin-top:16px;">${checksHtml}</div>
-
     ${bannedCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x26D4; Banned Cards</div>${chipHtml(bannedCards,'mld')}</div>` : ''}
     ${gcCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x26A0; Game Changers</div>${chipHtml(gcCards,'gc')}</div>` : ''}
     ${comboCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x1F300; Combo Pieces</div>${chipHtml(comboCards,'combo')}</div>` : ''}
     ${mldCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x1F30B; MLD Cards</div>${chipHtml(mldCards,'mld')}</div>` : ''}
     ${xtCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x23F1; Extra Turns</div>${chipHtml(xtCards,'xt')}</div>` : ''}
+
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+      <button onclick="exportScanTxt('${name.replace(/'/g,"\'")}', window._lastScanAnalysis)" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;padding:8px 16px;border-radius:6px;cursor:pointer;" onmouseover="this.style.borderColor='#e8c94a';this.style.color='#e8c94a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2193; EXPORT TXT</button>
+      <button onclick="shareScanURL('${name.replace(/'/g,"\'")}', ${bracket}, ${analysis.score.toFixed(1)})" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;padding:8px 16px;border-radius:6px;cursor:pointer;" onmouseover="this.style.borderColor='#4ae8b0';this.style.color='#4ae8b0'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F517; SHARE LINK</button>
+      <button onclick="fetchAndShowPrices()" id="price-btn" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;padding:8px 16px;border-radius:6px;cursor:pointer;" onmouseover="this.style.borderColor='#9e4ae8';this.style.color='#9e4ae8'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F4B0; PRICE ESTIMATE</button>
+    </div>
+    <div id="price-results" style="margin-top:12px;"></div>
   </div>
 
-  <div style="background:#14141a;border:1px solid #28283a;border-radius:12px;padding:20px;">
+  <div style="background:#14141a;border:1px solid #28283a;border-radius:12px;padding:20px;margin-bottom:16px;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#5a5a7a;margin-bottom:14px;">&#x1F4CA; CATEGORY BREAKDOWN</div>
     ${catRows}
   </div>`;
 
   resultsEl.innerHTML = html;
+
+  // Save state for export and prices
+  window._lastScanAnalysis = analysis;
+  window._lastScanDeck = deck;
+  window._lastScanName = name;
+
+  // Save to history
+  saveToHistory(name, bracket, analysis.score, analysis.gcCount, analysis.cardCount);
+
   resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function fetchAndShowPrices() {
+  const deck = window._lastScanDeck;
+  if (!deck) return;
+  const btn = document.getElementById('price-btn');
+  const priceEl = document.getElementById('price-results');
+  if (!btn || !priceEl) return;
+  btn.textContent = '⏳ FETCHING...';
+  btn.disabled = true;
+  priceEl.innerHTML = '<div style="color:#5a5a7a;font-family:DM Mono,monospace;font-size:11px;padding:8px;">Fetching prices from Scryfall...</div>';
+
+  const cardNames = [...deck.keys()];
+  const prices = await fetchPriceEstimate(cardNames);
+
+  let total = 0;
+  const priced = [];
+  for (const [name, data] of deck.entries()) {
+    const qty = data.qty || 1;
+    const price = prices[name.toLowerCase()] || 0;
+    const lineTotal = price * qty;
+    total += lineTotal;
+    if (price > 0) priced.push({ name, qty, price, lineTotal });
+  }
+  priced.sort((a,b) => b.lineTotal - a.lineTotal);
+
+  const unknown = cardNames.length - priced.length;
+  const top10 = priced.slice(0, 10);
+
+  let html = `<div style="background:#0e0e14;border:1px solid #9e4ae833;border-radius:8px;padding:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;">&#x1F4B0; PRICE ESTIMATE</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#e8c94a;">$${total.toFixed(2)} USD</div>
+    </div>
+    <div style="font-size:10px;color:#5a5a7a;margin-bottom:10px;letter-spacing:1px;">${priced.length} cards priced · ${unknown} unknown · prices from Scryfall (non-foil)</div>`;
+
+  if (top10.length) {
+    html += `<div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Top 10 by Value</div>`;
+    for (const c of top10) {
+      const pct = Math.min(100, (c.lineTotal / (priced[0]?.lineTotal||1)) * 100);
+      html += `<div style="display:grid;grid-template-columns:1fr 50px;gap:8px;align-items:center;margin-bottom:4px;">
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#e8e8f0;">${c.name}${c.qty>1?` x${c.qty}`:''}</div>
+          <div style="background:#1c1c24;border-radius:2px;height:3px;margin-top:3px;overflow:hidden;">
+            <div style="background:#9e4ae8;width:${pct}%;height:3px;border-radius:2px;"></div>
+          </div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#e8c94a;text-align:right;">$${c.lineTotal.toFixed(2)}</div>
+      </div>`;
+    }
+  }
+  html += `<div style="font-size:9px;color:#3a3a5a;margin-top:8px;letter-spacing:1px;">Prices are estimates only. Check TCGPlayer or CardKingdom for current market values.</div></div>`;
+
+  priceEl.innerHTML = html;
+  btn.textContent = '💰 PRICE ESTIMATE';
+  btn.disabled = false;
+  btn.onmouseover = function() { this.style.borderColor='#9e4ae8'; this.style.color='#9e4ae8'; };
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// SAMPLE DECKS
+// ══════════════════════════════════════════════════════════════════
+const SAMPLE_DECKS = {
+  krenko: {
+    name: 'Krenko cEDH',
+    list: `1 Krenko, Mob Boss
+1 Mox Diamond
+1 Chrome Mox
+1 Mox Opal
+1 Lotus Petal
+1 Sol Ring
+1 Mana Crypt
+1 Ancient Tomb
+1 Grim Monolith
+1 Mana Vault
+1 Thornbite Staff
+1 Umbral Mantle
+1 Staff of Domination
+1 Aggravated Assault
+1 Goblin Bombardment
+1 Skirk Prospector
+1 Phyrexian Altar
+1 Ashnod's Altar
+1 Goblin Recruiter
+1 Goblin Matron
+1 Imperial Recruiter
+1 Goblin Lackey
+1 Warren Instigator
+1 Goblin Warchief
+1 Goblin Chieftain
+1 Goblin Ringleader
+1 Mogg War Marshal
+1 Goblin Sharpshooter
+1 Conspicuous Snoop
+1 Kiki-Jiki, Mirror Breaker
+1 Jeska's Will
+1 Gamble
+1 Wheel of Fortune
+1 Faithless Looting
+1 Seething Song
+1 Pyretic Ritual
+1 Desperate Ritual
+1 Cabal Ritual
+1 Lightning Greaves
+1 Swiftfoot Boots
+1 Deflecting Swat
+1 Pyroblast
+1 Red Elemental Blast
+1 Chaos Warp
+1 Vandalblast
+1 Impact Tremors
+1 Purphoros, God of the Forge
+1 Shared Animosity
+1 Mana Echoes
+1 Battle Hymn
+1 Brightstone Ritual
+1 Ruby Medallion
+1 Extraplanar Lens
+1 Gauntlet of Power
+1 Cursed Mirror
+1 Voltaic Key
+1 Rings of Brighthearth
+1 Inventors' Fair
+1 Nykthos, Shrine to Nyx
+1 Cavern of Souls
+1 Wasteland
+1 Strip Mine
+1 Hall of the Bandit Lord
+1 Phyrexian Tower
+24 Mountain`
+  },
+  slivers: {
+    name: 'Sliver Overlord',
+    list: `1 Sliver Overlord
+1 Sliver Queen
+1 Sliver Hivelord
+1 Sliver Legion
+1 Crystalline Sliver
+1 Harmonic Sliver
+1 Gemhide Sliver
+1 Manaweft Sliver
+1 Thassa's Oracle
+1 Tainted Pact
+1 Demonic Tutor
+1 Vampiric Tutor
+1 Imperial Seal
+1 Demonic Consultation
+1 Opposition Agent
+1 Orcish Bowmasters
+1 Force of Will
+1 Fierce Guardianship
+1 Mana Drain
+1 Cyclonic Rift
+1 Rhystic Study
+1 Necropotence
+1 Smothering Tithe
+1 Carpet of Flowers
+1 Mox Diamond
+1 Chrome Mox
+1 Lotus Petal
+1 Sol Ring
+1 Mana Crypt
+1 Ancient Tomb
+1 Mana Confluence
+1 City of Brass
+1 Reflecting Pool
+1 Gemstone Mine
+1 Forbidden Orchard
+1 Tainted Isle
+1 Tainted Wood
+1 Tainted Peak
+1 Tainted Field
+1 Boseiju, Who Endures
+1 Underground Sea
+1 Volcanic Island
+1 Bayou
+1 Tropical Island
+1 Scrubland
+1 Badlands
+1 Savannah
+1 Plateau
+1 Tundra
+1 Flooded Strand
+1 Bloodstained Mire
+1 Polluted Delta
+1 Verdant Catacombs
+1 Windswept Heath
+1 Scalding Tarn
+1 Wooded Foothills
+1 Marsh Flats
+1 Arid Mesa
+1 Command Tower`
+  },
+  casual: {
+    name: 'Casual Precon+',
+    list: `1 Aesi, Tyrant of Gyre Strait
+1 Sol Ring
+1 Arcane Signet
+1 Commander's Sphere
+1 Kodama's Reach
+1 Cultivate
+1 Rampant Growth
+1 Explore
+1 Farseek
+1 Nature's Lore
+1 Cyclonic Rift
+1 Counterspell
+1 Negate
+1 Swan Song
+1 Mystic Remora
+1 Rhystic Study
+1 Sylvan Library
+1 Phyrexian Arena
+1 Brainstorm
+1 Ponder
+1 Preordain
+1 Mulldrifter
+1 Coiling Oracle
+1 Tatyova, Benthic Druid
+1 Meloku the Clouded Mirror
+1 Avenger of Zendikar
+1 Scute Swarm
+1 Roil Elemental
+1 Rampaging Baloths
+1 Whelming Wave
+1 Simic Growth Chamber
+1 Breeding Pool
+1 Tropical Island
+1 Yavimaya Coast
+1 Hinterland Harbor
+1 Command Tower
+1 Reliquary Tower
+1 Oboro, Palace in the Clouds
+1 Dryad Arbor
+1 Scattered Groves
+20 Island
+14 Forest`
+  }
+};
+
+function loadSampleDeck(key) {
+  const d = SAMPLE_DECKS[key];
+  if (!d) return;
+  document.getElementById('scan-name').value = d.name;
+  document.getElementById('scan-deck').value = d.list;
+  updateCounter('scan-deck', 'scan-counter');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SESSION HISTORY
+// ══════════════════════════════════════════════════════════════════
+const HISTORY_KEY = 'edh_scan_history';
+const MAX_HISTORY = 10;
+
+function saveToHistory(name, bracket, score, gcCount, cardCount) {
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) {}
+  history.unshift({ name, bracket, score, gcCount, cardCount, ts: Date.now() });
+  if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('scan-history-list');
+  if (!el) return;
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) {}
+  if (!history.length) {
+    el.innerHTML = '<div style="color:#3a3a5a;font-family:DM Mono,monospace;font-size:11px;padding:12px;text-align:center;">No scans yet</div>';
+    return;
+  }
+  const bracketColors = {1:'#4ae8b0',2:'#4a9ee8',3:'#9e4ae8',4:'#e8c94a',5:'#e84a6a'};
+  el.innerHTML = history.map((h,i) => {
+    const col = bracketColors[h.bracket] || '#5a5a7a';
+    const ago = timeAgo(h.ts);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;" onclick="restoreHistory(${i})" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${col};min-width:22px;text-align:center;">${h.bracket}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.name}</div>
+        <div style="font-size:10px;color:#5a5a7a;margin-top:1px;">${h.score?.toFixed(1) || '?'} power · ${h.gcCount} GC · ${h.cardCount} cards · ${ago}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function restoreHistory(idx) {
+  // Just scroll to the scan panel — we don't store full decklists in history
+  // (would bloat localStorage). Show a toast instead.
+  showToast('History shows metadata only — paste your deck again to re-scan');
+}
+
+function clearHistory() {
+  try { localStorage.removeItem(HISTORY_KEY); } catch(e) {}
+  renderHistory();
+}
+
+function timeAgo(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60) return 'just now';
+  if (secs < 3600) return Math.floor(secs/60) + 'm ago';
+  if (secs < 86400) return Math.floor(secs/3600) + 'h ago';
+  return Math.floor(secs/86400) + 'd ago';
+}
+
+function showToast(msg) {
+  let t = document.getElementById('edh-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'edh-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#14141a;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:11px;padding:10px 18px;border-radius:6px;z-index:9999;pointer-events:none;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PRICE ESTIMATES (Scryfall bulk price fetch)
+// ══════════════════════════════════════════════════════════════════
+async function fetchPriceEstimate(cardNames) {
+  const results = {};
+  // Scryfall collection endpoint — batch up to 75 cards
+  const chunks = [];
+  for (let i = 0; i < cardNames.length; i += 70) chunks.push(cardNames.slice(i, i+70));
+  for (const chunk of chunks) {
+    try {
+      const body = { identifiers: chunk.map(n => ({ name: n })) };
+      const res = await fetch('https://api.scryfall.com/cards/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const card of (data.data || [])) {
+        const price = parseFloat(card.prices?.usd || card.prices?.usd_foil || 0);
+        if (price > 0) results[card.name.toLowerCase()] = price;
+      }
+    } catch(e) { /* silently fail */ }
+  }
+  return results;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORT / SHARE FOR SINGLE DECK SCANNER
+// ══════════════════════════════════════════════════════════════════
+function exportScanTxt(name, analysis) {
+  const bracketLabels = {1:'Bracket 1',2:'Bracket 2',3:'Bracket 3',4:'Bracket 4',5:'Bracket 5 (cEDH)'};
+  let out = `EDH POWER LEVEL SCAN — ${name}\n${'='.repeat(50)}\n\n`;
+  out += `Bracket:      ${analysis.bracket} — ${bracketLabels[analysis.bracket] || ''}\n`;
+  out += `Power Score:  ${analysis.score?.toFixed(2) || '?'} / 10\n`;
+  out += `Avg CMC:      ${analysis.avgCmc?.toFixed(2) || '?'}\n`;
+  out += `Cards:        ${analysis.cardCount}\n`;
+  out += `Game Changers:${analysis.gcCount}\n\n`;
+  if (analysis.gcCards?.length)   out += `GAME CHANGERS\n${analysis.gcCards.join(', ')}\n\n`;
+  if (analysis.comboCards?.length) out += `COMBO PIECES\n${analysis.comboCards.join(', ')}\n\n`;
+  if (analysis.mldCards?.length)  out += `MLD CARDS\n${analysis.mldCards.join(', ')}\n\n`;
+  out += `Scanned by EDH Power Level — edhpowerlevel.ca\n`;
+  const blob = new Blob([out], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name.replace(/\s+/g,'-').toLowerCase()}-scan.txt`;
+  a.click();
+}
+
+function shareScanURL(name, bracket, score) {
+  const url = `${location.origin}${location.pathname}?scan=1&name=${encodeURIComponent(name)}&bracket=${bracket}&score=${score}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard!'));
+  } else {
+    showToast(url);
+  }
 }
 
 async function getMissingSynergies() {
@@ -3230,6 +4129,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initAutocomplete();
   loadFromURL();
   updateModeUI();
+  renderHistory();
 });
 </script>
 </body>
