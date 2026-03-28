@@ -387,7 +387,10 @@ textarea::placeholder { color: #5a5a7a; }
         <button onclick="document.getElementById('deck-a').value='';document.getElementById('name-a').value='Deck A';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
       </div>
       <input type="text" id="name-a" value="Deck A" placeholder="Deck name">
-      <textarea id="deck-a" placeholder="Paste your decklist here... Format: 1 Card Name (set codes auto-stripped)"></textarea>
+      <textarea id="deck-a" placeholder="Paste your decklist here... Format: 1 Card Name (set codes auto-stripped)" oninput="updateCounter('deck-a','counter-a')"></textarea>
+      <div style="text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#5a5a7a;margin-top:3px;letter-spacing:1px;">
+        <span id="counter-a" style="color:#e8c94a;font-weight:700;">0</span> cards
+      </div>
     </div>
     <div class="vs-mid"><div class="vs-circle">VS</div></div>
     <div class="deck-col">
@@ -396,7 +399,10 @@ textarea::placeholder { color: #5a5a7a; }
         <button onclick="document.getElementById('deck-b').value='';document.getElementById('name-b').value='Deck B';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
       </div>
       <input type="text" id="name-b" value="Deck B" placeholder="Deck name">
-      <textarea id="deck-b" placeholder="Paste decklist here..."></textarea>
+      <textarea id="deck-b" placeholder="Paste decklist here..." oninput="updateCounter('deck-b','counter-b')"></textarea>
+      <div style="text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#5a5a7a;margin-top:3px;letter-spacing:1px;">
+        <span id="counter-b" style="color:#4ae8b0;font-weight:700;">0</span> cards
+      </div>
     </div>
   </div>
 
@@ -501,6 +507,29 @@ textarea::placeholder { color: #5a5a7a; }
 <ins class="adsbygoogle" style="display:block;min-height:0;" data-ad-client="ca-pub-2816476613820323" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
 </div>
 
+<!-- SINGLE DECK SCANNER PANEL -->
+<div class="panel" id="panel-scan">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">&#x1F50D; Single Deck Scanner</div>
+    <div style="font-size:12px;color:#5a5a7a;margin-bottom:24px;letter-spacing:1px;">Full power level &amp; bracket analysis for a single deck</div>
+
+    <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="deck-lbl a" style="margin-bottom:0;">&#x2694; Your Deck</div>
+        <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">&#x2715; CLEAR</button>
+      </div>
+      <input type="text" id="scan-name" value="" placeholder="Deck name (optional)" style="width:100%;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:10px;">
+      <textarea id="scan-deck" placeholder="Paste your decklist here..." style="width:100%;height:220px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;margin-bottom:4px;" oninput="updateCounter('scan-deck','scan-counter')"></textarea>
+      <div style="text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#5a5a7a;margin-bottom:12px;letter-spacing:1px;">
+        <span id="scan-counter" style="color:#e8c94a;font-weight:700;">0</span> cards
+      </div>
+      <button onclick="runSingleScan()" id="scan-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;font-weight:700;">&#x26A1; SCAN DECK</button>
+    </div>
+
+    <div id="scan-results" style="display:none;"></div>
+  </div>
+</div>
+
 <!-- RECOMMENDATIONS PANEL -->
 <div class="panel" id="panel-recommend">
   <div style="max-width:780px;margin:0 auto;">
@@ -598,9 +627,9 @@ textarea::placeholder { color: #5a5a7a; }
     <div class="section-hdr">&#x26A0; Game Changers (Updated Feb 9, 2026)</div>
     <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Legal in Commander. Not permitted in Bracket 1 or 2. Up to <strong style="color:#e8e8f0">3 allowed in Bracket 3</strong>. Unlimited at Bracket 4+. <strong style="color:#e8c94a">Note: Sol Ring is intentionally NOT a Game Changer</strong> — WotC considers it a Commander tradition.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8c94a;line-height:2.2;columns:2;column-gap:20px;">
-      Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mox Opal · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
+      Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Deflecting Swat · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mox Opal · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
     </div>
-    <p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Counterspell, Pact of Negation, Food Chain, Deflecting Swat, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
+    <p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Counterspell, Pact of Negation, Food Chain, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
 
     <div class="section-hdr">&#x1F504; Chaining Extra Turns (Not Allowed Below Bracket 4)</div>
     <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">These cards enable repeated extra turns and are restricted below Bracket 4.</p>
@@ -664,7 +693,7 @@ const CARD_DB = {
   "Hullbreacher":          {impact:15, cmc:3,  banned:true, type:'creature'},
   "Erayo, Soratami Ascendant":{impact:11,cmc:2,banned:true, type:'creature'},
   "Flash":                 {impact:13, cmc:2,  banned:true, type:'instant'},
-  "Worldfire":             {impact:10, cmc:8,  gc:true, type:'sorcery'},
+  "Worldfire":             {impact:10, cmc:8,  type:'sorcery'},
   "Coalition Victory":     {impact:11, cmc:8,  gc:true, type:'sorcery'},
   "Sway of the Stars":     {impact:9,  cmc:10, type:'sorcery'},
   "Upheaval":              {impact:11, cmc:6,  banned:true, type:'sorcery'},
@@ -674,7 +703,7 @@ const CARD_DB = {
   "Recurring Nightmare":   {impact:14, cmc:3,  banned:true, type:'enchantment'},
   "Limited Resources":     {impact:10, cmc:1,  banned:true, mld:true, type:'enchantment'},
   "Trade Secrets":         {impact:9,  cmc:4,  banned:true, type:'instant'},
-  "Panoptic Mirror":       {impact:10, cmc:5,  banned:true, type:'artifact'},
+  "Panoptic Mirror":       {impact:10, cmc:5,  gc:true,  type:'artifact'},
   "Karakas":               {impact:14, cmc:0,  banned:true, type:'land'},
   "Library of Alexandria": {impact:17, cmc:0,  banned:true, type:'land'},
   "Fastbond":              {impact:13, cmc:1,  banned:true, type:'enchantment'},
@@ -723,7 +752,7 @@ const CARD_DB = {
   "Seedborn Muse":         {impact:14, cmc:5,  gc:true, type:'creature'},
   "Natural Order":         {impact:14, cmc:4,  gc:true, type:'sorcery'},
   "Intuition":             {impact:14, cmc:3,  gc:true, type:'instant'},
-  "Cabal Coffers":         {impact:15, cmc:2,  gc:true, type:'land'},
+  "Cabal Coffers":         {impact:15, cmc:2,  type:'land'},
   "Battle Hymn":           {impact:8,  cmc:2,  type:'instant'},
   "Brightstone Ritual":    {impact:9,  cmc:1,  type:'instant'},
   "Ruby Medallion":        {impact:11, cmc:2,  type:'artifact'},
@@ -731,10 +760,10 @@ const CARD_DB = {
 
   // === INTERACTION ===
   "Force of Will":         {impact:18, cmc:5,  gc:true,  type:'instant'},
-  "Force of Negation":     {impact:17, cmc:5,  gc:true,  type:'instant'},
+  "Force of Negation":     {impact:17, cmc:5,  type:'instant'},
   "Fierce Guardianship":   {impact:17, cmc:3,  gc:true,  type:'instant'},
-  "Deflecting Swat":       {impact:16, cmc:3,  type:'instant'},
-  "Flusterstorm":          {impact:16, cmc:1,  gc:true,  type:'instant'},
+  "Deflecting Swat":       {impact:16, cmc:3,  gc:true,  type:'instant'},
+  "Flusterstorm":          {impact:16, cmc:1,  type:'instant'},
   "Pyroblast":             {impact:13, cmc:1,  type:'instant'},
   "Red Elemental Blast":   {impact:13, cmc:1,  type:'instant'},
   "Counterspell":          {impact:15, cmc:2,  type:'instant'},
@@ -764,6 +793,8 @@ const CARD_DB = {
   "Imperial Recruiter":    {impact:14, cmc:3,  type:'creature'},
   "Gamble":                {impact:11, cmc:1,  gc:true, type:'sorcery'},
   "Survival of the Fittest":{impact:17,cmc:2,  gc:true,  type:'enchantment'},
+  "Farewell":              {impact:14, cmc:6,  gc:true,  type:'sorcery'},
+  "Biorhythm":             {impact:13, cmc:8,  gc:true,  type:'sorcery'},
   "Fauna Shaman":          {impact:12, cmc:2,  type:'creature'},
 
   // === DRAW ===
@@ -773,7 +804,7 @@ const CARD_DB = {
   "Ad Nauseam":            {impact:17, cmc:5,  gc:true,  type:'instant'},
   "Wheel of Fortune":      {impact:16, cmc:3,  type:'sorcery'},
   "Skullclamp":            {impact:16, cmc:1,  type:'artifact'},
-  "The One Ring":          {impact:16, cmc:4,  type:'artifact'},
+  "The One Ring":          {impact:16, cmc:4,  gc:true,  type:'artifact'},
   "Sensei's Divining Top": {impact:15, cmc:1,  type:'artifact'},
   "Faithless Looting":     {impact:11, cmc:1,  type:'sorcery'},
   "Brainstorm":            {impact:14, cmc:1,  type:'instant'},
@@ -787,9 +818,9 @@ const CARD_DB = {
   // === COMBO PIECES ===
   "Thassa's Oracle":       {impact:17, cmc:2,  gc:true,  combo:true, type:'creature'},
   "Thoracle":              {impact:17, cmc:2,  gc:true,  combo:true, type:'creature'},
-  "Doomsday":              {impact:17, cmc:3,  gc:true,  combo:true, type:'sorcery'},
+  "Doomsday":              {impact:17, cmc:3,  combo:true, type:'sorcery'},
   "Underworld Breach":     {impact:17, cmc:2,  gc:true,  combo:true, type:'enchantment'},
-  "Yawgmoth's Will":       {impact:17, cmc:3,  gc:true,  combo:true, type:'sorcery'},
+  "Yawgmoth's Will":       {impact:17, cmc:3,  combo:true, type:'sorcery'},
   "Bolas's Citadel":       {impact:17, cmc:6,  gc:true,  combo:true, type:'artifact'},
   "Food Chain":            {impact:16, cmc:3,  combo:true, type:'enchantment'},
   "Thornbite Staff":       {impact:14, cmc:2,  combo:true, type:'artifact'},
@@ -853,12 +884,12 @@ const CARD_DB = {
   // === CEDH CREATURES ===
   "Tymna the Weaver":      {impact:16, cmc:3,  type:'creature'},
   "Kraum, Ludevic's Opus": {impact:14, cmc:5,  type:'creature'},
-  "Najeela, the Blade-Blossom":{impact:16,cmc:3,gc:true,type:'creature'},
-  "Kinnan, Bonder Prodigy":{impact:16, cmc:2,  gc:true, type:'creature'},
+  "Najeela, the Blade-Blossom":{impact:16,cmc:3,type:'creature'},
+  "Kinnan, Bonder Prodigy":{impact:16, cmc:2,  type:'creature'},
   "Sisay, Weatherlight Captain":{impact:14,cmc:3,type:'creature'},
-  "Urza, Lord High Artificer":{impact:16,cmc:4,gc:true,type:'creature'},
-  "The Gitrog Monster":    {impact:15, cmc:5,  gc:true, type:'creature'},
-  "Yuriko, the Tiger's Shadow":{impact:15,cmc:2,gc:true,type:'creature'},
+  "Urza, Lord High Artificer":{impact:16,cmc:4,type:'creature'},
+  "The Gitrog Monster":    {impact:15, cmc:5,  type:'creature'},
+  "Yuriko, the Tiger's Shadow":{impact:15,cmc:2,type:'creature'},
   "Malcolm, Keen-Eyed Navigator":{impact:12,cmc:3,type:'creature'},
   "Krenko, Mob Boss":      {impact:14, cmc:4,  type:'creature'},
 
@@ -2991,6 +3022,123 @@ async function analyzeSynergies() {
   resultsEl.innerHTML = html;
   btn.disabled = false;
   btn.textContent = '🔗 ANALYZE SYNERGIES';
+}
+
+
+// ── CARD COUNTER ─────────────────────────────────────────
+function updateCounter(textareaId, counterId) {
+  const raw = document.getElementById(textareaId).value;
+  const deck = parseDeck(raw);
+  let total = 0;
+  for (const [, v] of deck) total += (v.qty || 1);
+  // also count lines that may not parse (plain card names without qty)
+  if (total === 0 && raw.trim()) {
+    total = raw.trim().split('\n').filter(l => l.trim().length > 0).length;
+  }
+  document.getElementById(counterId).textContent = total;
+}
+
+// ── SINGLE DECK SCANNER ───────────────────────────────────
+function runSingleScan() {
+  const raw = document.getElementById('scan-deck').value;
+  if (!raw.trim()) { alert('Please paste a decklist.'); return; }
+  const name = document.getElementById('scan-name').value || 'My Deck';
+
+  const deck = parseDeck(raw);
+  const analysis = analyzeDeck(deck);
+
+  const resultsEl = document.getElementById('scan-results');
+  resultsEl.style.display = 'block';
+
+  // Build a standalone power card display
+  const bracket = analysis.bracket;
+  const bracketColors = {1:'#4ae8b0',2:'#4a9ee8',3:'#9e4ae8',4:'#e8c94a',5:'#e84a6a'};
+  const bracketLabels = {1:'Bracket 1',2:'Bracket 2',3:'Bracket 3',4:'Bracket 4',5:'Bracket 5 (cEDH)'};
+  const col = bracketColors[bracket] || '#e8c94a';
+
+  // Flagged cards
+  const gcCards   = [...deck.entries()].filter(([,v])=>v.gc).map(([n])=>n);
+  const mldCards  = [...deck.entries()].filter(([,v])=>v.mld).map(([n])=>n);
+  const comboCards= [...deck.entries()].filter(([,v])=>v.combo).map(([n])=>n);
+  const xtCards   = [...deck.entries()].filter(([,v])=>v.xt).map(([n])=>n);
+  const bannedCards=[...deck.entries()].filter(([,v])=>v.banned).map(([n])=>n);
+
+  const chipHtml = (arr, cls) => arr.map(n => `<span class="flag-chip ${cls}" data-card="${n}" onmouseover="showTooltip(event,'${n.replace(/'/g,"\\'")}',this)" onmouseout="hideTooltip()">${n}</span>`).join('');
+
+  // Category breakdown for single deck
+  const cats = ['creature','artifact','enchantment','instant','sorcery','planeswalker','land'];
+  const ct = (t) => { let n=0; for(const[,v] of deck) if(v.type===t) n+=(v.qty||1); return n; };
+  const maxCat = 40;
+  const catRows = cats.map(c => {
+    const n = ct(c);
+    return `<div style="display:grid;grid-template-columns:90px 1fr 40px;gap:8px;align-items:center;margin-bottom:6px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:#5a5a7a;text-transform:uppercase;text-align:right;">${c}</div>
+      <div style="background:#1c1c24;border-radius:3px;height:7px;overflow:hidden;">
+        <div style="background:${col};width:${Math.min(100,(n/maxCat)*100)}%;height:7px;border-radius:3px;transition:width 0.7s;"></div>
+      </div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${col};text-align:center;">${n}</div>
+    </div>`;
+  }).join('');
+
+  // Bracket checks
+  const checks = [
+    { ok: !analysis.hasXTChain,  pass:'No chaining extra turns', fail:'Chaining extra turns detected (Bracket 4+)' },
+    { ok: !analysis.hasMLD,      pass:'No mass land denial', fail:'MLD detected (Bracket 4+)' },
+    { ok: analysis.comboCount===0, warn: analysis.comboCount>0 && analysis.comboCount<=2,
+      pass:'No 2-card combos', fail:'2-card combos present (Bracket 4+)', warnMsg:`${analysis.comboCount} combo piece(s) — check assembly cost` },
+    { ok: analysis.gcCount===0,  warn: analysis.gcCount>0 && analysis.gcCount<=3,
+      pass:'No Game Changers', fail:`${analysis.gcCount} Game Changer(s) (Bracket 4+)`, warnMsg:`${analysis.gcCount} Game Changer(s) — Bracket 3 allows up to 3` },
+  ];
+
+  const checksHtml = checks.map(c => {
+    if (c.ok) return `<div class="bcheck pass"><span class="icon">&#x2713;</span>${c.pass}</div>`;
+    if (c.warn) return `<div class="bcheck warn"><span class="icon">&#x26A0;</span>${c.warnMsg || c.fail}</div>`;
+    return `<div class="bcheck fail"><span class="icon">&#x2715;</span>${c.fail}</div>`;
+  }).join('');
+
+  let html = `
+  <div style="background:#14141a;border:1px solid ${col}44;border-radius:12px;padding:24px;position:relative;overflow:hidden;margin-bottom:16px;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${col},${col}44);"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:${col};">${name}</div>
+        <div style="font-size:11px;color:#5a5a7a;letter-spacing:1px;margin-top:2px;">${analysis.cardCount} cards analyzed</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:${col};padding:8px 18px;border-radius:8px;border:1px solid ${col}44;">${bracket}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:${col};margin-top:3px;">${bracketLabels[bracket]||'Unknown'}</div>
+      </div>
+    </div>
+
+    <div class="power-stats" style="margin-bottom:20px;">
+      <div class="pstat"><div class="pstat-val">${analysis.score.toFixed(1)}</div><div class="pstat-lbl">Power Score</div></div>
+      <div class="pstat"><div class="pstat-val">${analysis.avgCmc.toFixed(2)}</div><div class="pstat-lbl">Avg CMC</div></div>
+      <div class="pstat"><div class="pstat-val">${analysis.gcCount}</div><div class="pstat-lbl">Game Changers</div></div>
+    </div>
+
+    <div class="power-bar-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#5a5a7a;margin-bottom:4px;"><span>Power</span><span>${analysis.score.toFixed(1)} / 10</span></div>
+      <div class="power-bar-bg"><div class="power-bar-fill" style="background:${col};width:${Math.min(100,(analysis.score/10)*100)}%;"></div></div>
+      <div class="power-bar-labels"><span>Casual</span><span>High Power</span><span>cEDH</span></div>
+    </div>
+
+    <div class="bracket-checks" style="margin-top:16px;">${checksHtml}</div>
+
+    ${bannedCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x26D4; Banned Cards</div>${chipHtml(bannedCards,'mld')}</div>` : ''}
+    ${gcCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x26A0; Game Changers</div>${chipHtml(gcCards,'gc')}</div>` : ''}
+    ${comboCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x1F300; Combo Pieces</div>${chipHtml(comboCards,'combo')}</div>` : ''}
+    ${mldCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x1F30B; MLD Cards</div>${chipHtml(mldCards,'mld')}</div>` : ''}
+    ${xtCards.length ? `<div class="flagged-section"><div class="flagged-title">&#x23F1; Extra Turns</div>${chipHtml(xtCards,'xt')}</div>` : ''}
+  </div>
+
+  <div style="background:#14141a;border:1px solid #28283a;border-radius:12px;padding:20px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#5a5a7a;margin-bottom:14px;">&#x1F4CA; CATEGORY BREAKDOWN</div>
+    ${catRows}
+  </div>`;
+
+  resultsEl.innerHTML = html;
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function getMissingSynergies() {
