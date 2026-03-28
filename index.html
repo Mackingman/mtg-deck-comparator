@@ -8,663 +8,654 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EDH Power Level — Deck Analyzer</title>
 <style>
-/* ═══════════════════════════════════════════════════
-   EDH POWER LEVEL — PREMIUM DARK THEME
-   ═══════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600;700;800&family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@700;900&display=swap');
 
+/* ════════════════════════════════════════════════
+   EDH POWER LEVEL  ·  Design System
+   ════════════════════════════════════════════════ */
 :root {
-  --gold:    #e8c94a;
-  --gold-dim: rgba(232,201,74,0.15);
-  --gold-glow: rgba(232,201,74,0.35);
-  --teal:    #4ae8b0;
-  --teal-dim: rgba(74,232,176,0.12);
-  --purple:  #9e4ae8;
-  --red:     #e84a6a;
-  --blue:    #4a9ee8;
-  --bg:      #080810;
-  --bg2:     #0e0e18;
-  --bg3:     #13131f;
-  --bg4:     #1a1a28;
-  --border:  rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text:    #e8e8f2;
-  --text-dim: #6a6a8a;
-  --text-faint: #3a3a55;
-  --radius:  10px;
-  --radius-lg: 16px;
+  /* Colors */
+  --gold:     #e8c94a;
+  --gold-lt:  #f5df7a;
+  --gold-dk:  #9a7c18;
+  --gold-a10: rgba(232,201,74,0.10);
+  --gold-a20: rgba(232,201,74,0.20);
+  --gold-a35: rgba(232,201,74,0.35);
+  --teal:     #3de8a8;
+  --teal-a10: rgba(61,232,168,0.10);
+  --purple:   #a855f7;
+  --red:      #f0516a;
+  --blue:     #60a5fa;
+  --green:    #4ade80;
+
+  /* Surfaces */
+  --bg:       #05050e;
+  --bg-1:     #090914;
+  --bg-2:     #0e0e1c;
+  --bg-3:     #141428;
+  --bg-4:     #1b1b35;
+  --bg-5:     #22223f;
+
+  /* Type */
+  --text:     #f0f0fa;
+  --text-2:   #9090c0;
+  --text-3:   #50507a;
+  --text-4:   #28284a;
+
+  /* Structure */
+  --border:   rgba(255,255,255,0.06);
+  --border-2: rgba(255,255,255,0.10);
+  --border-3: rgba(255,255,255,0.16);
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 32px rgba(0,0,0,0.7);
+  --shadow-lg: 0 16px 64px rgba(0,0,0,0.9);
+
+  /* Brand gradients */
+  --grad-gold: linear-gradient(135deg, #7a5c0a, #e8c94a 45%, #f5e07a 55%, #9a7c18);
+  --grad-surface: linear-gradient(160deg, #0e0e1c 0%, #12122a 100%);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { scroll-behavior: smooth; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* ── ANIMATED BACKGROUND ─────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 40% at 20% 10%, rgba(232,201,74,0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 30% at 80% 80%, rgba(74,232,176,0.04) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(158,74,232,0.03) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+#bg-canvas {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
 }
+body > *:not(#bg-canvas) { position: relative; z-index: 1; }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.panel, .header, .tabs, footer { position: relative; z-index: 1; }
-
-/* ── HEADER ──────────────────────────────────────── */
+/* ── HEADER ──────────────────────────────────── */
 .header {
-  text-align: center;
-  padding: 52px 20px 32px;
-  border-bottom: 1px solid var(--border);
   position: relative;
+  padding: 56px 24px 44px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
 
-.header-inner {
-  position: relative;
-  display: inline-block;
+/* Hex tile SVG background */
+.header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpolygon points='30,2 56,15 56,37 30,50 4,37 4,15' fill='none' stroke='%23e8c94a' stroke-width='0.6' opacity='0.07'/%3E%3C/svg%3E");
+  background-size: 60px 52px;
+  pointer-events: none;
+}
+
+/* Gold sweep at top */
+.header::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.6;
+}
+
+.header-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 6px; text-transform: uppercase;
+  color: var(--gold); opacity: 0.65;
+  margin-bottom: 16px;
+  animation: fadeUp 0.7s ease both;
 }
 
 .header h1 {
-  font-family: 'Cinzel', serif;
-  font-size: clamp(28px, 5.5vw, 68px);
+  font-family: 'Cinzel Decorative', serif;
   font-weight: 900;
-  letter-spacing: 8px;
-  color: var(--gold);
-  text-shadow:
-    0 0 30px rgba(232,201,74,0.4),
-    0 0 80px rgba(232,201,74,0.15),
-    0 2px 0 rgba(0,0,0,0.8);
+  font-size: clamp(26px, 5.5vw, 68px);
   line-height: 1;
-  animation: titlePulse 4s ease-in-out infinite;
+  letter-spacing: 2px;
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 40px rgba(232,201,74,0.45));
+  animation: fadeUp 0.7s 0.08s ease both, goldPulse 5s 1s ease-in-out infinite;
 }
 
-@keyframes titlePulse {
-  0%, 100% { text-shadow: 0 0 30px rgba(232,201,74,0.4), 0 0 80px rgba(232,201,74,0.15), 0 2px 0 rgba(0,0,0,0.8); }
-  50% { text-shadow: 0 0 50px rgba(232,201,74,0.6), 0 0 100px rgba(232,201,74,0.25), 0 2px 0 rgba(0,0,0,0.8); }
+@keyframes goldPulse {
+  0%,100% { filter: drop-shadow(0 0 30px rgba(232,201,74,0.35)); }
+  50%      { filter: drop-shadow(0 0 60px rgba(232,201,74,0.7)) drop-shadow(0 0 120px rgba(232,201,74,0.2)); }
 }
 
-.header-sub {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-top: 10px;
-}
-
-.header-gems {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+.header-tagline {
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px; font-weight: 500; letter-spacing: 6px; text-transform: uppercase;
+  color: var(--text-2);
   margin-top: 14px;
+  animation: fadeUp 0.7s 0.16s ease both;
 }
 
-.gem {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  animation: gemPulse 2s ease-in-out infinite;
-}
-.gem:nth-child(1) { background: var(--teal); animation-delay: 0s; }
-.gem:nth-child(2) { background: var(--blue); animation-delay: 0.3s; }
-.gem:nth-child(3) { background: var(--purple); animation-delay: 0.6s; }
-.gem:nth-child(4) { background: var(--gold); animation-delay: 0.9s; }
-.gem:nth-child(5) { background: var(--red); animation-delay: 1.2s; }
-
-@keyframes gemPulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.4); box-shadow: 0 0 8px currentColor; }
+.header-mana {
+  display: flex; justify-content: center; gap: 12px;
+  margin-top: 24px;
+  animation: fadeUp 0.7s 0.24s ease both;
 }
 
-/* ── TABS ────────────────────────────────────────── */
-.tabs {
-  display: flex;
+.mana-pip {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 800;
+  letter-spacing: 0; border: 1.5px solid currentColor;
+  cursor: default; user-select: none;
+  transition: transform 0.25s, box-shadow 0.25s;
+  animation: pipFloat 3s ease-in-out infinite;
+}
+.mana-pip:hover { transform: scale(1.35) rotate(10deg); }
+.mana-pip:nth-child(1) { color:#f0f0f0; background:rgba(240,240,240,0.07); animation-delay:0s; }
+.mana-pip:nth-child(2) { color:#60a5fa; background:rgba(96,165,250,0.10); animation-delay:0.35s; }
+.mana-pip:nth-child(3) { color:#aaa; background:rgba(50,40,30,0.6); border-color:#777; animation-delay:0.7s; }
+.mana-pip:nth-child(4) { color:#fb923c; background:rgba(251,146,60,0.10); animation-delay:1.05s; }
+.mana-pip:nth-child(5) { color:#4ade80; background:rgba(74,222,128,0.09); animation-delay:1.4s; }
+
+@keyframes pipFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+.header-stats {
+  display: flex; justify-content: center; align-items: stretch;
+  gap: 0; margin-top: 32px;
+  animation: fadeUp 0.7s 0.32s ease both;
+  flex-wrap: wrap;
+}
+
+.hstat {
+  padding: 12px 32px; text-align: center;
+  border-right: 1px solid var(--border);
+}
+.hstat:last-child { border-right: none; }
+.hstat-n {
+  font-family: 'Bebas Neue'; font-size: 36px; color: var(--gold);
+  line-height: 1; letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(232,201,74,0.4);
+}
+.hstat-l {
+  font-family: 'DM Mono'; font-size: 8px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text-3); margin-top: 4px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── WELCOME BANNER ──────────────────────────── */
+.welcome-bar {
+  background: linear-gradient(90deg, rgba(232,201,74,0.07), rgba(61,232,168,0.04), rgba(232,201,74,0.07));
   border-bottom: 1px solid var(--border);
-  background: var(--bg2);
-  overflow-x: auto;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+  animation: fadeUp 0.5s ease both;
 }
+.welcome-text { font-family: 'DM Mono'; font-size: 11px; color: var(--text-2); letter-spacing: 0.5px; line-height: 1.6; }
+.welcome-text strong { color: var(--gold); }
+.welcome-sub { font-size: 10px; color: var(--text-3); margin-top: 3px; }
+.welcome-dismiss {
+  background: none; border: 1px solid var(--border-2); color: var(--text-3);
+  font-family: 'DM Mono'; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.welcome-dismiss:hover { border-color: var(--gold); color: var(--gold); }
 
+/* ── NAVIGATION ──────────────────────────────── */
+.tabs {
+  position: sticky; top: 0; z-index: 200;
+  display: flex;
+  background: rgba(5,5,14,0.88);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
 .tabs::-webkit-scrollbar { height: 0; }
 
 .tab {
-  padding: 16px 24px;
+  padding: 18px 22px;
   cursor: pointer;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-dim);
+  font-family: 'DM Mono'; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
   border-bottom: 2px solid transparent;
   white-space: nowrap;
-  transition: all 0.25s;
-  position: relative;
+  transition: color 0.2s, background 0.2s;
+  user-select: none;
+  display: flex; align-items: center; gap: 7px;
 }
-
 .tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-
 .tab.active {
   color: var(--gold);
   border-bottom-color: var(--gold);
-  background: var(--gold-dim);
+  background: rgba(232,201,74,0.05);
 }
 
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  animation: tabShimmer 2s ease-in-out infinite;
-}
-
-@keyframes tabShimmer {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-/* ── PANELS ──────────────────────────────────────── */
-.panel { display: none; padding: 32px 24px; max-width: 1280px; margin: 0 auto; }
-.panel.active { display: block; animation: panelIn 0.3s ease; }
+/* ── PANELS ──────────────────────────────────── */
+.panel { display: none; padding: 32px 28px; max-width: 1320px; margin: 0 auto; }
+.panel.active { display: block; animation: panelIn 0.32s cubic-bezier(.22,1,.36,1) both; }
 
 @keyframes panelIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* ── INPUTS ──────────────────────────────────────── */
-.input-grid {
-  display: grid;
-  grid-template-columns: 1fr 56px 1fr;
-  gap: 0;
-  margin-bottom: 20px;
-}
-@media(max-width:640px){ .input-grid { grid-template-columns: 1fr; } .vs-mid { display: none; } }
-
-.deck-col { display: flex; flex-direction: column; gap: 10px; }
-
-.deck-lbl {
-  font-family: 'Cinzel', serif;
-  font-size: 14px;
-  letter-spacing: 3px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.deck-lbl.a { color: var(--gold); }
-.deck-lbl.b { color: var(--teal); }
-
-input[type=text] {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'Barlow', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 14px;
-  outline: none;
-  transition: all 0.25s;
-  width: 100%;
-}
-input[type=text]:focus {
-  border-color: rgba(232,201,74,0.5);
-  background: var(--bg4);
-  box-shadow: 0 0 0 3px rgba(232,201,74,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
-}
-
-textarea {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 11.5px;
-  line-height: 1.8;
-  padding: 14px;
-  resize: vertical;
-  height: 280px;
-  outline: none;
-  width: 100%;
-  transition: all 0.25s;
-}
-textarea:focus {
-  border-color: rgba(232,201,74,0.3);
-  background: var(--bg4);
-  box-shadow: 0 0 0 3px rgba(232,201,74,0.06);
-}
-textarea::placeholder { color: var(--text-faint); }
-
-.vs-mid {
-  display: flex; align-items: center; justify-content: center; padding-top: 52px;
-}
-.vs-circle {
-  width: 44px; height: 44px; border-radius: 50%;
-  border: 1px solid var(--border2);
-  background: var(--bg3);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px; color: var(--text-dim); letter-spacing: 1px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  transition: all 0.3s;
-}
-.vs-circle:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  box-shadow: 0 0 20px var(--gold-glow);
-}
-
-/* ── BUTTONS ─────────────────────────────────────── */
-.btn-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap; }
-
-.btn-primary {
-  background: linear-gradient(135deg, #f0d050, #c89828);
-  border: none;
-  border-radius: var(--radius);
-  color: #080810;
-  cursor: pointer;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 20px;
-  letter-spacing: 5px;
-  padding: 14px 48px;
-  transition: all 0.25s;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.25s;
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px var(--gold-glow), 0 0 0 1px rgba(232,201,74,0.3);
-}
-.btn-primary:hover::before { opacity: 1; }
-.btn-primary:active { transform: translateY(-1px); }
-
-.btn-secondary {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text-dim);
-  cursor: pointer;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 13px 22px;
-  transition: all 0.25s;
-}
-.btn-secondary:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: var(--gold-dim);
-  box-shadow: 0 0 16px rgba(232,201,74,0.1);
-}
-
-/* ── SECTION HEADERS ─────────────────────────────── */
+/* ── SECTION HEADERS ─────────────────────────── */
 .section-hdr {
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: var(--text-dim);
-  margin: 32px 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-  text-transform: uppercase;
+  font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 5px; text-transform: uppercase; color: var(--text-3);
+  margin: 36px 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
   position: relative;
 }
 .section-hdr::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0;
-  width: 60px; height: 1px;
-  background: var(--gold);
+  content: ''; position: absolute; bottom: -1px; left: 0;
+  width: 48px; height: 2px; background: var(--gold);
+  box-shadow: 0 0 8px rgba(232,201,74,0.6);
 }
 
-/* ── RESULTS (hidden until analysis) ─────────────── */
-#results { display: none; }
+/* ── DECK INPUT AREA ─────────────────────────── */
+.input-grid { display: grid; grid-template-columns: 1fr 56px 1fr; margin-bottom: 16px; }
+@media(max-width:680px){ .input-grid{ grid-template-columns:1fr; } .vs-mid{ display:none; } }
 
-/* ── POWER CARDS ─────────────────────────────────── */
-.power-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 28px;
-}
-@media(max-width:600px){ .power-grid { grid-template-columns: 1fr; } }
+.deck-col { display: flex; flex-direction: column; }
 
-.power-card {
-  background: var(--bg3);
+.deck-card {
+  background: var(--bg-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--r-lg);
+  padding: 20px;
+  height: 100%;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-.power-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+.deck-card:focus-within {
+  border-color: rgba(232,201,74,0.35);
+  box-shadow: 0 0 0 3px rgba(232,201,74,0.07), var(--shadow-md);
 }
-.power-card.a {
-  border-color: rgba(232,201,74,0.2);
-}
-.power-card.a:hover { border-color: rgba(232,201,74,0.4); box-shadow: 0 0 40px rgba(232,201,74,0.08); }
-.power-card.a::before {
-  background: linear-gradient(90deg, var(--gold), rgba(232,201,74,0.1));
-  box-shadow: 0 2px 20px rgba(232,201,74,0.3);
-}
-.power-card.b {
-  border-color: rgba(74,232,176,0.2);
-}
-.power-card.b:hover { border-color: rgba(74,232,176,0.4); box-shadow: 0 0 40px rgba(74,232,176,0.08); }
-.power-card.b::before {
-  background: linear-gradient(90deg, var(--teal), rgba(74,232,176,0.1));
-  box-shadow: 0 2px 20px rgba(74,232,176,0.3);
+.deck-card.b:focus-within {
+  border-color: rgba(61,232,168,0.3);
+  box-shadow: 0 0 0 3px rgba(61,232,168,0.06), var(--shadow-md);
 }
 
-/* Corner decoration */
-.power-card::after {
-  content: '';
-  position: absolute;
-  top: 0; right: 0;
-  width: 80px; height: 80px;
-  background: radial-gradient(circle at top right, rgba(255,255,255,0.03), transparent 70%);
-  pointer-events: none;
+.deck-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
 }
+.deck-lbl { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+.deck-lbl.a { color: var(--gold); }
+.deck-lbl.b { color: var(--teal); }
 
-.power-card-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 20px;
+.btn-clear {
+  background: none; border: 1px solid var(--border-2);
+  color: var(--text-3); font-family: 'DM Mono'; font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
 }
-.power-card-name { font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
-.power-card-name.a { color: var(--gold); }
-.power-card-name.b { color: var(--teal); }
+.btn-clear:hover { border-color: var(--red); color: var(--red); }
 
-.bracket-badge {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 32px;
-  line-height: 1;
-  padding: 8px 18px;
-  border-radius: var(--radius);
-  border: 1px solid;
-  letter-spacing: 2px;
+input[type=text] {
+  width: 100%; background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text);
+  font-family: 'Barlow'; font-size: 13px; font-weight: 600;
+  padding: 9px 14px; outline: none; margin-bottom: 10px; transition: all 0.2s;
 }
-.br1 { color: var(--teal); border-color: rgba(74,232,176,0.4); background: rgba(74,232,176,0.08); text-shadow: 0 0 20px rgba(74,232,176,0.5); }
-.br2 { color: var(--blue); border-color: rgba(74,158,232,0.4); background: rgba(74,158,232,0.08); text-shadow: 0 0 20px rgba(74,158,232,0.5); }
-.br3 { color: var(--purple); border-color: rgba(158,74,232,0.4); background: rgba(158,74,232,0.08); text-shadow: 0 0 20px rgba(158,74,232,0.5); }
-.br4 { color: var(--gold); border-color: rgba(232,201,74,0.4); background: rgba(232,201,74,0.08); text-shadow: 0 0 20px rgba(232,201,74,0.5); }
-.br5 { color: var(--red); border-color: rgba(232,74,106,0.4); background: rgba(232,74,106,0.08); text-shadow: 0 0 20px rgba(232,74,106,0.5); }
+input[type=text]:focus { border-color: rgba(232,201,74,0.4); }
 
-.power-stats {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; margin-bottom: 18px;
-}
-.pstat {
-  text-align: center;
-  background: var(--bg2);
-  border-radius: 8px;
-  padding: 10px 6px;
-  border: 1px solid var(--border);
+.textarea-wrap { position: relative; }
+textarea {
+  width: 100%; background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text);
+  font-family: 'DM Mono'; font-size: 11px; line-height: 1.9;
+  padding: 12px 12px 34px; resize: vertical; height: 280px; outline: none;
   transition: border-color 0.2s;
 }
-.pstat:hover { border-color: var(--border2); }
-.pstat-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--text); letter-spacing: 1px; }
-.pstat-lbl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+textarea:focus { border-color: rgba(232,201,74,0.2); }
+textarea::placeholder { color: var(--text-4); font-style: italic; }
 
-.bracket-checks { display: flex; flex-direction: column; gap: 6px; }
+.counter-badge {
+  position: absolute; bottom: 10px; right: 12px;
+  font-family: 'DM Mono'; font-size: 10px; color: var(--text-4);
+  pointer-events: none; letter-spacing: 1px;
+}
+.counter-badge .cnt { font-weight: 700; }
+.counter-badge .cnt.a { color: var(--gold); }
+.counter-badge .cnt.b { color: var(--teal); }
+.counter-badge .cnt.scan { color: var(--gold); }
+
+.vs-mid { display: flex; align-items: center; justify-content: center; padding-top: 58px; }
+.vs-circle {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: radial-gradient(circle, var(--bg-4), var(--bg-2));
+  border: 1px solid var(--border-3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue'; font-size: 17px; color: var(--text-3); letter-spacing: 1px;
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.02), var(--shadow-sm);
+  transition: all 0.3s;
+}
+.vs-circle:hover {
+  border-color: var(--gold); color: var(--gold);
+  box-shadow: 0 0 0 6px var(--gold-a10), 0 0 30px var(--gold-a35);
+  transform: scale(1.1);
+}
+
+/* ── SAMPLE BAR ──────────────────────────────── */
+.sample-bar {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px 18px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.sample-label { font-family:'DM Mono'; font-size:9px; letter-spacing:3px; color:var(--text-4); text-transform:uppercase; flex-shrink:0; }
+.sample-sep { width:1px; height:18px; background:var(--border-2); flex-shrink:0; }
+.sample-btn {
+  font-family:'DM Mono'; font-size:9px; letter-spacing:1px;
+  padding:4px 11px; border-radius:5px; cursor:pointer;
+  border:1px solid; transition:all 0.18s; background:transparent;
+  text-transform:uppercase;
+}
+.sample-btn.gold { color:var(--gold); border-color:rgba(232,201,74,0.25); }
+.sample-btn.gold:hover { background:var(--gold-a10); box-shadow:0 0 12px rgba(232,201,74,0.2); }
+.sample-btn.teal { color:var(--teal); border-color:rgba(61,232,168,0.25); }
+.sample-btn.teal:hover { background:var(--teal-a10); }
+.sample-btn.purple { color:var(--purple); border-color:rgba(168,85,247,0.25); }
+.sample-btn.purple:hover { background:rgba(168,85,247,0.08); }
+
+/* ── BUTTONS ─────────────────────────────────── */
+.btn-row { display:flex; gap:12px; justify-content:center; margin-bottom:36px; flex-wrap:wrap; }
+
+.btn-primary {
+  position:relative; overflow:hidden;
+  background: linear-gradient(135deg, var(--gold-dk) 0%, var(--gold) 40%, var(--gold-lt) 55%, var(--gold-dk) 100%);
+  background-size: 250% 100%; background-position: 100% 0;
+  border:none; border-radius:var(--r-md);
+  color:#05050e; cursor:pointer;
+  font-family:'Bebas Neue'; font-size:20px; letter-spacing:6px;
+  padding:14px 52px; transition:all 0.4s;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 4px 20px rgba(232,201,74,0.15);
+}
+.btn-primary:hover {
+  background-position:0 0;
+  transform:translateY(-3px);
+  box-shadow:0 6px 40px rgba(232,201,74,0.45), 0 0 0 1px rgba(232,201,74,0.25), 0 2px 0 rgba(0,0,0,0.3);
+}
+.btn-primary:active { transform:translateY(-1px); }
+/* Shine sweep */
+.btn-primary::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.2) 50%, transparent 65%);
+  transform:translateX(-100%); transition:transform 0.5s;
+}
+.btn-primary:hover::after { transform:translateX(100%); }
+
+.btn-secondary {
+  background:var(--bg-3); border:1px solid var(--border-2);
+  border-radius:var(--r-sm); color:var(--text-2); cursor:pointer;
+  font-family:'DM Mono'; font-size:10px; letter-spacing:2px;
+  text-transform:uppercase; padding:13px 22px; transition:all 0.2s;
+}
+.btn-secondary:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-a10); }
+
+/* ── POWER CARDS ─────────────────────────────── */
+.power-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px; }
+@media(max-width:640px){ .power-grid{ grid-template-columns:1fr; } }
+
+.power-card {
+  background: var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:26px; position:relative; overflow:hidden;
+  transition:transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  animation:cardIn 0.45s cubic-bezier(.22,1,.36,1) both;
+}
+.power-card:hover { transform:translateY(-5px); }
+.power-card.a { border-color:rgba(232,201,74,0.18); animation-delay:0s; }
+.power-card.b { border-color:rgba(61,232,168,0.18); animation-delay:0.08s; }
+.power-card.a:hover { box-shadow:0 24px 64px rgba(232,201,74,0.12), 0 0 0 1px rgba(232,201,74,0.28); }
+.power-card.b:hover { box-shadow:0 24px 64px rgba(61,232,168,0.10), 0 0 0 1px rgba(61,232,168,0.28); }
+
+.power-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+}
+.power-card.a::before { background:linear-gradient(90deg, var(--gold) 0%, rgba(232,201,74,0) 100%); box-shadow:0 0 24px rgba(232,201,74,0.5); }
+.power-card.b::before { background:linear-gradient(90deg, var(--teal) 0%, rgba(61,232,168,0) 100%); box-shadow:0 0 24px rgba(61,232,168,0.5); }
+
+/* Watermark hex */
+.power-card::after {
+  content:'⬡'; position:absolute; bottom:-28px; right:-12px;
+  font-size:160px; line-height:1; opacity:0.025; pointer-events:none; user-select:none;
+}
+
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(24px) scale(0.97); }
+  to   { opacity:1; transform:none; }
+}
+
+.power-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+.power-card-name { font-family:'Cinzel',serif; font-size:18px; font-weight:700; letter-spacing:2px; }
+.power-card-name.a { color:var(--gold); }
+.power-card-name.b { color:var(--teal); }
+
+.bracket-badge {
+  font-family:'Bebas Neue'; font-size:36px; line-height:1;
+  padding:8px 20px; border-radius:10px; border:1px solid;
+  letter-spacing:2px; transition:all 0.25s;
+}
+.bracket-badge:hover { transform:scale(1.08); }
+.br1 { color:var(--teal);   border-color:rgba(61,232,168,0.4);  background:rgba(61,232,168,0.08);  box-shadow:inset 0 0 20px rgba(61,232,168,0.12); }
+.br2 { color:var(--blue);   border-color:rgba(96,165,250,0.4);  background:rgba(96,165,250,0.08);  box-shadow:inset 0 0 20px rgba(96,165,250,0.12); }
+.br3 { color:var(--purple); border-color:rgba(168,85,247,0.4);  background:rgba(168,85,247,0.08);  box-shadow:inset 0 0 20px rgba(168,85,247,0.12); }
+.br4 { color:var(--gold);   border-color:rgba(232,201,74,0.4);  background:rgba(232,201,74,0.08);  box-shadow:inset 0 0 20px rgba(232,201,74,0.12); }
+.br5 { color:var(--red);    border-color:rgba(240,81,106,0.4);  background:rgba(240,81,106,0.08);  box-shadow:inset 0 0 20px rgba(240,81,106,0.12); }
+
+.power-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px; }
+.pstat {
+  text-align:center; background:var(--bg-1); border-radius:8px;
+  padding:10px 4px; border:1px solid var(--border); transition:all 0.2s;
+}
+.pstat:hover { border-color:var(--border-2); background:var(--bg-3); }
+.pstat-val { font-family:'Bebas Neue'; font-size:28px; color:var(--text); letter-spacing:1px; }
+.pstat-lbl { font-family:'DM Mono'; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-3); margin-top:2px; }
+
+.bracket-checks { display:flex; flex-direction:column; gap:5px; }
 .bcheck {
-  display: flex; align-items: center; gap: 10px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px; letter-spacing: 0.5px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  display:flex; align-items:center; gap:10px;
+  font-family:'DM Mono'; font-size:11px;
+  padding:7px 12px; border-radius:7px; border:1px solid;
 }
-.bcheck .icon { font-size: 13px; flex-shrink: 0; }
-.bcheck.pass { color: #4ae87a; background: rgba(74,232,122,0.06); border: 1px solid rgba(74,232,122,0.15); }
-.bcheck.fail { color: var(--red); background: rgba(232,74,106,0.06); border: 1px solid rgba(232,74,106,0.15); }
-.bcheck.warn { color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(232,201,74,0.2); }
+.bcheck .icon { flex-shrink:0; width:18px; text-align:center; font-size:12px; }
+.bcheck.pass { color:#5af090; background:rgba(90,240,144,0.05); border-color:rgba(90,240,144,0.15); }
+.bcheck.fail { color:var(--red); background:rgba(240,81,106,0.05); border-color:rgba(240,81,106,0.15); }
+.bcheck.warn { color:var(--gold); background:var(--gold-a10); border-color:rgba(232,201,74,0.2); }
 
-.power-bar-wrap { margin-top: 16px; }
+.power-bar-wrap { margin-top:18px; }
 .power-bar-bg {
-  height: 10px; background: var(--bg2); border-radius: 5px;
-  overflow: hidden; margin-top: 6px;
-  border: 1px solid var(--border);
+  height:10px; background:var(--bg-1); border-radius:5px;
+  overflow:hidden; margin-top:6px; border:1px solid var(--border);
 }
-.power-bar-fill { height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(.34,1.56,.64,1); }
-.bar-gold { background: linear-gradient(90deg, #a07820, #e8c94a, #f5e060); box-shadow: 0 0 10px rgba(232,201,74,0.4); }
-.bar-teal { background: linear-gradient(90deg, #208858, #4ae8b0, #80ffcc); box-shadow: 0 0 10px rgba(74,232,176,0.4); }
-.power-bar-labels { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.power-bar-fill {
+  height:100%; border-radius:5px;
+  transition:width 1.3s cubic-bezier(.34,1.4,.64,1);
+  position:relative; overflow:hidden;
+}
+.power-bar-fill::after {
+  content:''; position:absolute; top:0; right:0; bottom:0; width:50%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.28));
+  animation:barShine 2.5s ease-in-out infinite;
+}
+@keyframes barShine { 0%,100%{opacity:0;} 50%{opacity:1;} }
+.bar-gold { background:linear-gradient(90deg, #6a4808, var(--gold), var(--gold-lt)); }
+.bar-teal { background:linear-gradient(90deg, #0d5435, var(--teal), #80ffd0); }
+.power-bar-labels { display:flex; justify-content:space-between; font-family:'DM Mono'; font-size:9px; color:var(--text-4); margin-top:4px; letter-spacing:1px; }
 
-/* ── FLAGGED CARDS ───────────────────────────────── */
-.flagged-section {
-  margin-top: 14px;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-}
-.flagged-title {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--text-dim); margin-bottom: 8px;
-}
+/* ── FLAGS ───────────────────────────────────── */
+.flagged-section { margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
+.flagged-title { font-family:'DM Mono'; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--text-3); margin-bottom:8px; }
 .flag-chip {
-  display: inline-block;
-  background: var(--bg4);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 3px 8px;
-  margin: 2px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.15s;
+  display:inline-flex; align-items:center;
+  background:var(--bg-3); border:1px solid var(--border);
+  border-radius:5px; font-family:'DM Mono'; font-size:10px;
+  padding:3px 9px; margin:2px; color:var(--text); cursor:pointer;
+  transition:all 0.15s; user-select:none;
 }
-.flag-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-.flag-chip.mld { border-color: rgba(232,74,106,0.5); color: var(--red); background: rgba(232,74,106,0.08); }
-.flag-chip.combo { border-color: rgba(158,74,232,0.5); color: #c87aff; background: rgba(158,74,232,0.08); }
-.flag-chip.gc { border-color: rgba(232,201,74,0.5); color: var(--gold); background: var(--gold-dim); }
-.flag-chip.xt { border-color: rgba(74,158,232,0.5); color: var(--blue); background: rgba(74,158,232,0.08); }
+.flag-chip:hover { transform:translateY(-2px); box-shadow:var(--shadow-sm); position:relative; z-index:1; }
+.flag-chip.mld   { border-color:rgba(240,81,106,0.45); color:var(--red); background:rgba(240,81,106,0.08); }
+.flag-chip.combo { border-color:rgba(168,85,247,0.45); color:#c084fc; background:rgba(168,85,247,0.08); }
+.flag-chip.gc    { border-color:rgba(232,201,74,0.45); color:var(--gold); background:var(--gold-a10); }
+.flag-chip.xt    { border-color:rgba(96,165,250,0.45); color:var(--blue); background:rgba(96,165,250,0.08); }
 
-/* ── SUMMARY CARDS ───────────────────────────────── */
-.summary-bar {
-  display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px;
-}
-@media(max-width:500px){ .summary-bar { grid-template-columns: 1fr 1fr; } }
+/* ── SUMMARY STAT CARDS ──────────────────────── */
+.summary-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+@media(max-width:520px){ .summary-bar{ grid-template-columns:1fr 1fr; } }
 
 .scard {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; text-align: center;
-  transition: all 0.2s;
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--r-md); padding:18px 12px; text-align:center;
+  transition:all 0.22s; cursor:default;
 }
-.scard:hover { border-color: var(--border2); transform: translateY(-2px); }
-.scard .n { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; }
-.scard .l { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
-.scard.sa .n { color: var(--gold); text-shadow: 0 0 20px rgba(232,201,74,0.4); }
-.scard.sb .n { color: var(--teal); text-shadow: 0 0 20px rgba(74,232,176,0.4); }
-.scard.ss .n { color: var(--text); }
-.scard.so .n { color: var(--purple); text-shadow: 0 0 20px rgba(158,74,232,0.4); }
+.scard:hover { border-color:var(--border-2); transform:translateY(-3px); box-shadow:var(--shadow-md); }
+.scard .n { font-family:'Bebas Neue'; font-size:44px; letter-spacing:1px; line-height:1.05; }
+.scard .l { font-family:'DM Mono'; font-size:8px; letter-spacing:3px; text-transform:uppercase; color:var(--text-3); margin-top:4px; }
+.scard.sa .n { color:var(--gold); text-shadow:0 0 28px rgba(232,201,74,0.5); }
+.scard.sb .n { color:var(--teal); text-shadow:0 0 28px rgba(61,232,168,0.4); }
+.scard.ss .n { color:var(--text); }
+.scard.so .n { color:var(--purple); text-shadow:0 0 28px rgba(168,85,247,0.4); }
 
-/* ── OVERLAP VIS ─────────────────────────────────── */
+/* ── OVERLAP VIS ─────────────────────────────── */
 .overlap-vis {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px;
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:22px 26px; margin-bottom:24px;
 }
-.ovlap-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
-.ovlap-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin-bottom: 10px; gap: 2px; }
-.ob-a { background: linear-gradient(90deg, #c8a030, var(--gold)); }
-.ob-s { background: rgba(255,255,255,0.06); }
-.ob-b { background: linear-gradient(90deg, rgba(74,232,176,0.7), var(--teal)); }
-.ovlap-lbls { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 11px; }
+.ovlap-title { font-family:'DM Mono'; font-size:9px; letter-spacing:4px; text-transform:uppercase; color:var(--text-3); margin-bottom:16px; }
+.ovlap-bar { display:flex; height:28px; border-radius:8px; overflow:hidden; margin-bottom:10px; gap:2px; }
+.ob-a { background:linear-gradient(90deg, #6a4808, var(--gold)); }
+.ob-s { background:rgba(255,255,255,0.06); }
+.ob-b { background:linear-gradient(90deg, rgba(61,232,168,0.6), var(--teal)); }
+.ovlap-lbls { display:flex; justify-content:space-between; font-family:'DM Mono'; font-size:11px; }
 
-/* ── 3-COL CARD LISTS ───────────────────────────── */
-.three-col { display: grid; grid-template-columns: 1fr 180px 1fr; gap: 12px; }
-@media(max-width:700px){ .three-col { grid-template-columns: 1fr; } }
+/* ── 3-COL LISTS ─────────────────────────────── */
+.three-col { display:grid; grid-template-columns:1fr 185px 1fr; gap:12px; }
+@media(max-width:720px){ .three-col{ grid-template-columns:1fr; } }
 
 .col-hdr {
-  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-  padding: 12px 14px; border-radius: var(--radius) var(--radius) 0 0;
-  display: flex; justify-content: space-between;
+  font-family:'DM Mono'; font-size:10px; letter-spacing:3px; text-transform:uppercase;
+  padding:12px 16px; border-radius:var(--r-sm) var(--r-sm) 0 0;
+  display:flex; justify-content:space-between; align-items:center;
 }
-.col-hdr.ha { background: rgba(232,201,74,0.08); color: var(--gold); border: 1px solid rgba(232,201,74,0.2); border-bottom: none; }
-.col-hdr.hs { background: rgba(255,255,255,0.03); color: var(--text-dim); border: 1px solid var(--border); border-bottom: none; }
-.col-hdr.hb { background: rgba(74,232,176,0.08); color: var(--teal); border: 1px solid rgba(74,232,176,0.2); border-bottom: none; }
+.col-hdr.ha { background:rgba(232,201,74,0.07); color:var(--gold); border:1px solid rgba(232,201,74,0.18); border-bottom:none; }
+.col-hdr.hs { background:rgba(255,255,255,0.03); color:var(--text-3); border:1px solid var(--border); border-bottom:none; }
+.col-hdr.hb { background:rgba(61,232,168,0.07); color:var(--teal); border:1px solid rgba(61,232,168,0.18); border-bottom:none; }
 
-.col-body { border-radius: 0 0 var(--radius) var(--radius); max-height: 500px; overflow-y: auto; }
-.col-body.ba { border: 1px solid rgba(232,201,74,0.2); }
-.col-body.bs { border: 1px solid var(--border); }
-.col-body.bb { border: 1px solid rgba(74,232,176,0.2); }
+.col-body { border-radius:0 0 var(--r-sm) var(--r-sm); max-height:520px; overflow-y:auto; }
+.col-body.ba { border:1px solid rgba(232,201,74,0.18); }
+.col-body.bs { border:1px solid var(--border); }
+.col-body.bb { border:1px solid rgba(61,232,168,0.18); }
 
 .crd-row {
-  padding: 7px 14px;
-  font-family: 'DM Mono', monospace; font-size: 11px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-  display: flex; justify-content: space-between; align-items: center;
-  transition: background 0.12s;
+  padding:7px 16px; font-family:'DM Mono'; font-size:11px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  display:flex; justify-content:space-between; align-items:center;
+  transition:background 0.1s;
 }
-.crd-row:last-child { border-bottom: none; }
-.crd-row:hover { background: rgba(255,255,255,0.04); }
-.crd-row.ra:hover { background: rgba(232,201,74,0.06); }
-.crd-row.rb:hover { background: rgba(74,232,176,0.06); }
-.crd-row.rs { color: var(--text-dim); }
+.crd-row:last-child{ border-bottom:none; }
+.crd-row:hover { background:rgba(255,255,255,0.04); }
+.crd-row.ra:hover { background:rgba(232,201,74,0.06); }
+.crd-row.rb:hover { background:rgba(61,232,168,0.06); }
+.crd-row.rs { color:var(--text-3); }
 
-.tdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-left: 8px; }
-.tc { background: #e84a4a; box-shadow: 0 0 4px #e84a4a; }
-.ta { background: #888; }
-.te { background: #4ae87a; box-shadow: 0 0 4px #4ae87a; }
-.ti { background: var(--blue); box-shadow: 0 0 4px var(--blue); }
-.ts { background: var(--purple); box-shadow: 0 0 4px var(--purple); }
-.tl { background: #e87a4a; box-shadow: 0 0 4px #e87a4a; }
-.tp { background: var(--gold); box-shadow: 0 0 4px var(--gold); }
+.tdot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-left:8px; }
+.tc { background:#e84a4a; box-shadow:0 0 5px #e84a4a90; }
+.ta { background:#888; }
+.te { background:var(--green); box-shadow:0 0 5px #4ade8090; }
+.ti { background:var(--blue); box-shadow:0 0 5px #60a5fa90; }
+.ts { background:var(--purple); box-shadow:0 0 5px #a855f790; }
+.tl { background:#fb923c; box-shadow:0 0 5px #fb923c90; }
+.tp { background:var(--gold); box-shadow:0 0 5px #e8c94a90; }
 
 .sec-div {
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--text-dim); padding: 6px 14px;
-  background: var(--bg4); border-bottom: 1px solid var(--border);
+  font-family:'DM Mono'; font-size:9px; letter-spacing:3px; text-transform:uppercase;
+  color:var(--text-3); padding:6px 16px; background:var(--bg-3); border-bottom:1px solid var(--border);
 }
+.empty-msg { padding:40px; text-align:center; color:var(--text-3); font-family:'DM Mono'; font-size:11px; letter-spacing:2px; }
 
-.empty-msg { padding: 36px; text-align: center; color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; }
+/* ── CAT BREAKDOWN ───────────────────────────── */
+.cat-grid { display:grid; grid-template-columns:90px 1fr 60px 1fr 90px; gap:8px; align-items:center; margin-bottom:10px; }
+.cat-nm { font-family:'DM Mono'; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-3); text-align:right; }
+.cat-bw { height:8px; background:var(--bg-1); border-radius:4px; overflow:hidden; }
+.cat-bf-a { height:100%; border-radius:4px; background:linear-gradient(90deg,#6a4808,var(--gold)); transition:width 1s cubic-bezier(.34,1.4,.64,1); }
+.cat-bf-b { height:100%; border-radius:4px; background:linear-gradient(90deg,#0d5435,var(--teal)); transition:width 1s cubic-bezier(.34,1.4,.64,1); }
+.cat-nn { font-family:'Bebas Neue'; font-size:22px; text-align:center; letter-spacing:1px; }
+.cat-nn.a { color:var(--gold); } .cat-nn.b { color:var(--teal); }
+.cat-leg { font-family:'DM Mono'; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-3); }
 
-/* ── CAT BREAKDOWN ───────────────────────────────── */
-.cat-grid { display: grid; grid-template-columns: 80px 1fr 60px 1fr 80px; gap: 8px; align-items: center; margin-bottom: 10px; }
-.cat-nm { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); text-align: right; }
-.cat-bw { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
-.cat-bf-a { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #a07820, var(--gold)); transition: width 0.8s cubic-bezier(.34,1.56,.64,1); }
-.cat-bf-b { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #208858, var(--teal)); transition: width 0.8s cubic-bezier(.34,1.56,.64,1); }
-.cat-nn { font-family: 'Bebas Neue', sans-serif; font-size: 20px; text-align: center; letter-spacing: 1px; }
-.cat-nn.a { color: var(--gold); }
-.cat-nn.b { color: var(--teal); }
-.cat-leg { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); font-family: 'DM Mono', monospace; }
-
-/* ── SEARCH ──────────────────────────────────────── */
-.search-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+/* ── SEARCH / TAGS ───────────────────────────── */
+.search-row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
 .srch {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text);
-  font-family: 'DM Mono', monospace; font-size: 12px;
-  padding: 9px 14px; outline: none; flex: 1; min-width: 180px;
-  transition: all 0.2s;
+  background:var(--bg-2); border:1px solid var(--border); border-radius:var(--r-sm);
+  color:var(--text); font-family:'DM Mono'; font-size:12px;
+  padding:10px 16px; outline:none; flex:1; min-width:180px; transition:all 0.2s;
 }
-.srch:focus { border-color: rgba(232,201,74,0.4); background: var(--bg4); box-shadow: 0 0 0 3px rgba(232,201,74,0.06); }
-.srch::placeholder { color: var(--text-faint); }
-
-.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.srch:focus { border-color:rgba(232,201,74,0.4); box-shadow:0 0 0 3px rgba(232,201,74,0.06); }
+.srch::placeholder { color:var(--text-4); }
+.tag-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
 .tag {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 20px; color: var(--text-dim); cursor: pointer;
-  font-family: 'DM Mono', monospace;
-  font-size: 9px; letter-spacing: 2px;
-  padding: 4px 12px; text-transform: uppercase; transition: all 0.15s;
+  background:var(--bg-2); border:1px solid var(--border); border-radius:20px;
+  color:var(--text-3); cursor:pointer;
+  font-family:'DM Mono'; font-size:9px; letter-spacing:2px;
+  padding:4px 14px; text-transform:uppercase; transition:all 0.15s;
 }
-.tag:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-.tag.active { background: var(--gold-dim); border-color: rgba(232,201,74,0.5); color: var(--gold); }
+.tag:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-a10); }
+.tag.active { background:var(--gold-a10); border-color:rgba(232,201,74,0.45); color:var(--gold); }
 
-/* ── SCROLLBAR ───────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(232,201,74,0.3); }
+/* ── SCROLLBAR ───────────────────────────────── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(232,201,74,0.35); }
 
-/* ── GLASSMORPHISM CARDS ─────────────────────────── */
-.glass-card {
-  background: rgba(255,255,255,0.02);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-lg);
-}
-
-/* ── FOOTER ──────────────────────────────────────── */
-footer {
-  text-align: center;
-  padding: 32px 20px 24px;
-  border-top: 1px solid var(--border);
-  margin-top: 48px;
-}
-footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); letter-spacing: 3px; }
-
-/* ── RESPONSIVE SCAN PANEL ───────────────────────── */
-@media(max-width:700px) {
-  #panel-scan > div > div:first-child {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ── TOAST ───────────────────────────────────────── */
+/* ── TOAST ───────────────────────────────────── */
 #edh-toast {
-  font-family: 'DM Mono', monospace !important;
-  backdrop-filter: blur(20px);
-  background: rgba(20,20,30,0.95) !important;
-  border: 1px solid rgba(232,201,74,0.3) !important;
+  font-family:'DM Mono' !important; font-size:11px !important;
+  background:rgba(9,9,20,0.97) !important;
+  border:1px solid rgba(232,201,74,0.35) !important;
+  backdrop-filter:blur(20px) !important;
+  border-radius:8px !important; letter-spacing:1px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.8) !important;
 }
 
-/* ── LOADING SHIMMER ─────────────────────────────── */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* ── CARD TOOLTIP ────────────────────────────── */
+#card-tooltip img { border-radius:14px !important; box-shadow:0 24px 80px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.08) !important; }
+
+/* ── FOOTER ──────────────────────────────────── */
+footer {
+  text-align:center; padding:36px 24px 28px;
+  border-top:1px solid var(--border); margin-top:64px;
+  position:relative;
 }
-.shimmer {
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+footer::before {
+  content:''; position:absolute; top:-1px; left:25%; right:25%;
+  height:1px; background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity:0.4;
+}
+footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spacing:4px; text-transform:uppercase; }
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media(max-width:720px) {
+  .panel { padding:24px 16px; }
+  #panel-scan > div > div:first-child { grid-template-columns:1fr !important; }
+  .hstat { padding:10px 20px; }
 }
 
-/* ── GLOW UTILITIES ──────────────────────────────── */
-.glow-gold { box-shadow: 0 0 20px rgba(232,201,74,0.2), 0 0 60px rgba(232,201,74,0.08); }
-.glow-teal { box-shadow: 0 0 20px rgba(74,232,176,0.2), 0 0 60px rgba(74,232,176,0.08); }
+/* ── RESULTS ─────────────────────────────────── */
+#results { display:none; }
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2816476613820323" crossorigin="anonymous"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MiA1MiI+CiAgPHBvbHlnb24gcG9pbnRzPSIyNiwyIDQ4LDE0IDQ4LDM4IDI2LDUwIDQsMzggNCwxNCIgZmlsbD0iIzFhMWEwYSIgc3Ryb2tlPSIjZThjOTRhIiBzdHJva2Utd2lkdGg9IjIuNSIvPgogIDx0ZXh0IHg9IjI2IiB5PSIzNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNlOGM5NGEiPlA8L3RleHQ+Cjwvc3ZnPg==">
@@ -672,25 +663,84 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 <body>
 
 <div class="header">
-  <div class="header-inner">
-    <h1>EDH Power Level</h1>
-    <div class="header-sub">Deck Analyzer &nbsp;·&nbsp; Bracket System &nbsp;·&nbsp; Commander</div>
-    <div class="header-gems">
-      <div class="gem"></div>
-      <div class="gem"></div>
-      <div class="gem"></div>
-      <div class="gem"></div>
-      <div class="gem"></div>
-    </div>
+  <!-- Animated hex SVG bg -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.04;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="hex" x="0" y="0" width="56" height="48" patternUnits="userSpaceOnUse">
+        <polygon points="28,2 52,14 52,34 28,46 4,34 4,14" fill="none" stroke="#e8c94a" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#hex)"/>
+  </svg>
+
+  <div class="header-eyebrow">Commander · Power Level · Bracket Analysis</div>
+  <h1>EDH Power Level</h1>
+  <div class="header-tagline">Analyze · Compare · Conquer</div>
+
+  <!-- Mana pips -->
+  <div class="header-mana">
+    <div class="mana-pip" title="White">W</div>
+    <div class="mana-pip" title="Blue">U</div>
+    <div class="mana-pip" title="Black">B</div>
+    <div class="mana-pip" title="Red">R</div>
+    <div class="mana-pip" title="Green">G</div>
+  </div>
+
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-n">5</div><div class="hstat-l">Brackets</div></div>
+    
+    <div class="hstat"><div class="hstat-n">53</div><div class="hstat-l">Game Changers</div></div>
+    
+    <div class="hstat"><div class="hstat-n" id="db-count">600+</div><div class="hstat-l">Cards in DB</div></div>
+    
+    <div class="hstat"><div class="hstat-n">Feb 2026</div><div class="hstat-l">Last Updated</div></div>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('compare')">
+    <span style="margin-right:6px;">⚔</span>Compare Decks
+  </div>
+  <div class="tab" onclick="switchTab('scan')">
+    <span style="margin-right:6px;">🔍</span>Single Deck
+  </div>
+  <div class="tab" onclick="switchTab('recommend')">
+    <span style="margin-right:6px;">✨</span>AI Recommendations
+  </div>
+  <div class="tab" onclick="switchTab('synergy')">
+    <span style="margin-right:6px;">🔗</span>Synergies
+  </div>
+  <div class="tab" onclick="switchTab('about')">
+    <span style="margin-right:6px;">📖</span>Algorithm
   </div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('compare')">⚔ Compare</div>
-  <div class="tab" onclick="switchTab('scan')">🔍 Single Deck</div>
-  <div class="tab" onclick="switchTab('recommend')">✨ Recommendations</div>
-  <div class="tab" onclick="switchTab('synergy')">🔗 Synergies</div>
-  <div class="tab" onclick="switchTab('about')">📖 Algorithm</div>
+<!-- WELCOME BANNER -->
+<!-- Shortcut hints bar -->
+<div id="shortcuts-hint" style="background:var(--bg-2);border-bottom:1px solid var(--border);padding:6px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;overflow:hidden;">
+  <span style="font-family:'DM Mono';font-size:8px;color:var(--text-4);letter-spacing:2px;text-transform:uppercase;">Shortcuts:</span>
+  <span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);">
+    <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">⌘ Enter</kbd> Analyze
+  </span>
+  <span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);">
+    <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">1-5</kbd> Switch tabs
+  </span>
+  <span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);">
+    <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">⌘ K</kbd> Search cards
+  </span>
+  <button onclick="document.getElementById('shortcuts-hint').style.display='none'" style="background:none;border:none;color:var(--text-4);font-size:14px;cursor:pointer;margin-left:auto;line-height:1;" title="Dismiss">×</button>
+</div>
+<div id="welcome-banner" class="welcome-bar">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span style="font-size:22px;">⚡</span>
+    <div>
+      <div class="welcome-text">Welcome to <strong>EDH Power Level</strong> — paste your Commander decklist to get started</div>
+      <div class="welcome-sub">Supports Moxfield · Archidekt · EDHREC · MTGGoldfish · plain text</div>
+    </div>
+  </div>
+  <button class="welcome-dismiss" onclick="document.getElementById('welcome-banner').style.display='none'">DISMISS ✕</button>
+</div>
+  </div>
+  <button onclick="document.getElementById('welcome-banner').style.display='none'" style="background:none;border:1px solid var(--border2);color:var(--text-dim);font-family:'DM Mono';font-size:9px;letter-spacing:2px;padding:5px 12px;border-radius:6px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">DISMISS ✕</button>
 </div>
 
 <!-- COMPARE PANEL -->
@@ -698,57 +748,76 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 
   <div class="input-grid">
     <div class="deck-col">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="deck-card">
+      <div class="deck-top">
         <div class="deck-lbl a">⚔ Deck A</div>
         <button onclick="document.getElementById('deck-a').value='';document.getElementById('name-a').value='Deck A';document.getElementById('counter-a').textContent='0';" style="background:none;border:1px solid var(--border2);color:var(--text-dim);font-size:10px;font-family:'DM Mono',monospace;padding:4px 12px;border-radius:6px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">✕ CLEAR</button>
       </div>
       <input type="text" id="name-a" value="Deck A" placeholder="Deck name...">
       <div style="position:relative;">
         <textarea id="deck-a" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes are stripped automatically" oninput="updateCounter('deck-a','counter-a')" style="padding-bottom:32px;"></textarea>
-        <div style="position:absolute;bottom:10px;right:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-faint);pointer-events:none;"><span id="counter-a" style="color:var(--gold);font-weight:700;">0</span> / 100</div>
+        <div class="counter-badge"><span class="cnt a" id="counter-a">0</span> / 100</div>
       </div>
+      </div><!-- /deck-input-card -->
     </div>
     <div class="vs-mid">
       <div class="vs-circle">VS</div>
     </div>
     <div class="deck-col">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="deck-card b">
+      <div class="deck-top">
         <div class="deck-lbl b">🌀 Deck B</div>
         <button onclick="document.getElementById('deck-b').value='';document.getElementById('name-b').value='Deck B';document.getElementById('counter-b').textContent='0';" style="background:none;border:1px solid var(--border2);color:var(--text-dim);font-size:10px;font-family:'DM Mono',monospace;padding:4px 12px;border-radius:6px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">✕ CLEAR</button>
       </div>
       <input type="text" id="name-b" value="Deck B" placeholder="Deck name...">
       <div style="position:relative;">
         <textarea id="deck-b" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes are stripped automatically" oninput="updateCounter('deck-b','counter-b')" style="padding-bottom:32px;"></textarea>
-        <div style="position:absolute;bottom:10px;right:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-faint);pointer-events:none;"><span id="counter-b" style="color:var(--teal);font-weight:700;">0</span> / 100</div>
+        <div class="counter-badge"><span class="cnt b" id="counter-b">0</span> / 100</div>
       </div>
+      </div><!-- /deck-input-card -->
     </div>
   </div>
 
 
-  <!-- Sample Deck Loader for Compare -->
-  <div style="background:#14141a;border:1px solid #28283a;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;flex-shrink:0;">&#x1F9EA; Load Sample</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
-      <button onclick="loadCompare('krenko','a')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#e8c94a;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e8c94a'" onmouseout="this.style.borderColor='#3a3a5a'">Krenko → A</button>
-      <button onclick="loadCompare('slivers','a')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#e8c94a;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e8c94a'" onmouseout="this.style.borderColor='#3a3a5a'">Slivers → A</button>
-      <button onclick="loadCompare('casual','a')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#e8c94a;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#e8c94a'" onmouseout="this.style.borderColor='#3a3a5a'">Casual → A</button>
-      <div style="width:1px;background:#28283a;margin:0 4px;"></div>
-      <button onclick="loadCompare('krenko','b')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#4ae8b0;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#4ae8b0'" onmouseout="this.style.borderColor='#3a3a5a'">Krenko → B</button>
-      <button onclick="loadCompare('slivers','b')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#4ae8b0;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#4ae8b0'" onmouseout="this.style.borderColor='#3a3a5a'">Slivers → B</button>
-      <button onclick="loadCompare('casual','b')" style="background:#1c1c24;border:1px solid #3a3a5a;color:#4ae8b0;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.borderColor='#4ae8b0'" onmouseout="this.style.borderColor='#3a3a5a'">Casual → B</button>
-    </div>
+  <!-- Sample Deck Loader -->
+  <div class="sample-bar">
+    <span class="sample-label">🧪 Load Sample</span>
+    <button class="sample-btn gold" onclick="loadCompare('krenko','a')">Krenko → A</button>
+    <button class="sample-btn gold" onclick="loadCompare('slivers','a')">Slivers → A</button>
+    <button class="sample-btn gold" onclick="loadCompare('casual','a')">Casual → A</button>
+    <div class="sample-sep"></div>
+    <button class="sample-btn teal" onclick="loadCompare('krenko','b')">Krenko → B</button>
+    <button class="sample-btn teal" onclick="loadCompare('slivers','b')">Slivers → B</button>
+    <button class="sample-btn teal" onclick="loadCompare('casual','b')">Casual → B</button>
   </div>
 
   <div class="btn-row">
-    <button class="btn-primary" onclick="runAnalysis()">&#x26A1; Analyze &amp; Compare</button>
+    <button class="btn-primary" id="analyze-btn" onclick="runAnalysisAnimated()">&#x26A1; Analyze &amp; Compare</button>
     <button class="btn-secondary" onclick="downloadSelf()">&#x2193; Download App</button>
     <button class="btn-secondary" id="share-btn" onclick="shareURL()">&#x1F517; Share Decks</button>
+  </div>
+  <!-- Progress bar -->
+  <div id="analyze-progress" title="Tip: Press ⌘+Enter to analyze" style="display:none;max-width:600px;margin:-16px auto 24px;padding:0 20px;">
+    <div style="background:var(--bg-3);border-radius:4px;height:3px;overflow:hidden;">
+      <div id="analyze-bar" style="height:3px;background:linear-gradient(90deg,var(--gold-dk),var(--gold),var(--gold-lt));width:0%;transition:width 0.4s ease;border-radius:4px;"></div>
+    </div>
+    <div id="analyze-status" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-3);letter-spacing:2px;text-align:center;margin-top:6px;text-transform:uppercase;"></div>
   </div>
 
   <div id="results">
 
     <!-- POWER LEVEL -->
     <div class="section-hdr">Power Level &amp; Bracket Analysis</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--text-4);letter-spacing:2px;align-self:center;text-transform:uppercase;flex-shrink:0;">Brackets:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(61,232,168,0.3);color:var(--teal);background:rgba(61,232,168,0.06);">B1 Precon</span>
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(96,165,250,0.3);color:var(--blue);background:rgba(96,165,250,0.06);">B2 Casual</span>
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);color:var(--purple);background:rgba(168,85,247,0.06);">B3 Optimized</span>
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(232,201,74,0.3);color:var(--gold);background:var(--gold-a10);">B4 High Power</span>
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(240,81,106,0.3);color:var(--red);background:rgba(240,81,106,0.06);">B5 cEDH</span>
+      </div>
+    </div>
     
   <div class="power-grid">
       <div class="power-card a" id="pcard-a"></div>
@@ -780,7 +849,7 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 
     <!-- Cat breakdown -->
     <div class="section-hdr">Category Breakdown</div>
-    <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:20px;">
       <div id="cat-rows"></div>
     </div>
 
@@ -818,17 +887,21 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 <!-- SYNERGIES PANEL -->
 <div class="panel" id="panel-synergy">
   <div style="max-width:860px;margin:0 auto;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">🔗 Synergy Analyzer</div>
-    <div style="font-size:12px;color:#5a5a7a;margin-bottom:24px;letter-spacing:1px;">Deep synergy analysis for a single deck — themes, pairs, score, and missing pieces</div>
+    <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">🔗 Synergy Analyzer</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);margin-bottom:24px;letter-spacing:1px;">Deep synergy analysis for a single deck — themes, pairs, score, and missing pieces</div>
 
-    <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="deck-lbl a" style="margin-bottom:0;">⚔ Your Deck</div>
-        <button onclick="document.getElementById('syn-deck').value='';document.getElementById('syn-commander').value='';document.getElementById('syn-results').style.display='none';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="deck-lbl a">⚔ Your Deck</div>
+        <button class="btn-clear" onclick="document.getElementById('syn-deck').value='';document.getElementById('syn-commander').value='';document.getElementById('syn-results').style.display='none';">✕ CLEAR</button>
       </div>
-      <input type="text" id="syn-commander" placeholder="Commander name (e.g. Krenko, Mob Boss)" style="width:100%;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:10px;">
-      <textarea id="syn-deck" placeholder="Paste your decklist here..." style="width:100%;height:180px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;margin-bottom:12px;"></textarea>
-      <button onclick="analyzeSynergies()" id="syn-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#9e4ae8,#7a32c4);color:#fff;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;">🔗 ANALYZE SYNERGIES</button>
+      <input type="text" id="syn-commander" placeholder="Commander name (e.g. Krenko, Mob Boss)" style="width:100%;margin-bottom:10px;">
+      <div class="textarea-wrap">
+        <textarea id="syn-deck" placeholder="Paste your decklist here..." style="height:180px;margin-bottom:4px;" oninput="updateCounter('syn-deck','syn-counter')"></textarea>
+        <div class="counter-badge"><span class="cnt scan" id="syn-counter">0</span> cards</div>
+      </div>
+      <div style="margin-bottom:14px;"></div>
+      <button onclick="analyzeSynergies()" id="syn-btn" style="width:100%;padding:15px;background:linear-gradient(135deg,#6b21a8,var(--purple));color:#fff;border:none;border-radius:var(--r-md);font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(168,85,247,0.2);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(168,85,247,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(168,85,247,0.2)'">🔗 ANALYZE SYNERGIES</button>
     </div>
 
     <div id="syn-results" style="display:none;"></div>
@@ -848,20 +921,20 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 
       <!-- LEFT: Input card -->
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">&#x1F50D; Single Deck Scanner</div>
-        <div style="font-size:11px;color:#5a5a7a;margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">Power level &amp; bracket analysis</div>
+        <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">&#x1F50D; Single Deck Scanner</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">Power level &amp; bracket analysis</div>
 
-        <div style="background:#14141a;border:1px solid #28283a;border-radius:12px;padding:20px;">
+        <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;">
           <!-- Name row -->
           <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;">
-            <input type="text" id="scan-name" value="" placeholder="Deck name..." style="flex:1;padding:9px 12px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;border-radius:6px;box-sizing:border-box;" onfocus="this.style.borderColor='#e8c94a44'" onblur="this.style.borderColor='#28283a'">
-            <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';" style="background:none;border:1px solid #28283a;color:#5a5a7a;font-size:10px;font-family:DM Mono,monospace;padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2715; CLEAR</button>
+            <input type="text" id="scan-name" value="" placeholder="Deck name..." style="flex:1;padding:9px 12px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;border-radius:6px;box-sizing:border-box;" onfocus="this.style.borderColor='#e8c94a44'" onblur="this.style.borderColor='#28283a'">
+            <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';" style="background:none;border:1px solid var(--border);color:var(--text-2);font-size:10px;font-family:'DM Mono',monospace;padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;letter-spacing:1px;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2715; CLEAR</button>
           </div>
 
           <!-- Textarea -->
           <div style="position:relative;">
-            <textarea id="scan-deck" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes stripped automatically" style="width:100%;height:240px;padding:12px;padding-bottom:30px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.8;border-radius:8px;resize:vertical;box-sizing:border-box;" oninput="updateCounter('scan-deck','scan-counter')" onfocus="this.style.borderColor='#e8c94a33'" onblur="this.style.borderColor='#28283a'"></textarea>
-            <div style="position:absolute;bottom:8px;right:10px;font-family:'DM Mono',monospace;font-size:10px;color:#3a3a5a;pointer-events:none;"><span id="scan-counter" style="color:#e8c94a;font-weight:700;">0</span> / 100 cards</div>
+            <textarea id="scan-deck" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes stripped automatically" style="width:100%;height:240px;padding:12px;padding-bottom:30px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.8;border-radius:8px;resize:vertical;box-sizing:border-box;" oninput="updateCounter('scan-deck','scan-counter')" onfocus="this.style.borderColor='#e8c94a33'" onblur="this.style.borderColor='#28283a'"></textarea>
+            <div class="counter-badge"><span class="cnt scan" id="scan-counter">0</span> / 100 cards</div>
           </div>
 
           <!-- Sample decks -->
@@ -873,27 +946,27 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
           </div>
 
           <!-- Scan button -->
-          <button onclick="runSingleScan()" id="scan-btn" style="width:100%;padding:15px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;cursor:pointer;font-weight:700;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 24px rgba(232,201,74,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">&#x26A1; SCAN DECK</button>
+          <button onclick="runSingleScan()" id="scan-btn" style="width:100%;padding:15px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:8px;font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;font-weight:700;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 24px rgba(232,201,74,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">&#x26A1; SCAN DECK</button>
         </div>
       </div>
 
       <!-- RIGHT: History -->
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:#5a5a7a;margin-bottom:10px;margin-top:38px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-family:'Bebas Neue';font-size:16px;letter-spacing:3px;color:var(--text-2);margin-bottom:10px;margin-top:38px;display:flex;justify-content:space-between;align-items:center;">
           <span>&#x1F4DC; HISTORY</span>
-          <button onclick="clearHistory()" style="background:none;border:none;color:#3a3a5a;font-size:10px;font-family:DM Mono,monospace;cursor:pointer;letter-spacing:1px;padding:0;" onmouseover="this.style.color='#e84a6a'" onmouseout="this.style.color='#3a3a5a'">CLEAR</button>
+          <button onclick="clearHistory()" style="background:none;border:none;color:#3a3a5a;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;letter-spacing:1px;padding:0;" onmouseover="this.style.color='#e84a6a'" onmouseout="this.style.color='#3a3a5a'">CLEAR</button>
         </div>
-        <div id="scan-history-list" style="background:#14141a;border:1px solid #28283a;border-radius:10px;overflow:hidden;min-height:60px;"></div>
+        <div id="scan-history-list" style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-height:60px;"></div>
 
         <!-- Quick tips -->
-        <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:14px;margin-top:14px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:#5a5a7a;margin-bottom:10px;">&#x1F4A1; BRACKET GUIDE</div>
+        <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:14px;">
+          <div style="font-family:'Bebas Neue';font-size:12px;letter-spacing:3px;color:var(--text-2);margin-bottom:10px;">&#x1F4A1; BRACKET GUIDE</div>
           <div style="display:flex;flex-direction:column;gap:6px;">
-            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#4ae8b022;border:1px solid #4ae8b055;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#4ae8b0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div><div style="font-size:10px;color:#5a5a7a;line-height:1.3;">Precon, no GC, no combos</div></div>
-            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#4a9ee822;border:1px solid #4a9ee855;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#4a9ee8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div><div style="font-size:10px;color:#5a5a7a;line-height:1.3;">Upgraded casual, no GC</div></div>
-            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#9e4ae822;border:1px solid #9e4ae855;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#9e4ae8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div><div style="font-size:10px;color:#5a5a7a;line-height:1.3;">Optimized, up to 3 GC</div></div>
-            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#e8c94a22;border:1px solid #e8c94a55;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#e8c94a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div><div style="font-size:10px;color:#5a5a7a;line-height:1.3;">High power, 4+ GC or MLD</div></div>
-            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#e84a6a22;border:1px solid #e84a6a55;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#e84a6a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</div><div style="font-size:10px;color:#5a5a7a;line-height:1.3;">cEDH, fast mana + combos</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#4ae8b022;border:1px solid #4ae8b055;font-family:'Bebas Neue';font-size:12px;color:#4ae8b0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div><div style="font-size:10px;color:var(--text-2);line-height:1.3;">Precon, no GC, no combos</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#4a9ee822;border:1px solid #4a9ee855;font-family:'Bebas Neue';font-size:12px;color:#4a9ee8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div><div style="font-size:10px;color:var(--text-2);line-height:1.3;">Upgraded casual, no GC</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#9e4ae822;border:1px solid #9e4ae855;font-family:'Bebas Neue';font-size:12px;color:#9e4ae8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div><div style="font-size:10px;color:var(--text-2);line-height:1.3;">Optimized, up to 3 GC</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#e8c94a22;border:1px solid #e8c94a55;font-family:'Bebas Neue';font-size:12px;color:#e8c94a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div><div style="font-size:10px;color:var(--text-2);line-height:1.3;">High power, 4+ GC or MLD</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:18px;height:18px;border-radius:3px;background:#e84a6a22;border:1px solid #e84a6a55;font-family:'Bebas Neue';font-size:12px;color:#e84a6a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</div><div style="font-size:10px;color:var(--text-2);line-height:1.3;">cEDH, fast mana + combos</div></div>
           </div>
         </div>
       </div>
@@ -909,40 +982,40 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 <div class="panel" id="panel-recommend">
   <div style="max-width:780px;margin:0 auto;">
 
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">✨ Card Recommendations</div>
-    <div style="font-size:12px;color:#5a5a7a;margin-bottom:24px;letter-spacing:1px;">AI-powered suggestions to improve your deck</div>
+    <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">✨ Card Recommendations</div>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:24px;letter-spacing:1px;">AI-powered suggestions to improve your deck</div>
 
     <!-- Input -->
-    <div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div class="deck-lbl a" style="margin-bottom:0;">⚔ Your Decklist</div>
-        <button onclick="document.getElementById('rec-deck').value='';document.getElementById('rec-commander').value='';" style="background:none;border:1px solid #3a3a5a;color:#5a5a7a;font-size:11px;font-family:DM Mono,monospace;padding:3px 10px;border-radius:4px;cursor:pointer;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
+        <button onclick="document.getElementById('rec-deck').value='';document.getElementById('rec-commander').value='';" style="background:none;border:1px solid var(--border-2);color:var(--text-2);font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:4px;cursor:pointer;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#3a3a5a';this.style.color='#5a5a7a'">✕ CLEAR</button>
       </div>
-      <input type="text" id="rec-commander" placeholder="Commander name (e.g. Krenko, Mob Boss)" style="width:100%;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:10px;">
-      <textarea id="rec-deck" placeholder="Paste your decklist here..." style="width:100%;height:160px;padding:10px;background:#0e0e14;border:1px solid #28283a;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>
+      <input type="text" id="rec-commander" placeholder="Commander name (e.g. Krenko, Mob Boss)" style="width:100%;padding:10px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;border-radius:6px;box-sizing:border-box;margin-bottom:10px;">
+      <textarea id="rec-deck" placeholder="Paste your decklist here..." style="width:100%;height:160px;padding:10px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>
 
       <!-- Mode selector -->
       <div style="margin-top:14px;margin-bottom:14px;">
-        <div style="font-size:11px;color:#5a5a7a;letter-spacing:1px;margin-bottom:8px;">RECOMMENDATION MODE</div>
+        <div style="font-size:11px;color:var(--text-2);letter-spacing:1px;margin-bottom:8px;">RECOMMENDATION MODE</div>
         <div style="display:flex;gap:10px;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0e0e14;border:1px solid #28283a;border-radius:8px;padding:10px 14px;flex:1;transition:border-color 0.2s;" id="mode-fast-label">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex:1;transition:border-color 0.2s;" id="mode-fast-label">
             <input type="radio" name="rec-mode" value="fast" checked onchange="updateModeUI()" style="accent-color:#e8c94a;">
             <div>
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#e8c94a;">⚡ FAST</div>
-              <div style="font-size:10px;color:#5a5a7a;margin-top:2px;">AI knowledge only · Instant results · Good accuracy</div>
+              <div style="font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;color:#e8c94a;">⚡ FAST</div>
+              <div style="font-size:10px;color:var(--text-2);margin-top:2px;">AI knowledge only · Instant results · Good accuracy</div>
             </div>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0e0e14;border:1px solid #28283a;border-radius:8px;padding:10px 14px;flex:1;transition:border-color 0.2s;" id="mode-accurate-label">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex:1;transition:border-color 0.2s;" id="mode-accurate-label">
             <input type="radio" name="rec-mode" value="accurate" onchange="updateModeUI()" style="accent-color:#4ae8b0;">
             <div>
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#4ae8b0;">🎯 ACCURATE</div>
-              <div style="font-size:10px;color:#5a5a7a;margin-top:2px;">EDHREC data + AI analysis · 10-20s · Very high accuracy</div>
+              <div style="font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;color:#4ae8b0;">🎯 ACCURATE</div>
+              <div style="font-size:10px;color:var(--text-2);margin-top:2px;">EDHREC data + AI analysis · 10-20s · Very high accuracy</div>
             </div>
           </label>
         </div>
       </div>
 
-      <button onclick="getRecommendations()" id="rec-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#e8c94a,#c9a832);color:#111;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;">
+      <button onclick="getRecommendations()" id="rec-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#e8c94a,#c9a832);color:#111;border:none;border-radius:8px;font-family:'Bebas Neue';font-size:18px;letter-spacing:3px;cursor:pointer;">
         ✨ GET RECOMMENDATIONS
       </button>
     </div>
@@ -959,67 +1032,67 @@ footer p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text
 
 <!-- ABOUT PANEL -->
 <div class="panel" id="panel-about">
-  <div style="max-width:700px;margin:0 auto;line-height:1.8;color:#e8e8f0;">
+  <div style="max-width:700px;margin:0 auto;line-height:1.8;color:var(--text);">
     <div class="section-hdr">How Power Level is Calculated</div>
-    <p style="margin-bottom:16px;color:#5a5a7a;">This tool uses a power level algorithm based on published Commander methodology. Because we can't access live card price/popularity data offline, we use a curated local database of card ratings, bracket flags, and type data. Banned list and Game Changers are accurate as of <strong style="color:#e8e8f0">February 9, 2026</strong>.</p>
+    <p style="margin-bottom:16px;color:var(--text-2);">This tool uses a power level algorithm based on published Commander methodology. Because we can't access live card price/popularity data offline, we use a curated local database of card ratings, bracket flags, and type data. Banned list and Game Changers are accurate as of <strong style="color:#e8e8f0">February 9, 2026</strong>.</p>
 
     <div class="section-hdr">Bracket Requirements (WotC — Updated Feb 2026)</div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;">
-      <div style="background:#14141a;border:1px solid rgba(74,232,176,0.3);border-radius:8px;padding:12px;text-align:center;">
+      <div style="background:var(--bg-2);border:1px solid rgba(74,232,176,0.3);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-family:'Bebas Neue';font-size:20px;color:#4ae8b0">1</div>
-        <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Exhibition</div>
+        <div style="font-size:10px;color:var(--text-2);letter-spacing:1px">Exhibition</div>
         <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No extra turns, no MLD, no 2-card combos, no Game Changers. Tutors sparse.</div>
       </div>
-      <div style="background:#14141a;border:1px solid rgba(74,158,232,0.3);border-radius:8px;padding:12px;text-align:center;">
+      <div style="background:var(--bg-2);border:1px solid rgba(74,158,232,0.3);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-family:'Bebas Neue';font-size:20px;color:#4a9ee8">2</div>
-        <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Core</div>
+        <div style="font-size:10px;color:var(--text-2);letter-spacing:1px">Core</div>
         <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No chaining extra turns, no MLD, no 2-card combos, no Game Changers. Avg precon level.</div>
       </div>
-      <div style="background:#14141a;border:1px solid rgba(158,74,232,0.3);border-radius:8px;padding:12px;text-align:center;">
+      <div style="background:var(--bg-2);border:1px solid rgba(158,74,232,0.3);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-family:'Bebas Neue';font-size:20px;color:#9e4ae8">3</div>
-        <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Upgraded</div>
+        <div style="font-size:10px;color:var(--text-2);letter-spacing:1px">Upgraded</div>
         <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No MLD. Late-game combos only (8+ mana to assemble). Up to 3 Game Changers.</div>
       </div>
-      <div style="background:#14141a;border:1px solid rgba(232,201,74,0.3);border-radius:8px;padding:12px;text-align:center;">
+      <div style="background:var(--bg-2);border:1px solid rgba(232,201,74,0.3);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-family:'Bebas Neue';font-size:20px;color:#e8c94a">4</div>
-        <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">Optimized</div>
+        <div style="font-size:10px;color:var(--text-2);letter-spacing:1px">Optimized</div>
         <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No restrictions beyond the banlist. High-powered, not tournament cEDH.</div>
       </div>
-      <div style="background:#14141a;border:1px solid rgba(232,74,106,0.3);border-radius:8px;padding:12px;text-align:center;">
+      <div style="background:var(--bg-2);border:1px solid rgba(232,74,106,0.3);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-family:'Bebas Neue';font-size:20px;color:#e84a6a">5</div>
-        <div style="font-size:10px;color:#5a5a7a;letter-spacing:1px">cEDH</div>
+        <div style="font-size:10px;color:var(--text-2);letter-spacing:1px">cEDH</div>
         <div style="font-size:10px;margin-top:6px;color:#e8e8f0">No restrictions. Built to win in the competitive metagame.</div>
       </div>
     </div>
 
     <div class="section-hdr">&#x26D4; Banned Cards in Commander (as of Feb 9, 2026)</div>
-    <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">44 individually named cards banned. <strong style="color:#4ae87a">Biorhythm</strong> and <strong style="color:#4ae87a">Lutri, the Spellchaser</strong> were <strong style="color:#4ae87a">unbanned</strong> Feb 9, 2026. Lutri is legal in the 99 and as commander but remains <em>banned as a companion</em>. Note: Dockside Extortionist, Mana Crypt, and Jeweled Lotus are also banned.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">44 individually named cards banned. <strong style="color:#4ae87a">Biorhythm</strong> and <strong style="color:#4ae87a">Lutri, the Spellchaser</strong> were <strong style="color:#4ae87a">unbanned</strong> Feb 9, 2026. Lutri is legal in the 99 and as commander but remains <em>banned as a companion</em>. Note: Dockside Extortionist, Mana Crypt, and Jeweled Lotus are also banned.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e84a6a;line-height:2.2;columns:2;column-gap:20px;margin-bottom:8px;">
       Ancestral Recall · Balance · Black Lotus · Braids, Cabal Minion · Channel · Chaos Orb · Dockside Extortionist · Emrakul, the Aeons Torn · Erayo, Soratami Ascendant · Falling Star · Fastbond · Flash · Golos, Tireless Pilgrim · Griselbrand · Hullbreacher · Iona, Shield of Emeria · Jeweled Lotus · Karakas · Leovold, Emissary of Trest · Library of Alexandria · Limited Resources · Mana Crypt · Mox Emerald · Mox Jet · Mox Pearl · Mox Ruby · Mox Sapphire · Panoptic Mirror · Primeval Titan · Prophet of Kruphix · Recurring Nightmare · Rofellos, Llanowar Emissary · Shahrazad · Sway of the Stars · Sylvan Primordial · Time Walk · Tinker · Trade Secrets · Upheaval · Worldfire · Yawgmoth's Bargain · Yosei, the Morning Star
     </div>
-    <p style="font-size:11px;color:#5a5a7a;">Also banned: all ante cards, all Conspiracy-type cards, all cards removed from constructed for offensive content.</p>
+    <p style="font-size:11px;color:var(--text-2);">Also banned: all ante cards, all Conspiracy-type cards, all cards removed from constructed for offensive content.</p>
 
     <div class="section-hdr">&#x26A0; Game Changers (Updated Feb 9, 2026)</div>
-    <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Legal in Commander. Not permitted in Bracket 1 or 2. Up to <strong style="color:#e8e8f0">3 allowed in Bracket 3</strong>. Unlimited at Bracket 4+. <strong style="color:#e8c94a">Note: Sol Ring is intentionally NOT a Game Changer</strong> — WotC considers it a Commander tradition.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Legal in Commander. Not permitted in Bracket 1 or 2. Up to <strong style="color:#e8e8f0">3 allowed in Bracket 3</strong>. Unlimited at Bracket 4+. <strong style="color:#e8c94a">Note: Sol Ring is intentionally NOT a Game Changer</strong> — WotC considers it a Commander tradition.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8c94a;line-height:2.2;columns:2;column-gap:20px;">
       Ad Nauseam · Ancient Tomb · Aura Shards · Biorhythm · Bolas's Citadel · Braids, Cabal Minion · Chrome Mox · Coalition Victory · Consecrated Sphinx · Crop Rotation · Cyclonic Rift · Demonic Tutor · Drannith Magistrate · Enlightened Tutor · Farewell · Field of the Dead · Fierce Guardianship · Force of Will · Gaea's Cradle · Gamble · Gifts Ungiven · Glacial Chasm · Grand Arbiter Augustin IV · Grim Monolith · Humility · Imperial Seal · Intuition · Jeska's Will · Lion's Eye Diamond · Mana Vault · Mishra's Workshop · Mox Diamond · Mox Opal · Mystical Tutor · Narset, Parter of Veils · Natural Order · Necropotence · Notion Thief · Opposition Agent · Orcish Bowmasters · Panoptic Mirror · Rhystic Study · Seedborn Muse · Serra's Sanctum · Smothering Tithe · Survival of the Fittest · Teferi's Protection · Tergrid, God of Fright · Thassa's Oracle · The One Ring · The Tabernacle at Pendrell Vale · Underworld Breach · Vampiric Tutor · Worldly Tutor
     </div>
-    <p style="font-size:11px;color:#5a5a7a;margin-top:8px;">Removed Oct 2025: Sol Ring, Counterspell, Pact of Negation, Food Chain, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
+    <p style="font-size:11px;color:var(--text-2);margin-top:8px;">Removed Oct 2025: Sol Ring, Counterspell, Pact of Negation, Food Chain, Expropriate, Jin-Gitaxias, Kinnan, Sway of the Stars, Urza, Vorinclex, Winota, Yuriko</p>
 
     <div class="section-hdr">&#x1F504; Chaining Extra Turns (Not Allowed Below Bracket 4)</div>
-    <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">These cards enable repeated extra turns and are restricted below Bracket 4.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">These cards enable repeated extra turns and are restricted below Bracket 4.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#4a9ee8;line-height:2.2;columns:2;column-gap:20px;">
       Time Warp · Temporal Manipulation · Walk the Aeons · Capture of Jingzhou · Expropriate · Time Stretch · Nexus of Fate · Timestream Navigator · Sage of Hours · Time Sieve · Lighthouse Chronologist · Magosi, the Waterveil
     </div>
 
     <div class="section-hdr">&#x1F30B; Mass Land Denial (MLD) — Pushes Bracket 4+</div>
-    <p style="font-size:13px;color:#5a5a7a;margin-bottom:6px;">Per WotC's bracket definitions, these cards qualify as MLD and prevent play below Bracket 4.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Per WotC's bracket definitions, these cards qualify as MLD and prevent play below Bracket 4.</p>
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e84a6a;line-height:2.2;columns:2;column-gap:20px;">
       Armageddon · Ravages of War · Ruination · Sunder · Blood Moon · Magus of the Moon · Winter Orb · Stasis · Contamination · Tangle Wire · Death Cloud · Worldslayer · Trinisphere · Vorinclex, Voice of Hunger · Hokori, Dust Drinker · Hall of Gemstone · Cataclysm · Realm Razer · Infernal Darkness · Rising Waters · Spreading Algae · Numot, the Devastator · Giltleaf Archdruid · Kudzu · Demonic Hordes · Urza's Sylex · Dimensional Breach · Epicenter · Global Ruin · Razia's Purification · Apocalypse · Bearer of the Heavens · Pox · Restore Balance
     </div>
 
     <div class="section-hdr">&#x1F4CA; Power Score</div>
-    <p style="font-size:13px;color:#5a5a7a;">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
+    <p style="font-size:13px;color:var(--text-2);">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
   </div>
 
 </div>
@@ -1822,7 +1895,7 @@ function renderPowerCard(elId, analysis, deckName, colorClass) {
     <div class="power-card-header">
       <div>
         <div class="power-card-name ${nameClass}">${deckName}</div>
-        <div style="font-size:11px;color:#5a5a7a;margin-top:2px;letter-spacing:1px">${analysis.cardCount} cards analyzed</div>
+        <div style="font-size:11px;color:var(--text-2);margin-top:2px;letter-spacing:1px">${analysis.cardCount} cards analyzed</div>
       </div>
       <div class="bracket-badge ${brClass}">B${br}</div>
     </div>
@@ -1855,12 +1928,12 @@ function renderPowerCard(elId, analysis, deckName, colorClass) {
     </div>
 
     <div class="power-bar-wrap">
-      <div class="power-bar-labels"><span>1</span><span style="color:#e8e8f0;font-size:12px;font-weight:700">Power: ${analysis.powerLevel}/10</span><span>10</span></div>
+      <div class="power-bar-labels"><span>1</span><span style="color:var(--text);font-size:12px;font-weight:700">Power: ${analysis.powerLevel}/10</span><span>10</span></div>
       <div class="power-bar-bg"><div class="power-bar-fill ${barClass}" style="width:${plPct}%"></div></div>
     </div>
 
-    <div style="margin-top:12px;font-size:11px;color:#5a5a7a;margin-bottom:8px;letter-spacing:1px">
-      Min Bracket: <span style="color:#e8e8f0;font-weight:700">B${brMin}</span> &nbsp;·&nbsp; Recommended: <span style="color:#e8e8f0;font-weight:700">B${br}</span>
+    <div style="margin-top:12px;font-size:11px;color:var(--text-2);margin-bottom:8px;letter-spacing:1px">
+      Min Bracket: <span style="color:var(--text);font-weight:700">B${brMin}</span> &nbsp;·&nbsp; Recommended: <span style="color:var(--text);font-weight:700">B${br}</span>
     </div>
 
     <div class="bracket-checks">
@@ -1964,7 +2037,7 @@ function buildCatBreakdown(dA, dB, nA, nB) {
       <div class="cat-nm">${c}</div>
       <div class="cat-bw"><div class="cat-bf-a" style="width:${Math.min(100,(a/max)*100)}%"></div></div>
       <div style="display:flex;gap:2px;justify-content:center">
-        <span class="cat-nn a">${a}</span><span style="color:#5a5a7a;font-size:12px;padding-top:3px">/</span><span class="cat-nn b">${b}</span>
+        <span class="cat-nn a">${a}</span><span style="color:var(--text-2);font-size:12px;padding-top:3px">/</span><span class="cat-nn b">${b}</span>
       </div>
       <div class="cat-bw"><div class="cat-bf-b" style="width:${Math.min(100,(b/max)*100)}%"></div></div>
       <div class="cat-leg">${nA.slice(0,6)} / ${nB.slice(0,6)}</div>
@@ -2106,7 +2179,7 @@ function showLoading(text) {
     el = document.createElement('div');
     el.id = 'loading-overlay';
     el.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-    el.innerHTML = '<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:30px 40px;text-align:center;"><div id="loading-text" style="font-family:DM Mono,monospace;font-size:14px;color:#e8c94a;">Loading...</div></div>';
+    el.innerHTML = '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:30px 40px;text-align:center;"><div id="loading-text" style="font-family:DM Mono,monospace;font-size:14px;color:#e8c94a;">Loading...</div></div>';
     document.body.appendChild(el);
   }
   const textEl = document.getElementById('loading-text');
@@ -2693,7 +2766,7 @@ function initAutocomplete() {
     // Create dropdown for this textarea
     const dropdown = document.createElement('div');
     dropdown.id = id + '-autocomplete';
-    dropdown.style.cssText = 'position:absolute;background:#1c1c24;border:1px solid #28283a;' +
+    dropdown.style.cssText = 'position:absolute;background:var(--bg-3);border:1px solid var(--border);' +
       'border-radius:6px;z-index:1000;max-height:200px;overflow-y:auto;display:none;' +
       'box-shadow:0 4px 16px rgba(0,0,0,0.6);font-family:DM Mono,monospace;font-size:12px;min-width:220px;';
     ta.parentNode.style.position = 'relative';
@@ -2723,7 +2796,7 @@ function initAutocomplete() {
           if (!suggestions.length) { dropdown.style.display = 'none'; return; }
 
           dropdown.innerHTML = suggestions.map(s =>
-            '<div style="padding:8px 12px;cursor:pointer;color:#e8e8f0;border-bottom:1px solid rgba(255,255,255,0.04);"' +
+            '<div style="padding:8px 12px;cursor:pointer;color:var(--text);border-bottom:1px solid rgba(255,255,255,0.04);"' +
             ' onmousedown="selectAutocomplete(\'' + id + '\',\'' + s.replace(/'/g, "\\'") + '\')"' +
             ' onmouseover="this.style.background=\'rgba(232,201,74,0.1)\'"' +
             ' onmouseout="this.style.background=\'\'">' + s + '</div>'
@@ -2959,16 +3032,16 @@ function renderComboDetails(combosA, combosB, nameA, nameB) {
   }
 
   const renderComboList = (combos, label, color) => {
-    if (!combos.length) return '<div style="background:#14141a;border:1px solid ' + color + '22;border-radius:10px;padding:12px 16px;margin-bottom:12px;"><div style="font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:#5a5a7a;">' + label + ' — No Combos Detected</div></div>';
+    if (!combos.length) return '<div style="background:var(--bg-2);border:1px solid ' + color + '22;border-radius:10px;padding:12px 16px;margin-bottom:12px;"><div style="font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:var(--text-2);">' + label + ' — No Combos Detected</div></div>';
 
-    return '<div style="background:#14141a;border:1px solid ' + color + '33;border-radius:10px;padding:16px;margin-bottom:12px;">' +
+    return '<div style="background:var(--bg-2);border:1px solid ' + color + '33;border-radius:10px;padding:16px;margin-bottom:12px;">' +
       '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:' + color + ';margin-bottom:10px;">' +
       label + ' — ' + combos.length + ' Combo' + (combos.length !== 1 ? 's' : '') + ' Detected</div>' +
       combos.map(c => {
         const link = c.spellbookId
           ? ' <a href="https://commanderspellbook.com/combo/' + c.spellbookId + '" target="_blank" ' +
-            'style="color:#5a5a7a;font-size:9px;text-decoration:none;font-family:DM Mono,monospace;' +
-            'border:1px solid #28283a;border-radius:3px;padding:1px 4px;margin-left:4px;">CSB ↗</a>'
+            'style="color:var(--text-2);font-size:9px;text-decoration:none;font-family:DM Mono,monospace;' +
+            'border:1px solid var(--border);border-radius:3px;padding:1px 4px;margin-left:4px;">CSB ↗</a>'
           : '';
         // Build Spellbook URL - use ID if available, otherwise search by card names
         const spellbookUrl = c.spellbookId
@@ -2979,9 +3052,9 @@ function renderComboDetails(combosA, combosB, nameA, nameB) {
           '<a href="' + spellbookUrl + '" target="_blank" style="display:flex;align-items:flex-start;gap:8px;padding:8px 4px;text-decoration:none;border-radius:6px;background:rgba(255,255,255,0.02);">' +
           '<span style="color:#9e4ae8;font-size:12px;font-family:DM Mono,monospace;flex-shrink:0;margin-top:1px;">&#x221E;</span>' +
           '<div style="min-width:0;flex:1;">' +
-            '<div style="font-family:DM Mono,monospace;font-size:11px;color:#e8e8f0;line-height:1.5;">' +
+            '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);line-height:1.5;">' +
             c.cards.join(' + ') +
-            '<span style="color:#5a5a7a;font-size:9px;font-family:DM Mono,monospace;border:1px solid #28283a;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;">CSB ↗</span>' +
+            '<span style="color:var(--text-2);font-size:9px;font-family:DM Mono,monospace;border:1px solid var(--border);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle;">CSB ↗</span>' +
             '</div>' +
             (c.results.length
               ? '<div style="font-size:10px;color:#4ae8b0;margin-top:3px;">→ ' + c.results.join(' · ') + '</div>'
@@ -2990,7 +3063,7 @@ function renderComboDetails(combosA, combosB, nameA, nameB) {
               ? '<div style="font-size:10px;color:#9e4ae8;margin-top:3px;">Requires: ' + c.prereqs.substring(0,120) + (c.prereqs.length > 120 ? '…' : '') + '</div>'
               : '') +
             (c.steps
-              ? '<div style="font-size:10px;color:#5a5a7a;margin-top:2px;line-height:1.6;">' + c.steps.substring(0,200) + (c.steps.length > 200 ? '…' : '') + '</div>'
+              ? '<div style="font-size:10px;color:var(--text-2);margin-top:2px;line-height:1.6;">' + c.steps.substring(0,200) + (c.steps.length > 200 ? '…' : '') + '</div>'
               : '') +
           '</div></a></div>';
       }).join('') +
@@ -2998,10 +3071,10 @@ function renderComboDetails(combosA, combosB, nameA, nameB) {
   };
 
   el.innerHTML =
-    '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:4px;color:#5a5a7a;' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:4px;color:var(--text-2);' +
     'margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid #28283a;">' +
     '&#x267E; Combos Detected <span style="font-size:10px;color:#3a3a5a;">via Commander Spellbook</span>' +
-    '<div id="combo-status" style="font-size:10px;color:#5a5a7a;font-family:DM Mono,monospace;letter-spacing:0;margin-top:4px;">Loading...</div></div>' +
+    '<div id="combo-status" style="font-size:10px;color:var(--text-2);font-family:DM Mono,monospace;letter-spacing:0;margin-top:4px;">Loading...</div></div>' +
     renderComboList(combosA, nameA, '#e8c94a') +
     (combosB.length || nameB ? renderComboList(combosB, nameB, '#4ae8b0') : '');
 }
@@ -3030,7 +3103,7 @@ async function getRecommendations() {
 
   const resultsEl = document.getElementById('rec-results');
   resultsEl.style.display = 'block';
-  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:#5a5a7a;font-family:DM Mono,monospace;font-size:13px;">' +
+  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-2);font-family:DM Mono,monospace;font-size:13px;">' +
     (mode === 'fast' ? '⚡ Running AI analysis...' : '🎯 Fetching EDHREC data + running AI analysis...<br><span style="font-size:11px;margin-top:8px;display:block;">This may take 10-20 seconds</span>') +
     '</div>';
 
@@ -3080,7 +3153,7 @@ async function getRecommendations() {
     renderRecommendations(text, commander, mode, !!edhrecData);
 
   } catch(e) {
-    resultsEl.innerHTML = '<div style="background:#14141a;border:1px solid #e84a6a33;border-radius:10px;padding:20px;color:#e84a6a;font-family:DM Mono,monospace;font-size:12px;">Error: ' + e.message + '</div>';
+    resultsEl.innerHTML = '<div style="background:var(--bg-2);border:1px solid #e84a6a33;border-radius:10px;padding:20px;color:#e84a6a;font-family:DM Mono,monospace;font-size:12px;">Error: ' + e.message + '</div>';
   }
 
   btn.disabled = false;
@@ -3135,7 +3208,7 @@ function renderRecommendations(text, commander, mode, usedEdhrec) {
   // Parse JSON
   const jsonMatch = text.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
-    resultsEl.innerHTML = '<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;color:#e8e8f0;font-family:DM Mono,monospace;font-size:12px;white-space:pre-wrap;">' + text + '</div>';
+    resultsEl.innerHTML = '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text);font-family:DM Mono,monospace;font-size:12px;white-space:pre-wrap;">' + text + '</div>';
     return;
   }
 
@@ -3156,24 +3229,24 @@ function renderRecommendations(text, commander, mode, usedEdhrec) {
     ? '<span style="color:#4ae8b0;font-size:10px;border:1px solid #4ae8b033;border-radius:3px;padding:1px 6px;margin-left:8px;">EDHREC + AI</span>'
     : '<span style="color:#e8c94a;font-size:10px;border:1px solid #e8c94a33;border-radius:3px;padding:1px 6px;margin-left:8px;">AI</span>';
 
-  let html = '<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:20px;margin-bottom:16px;">' +
-    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:3px;color:#e8e8f0;margin-bottom:4px;">Recommendations for ' + commander + sourceTag + '</div>' +
-    '<div style="font-size:11px;color:#5a5a7a;margin-bottom:16px;">' + recs.length + ' suggestions · Click card name to view on Scryfall</div>';
+  let html = '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">' +
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:3px;color:var(--text);margin-bottom:4px;">Recommendations for ' + commander + sourceTag + '</div>' +
+    '<div style="font-size:11px;color:var(--text-2);margin-bottom:16px;">' + recs.length + ' suggestions · Click card name to view on Scryfall</div>';
 
   for (const rec of recs) {
     const pc = priorityColor[rec.priority] || '#e8c94a';
     const cc = categoryColor[rec.category] || '#5a5a7a';
     const scryfallUrl = 'https://scryfall.com/search?q=%21' + encodeURIComponent(rec.card) + '&unique=cards';
-    html += '<div style="border:1px solid #28283a;border-radius:8px;padding:14px;margin-bottom:10px;background:#0e0e14;">' +
+    html += '<div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;background:var(--bg-1);">' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
         '<span style="color:' + pc + ';font-size:10px;border:1px solid ' + pc + '44;border-radius:3px;padding:1px 6px;">' + (rec.priority||'') + '</span>' +
         '<span style="color:' + cc + ';font-size:10px;border:1px solid ' + cc + '44;border-radius:3px;padding:1px 6px;">' + (rec.category||'') + '</span>' +
-        '<span style="font-family:DM Mono,monospace;font-size:13px;color:#e8e8f0;font-weight:700;">' + rec.card + '</span>' +
+        '<span style="font-family:DM Mono,monospace;font-size:13px;color:var(--text);font-weight:700;">' + rec.card + '</span>' +
         ' <a href="https://edhrec.com/cards/' + rec.card.toLowerCase().replace(/[^a-z0-9]/g, function(c) { return c === " " ? "-" : ""; }).replace(/ /g,"-") + '" target="_blank" style="font-size:10px;color:#4ae8b0;text-decoration:none;border:1px solid #4ae8b033;border-radius:3px;padding:1px 5px;margin-left:6px;">EDHREC ↗</a>' +
-        ' <a href="https://scryfall.com/search?q=%21' + encodeURIComponent(rec.card) + '" target="_blank" style="font-size:10px;color:#5a5a7a;text-decoration:none;border:1px solid #28283a;border-radius:3px;padding:1px 5px;margin-left:3px;">Scryfall ↗</a>' +
+        ' <a href="https://scryfall.com/search?q=%21' + encodeURIComponent(rec.card) + '" target="_blank" style="font-size:10px;color:var(--text-2);text-decoration:none;border:1px solid var(--border);border-radius:3px;padding:1px 5px;margin-left:3px;">Scryfall ↗</a>' +
       '</div>' +
       '<div style="font-size:12px;color:#b8b8d0;margin-bottom:8px;">' + (rec.reason||'') + '</div>' +
-      (rec.replace ? '<div style="font-size:11px;color:#5a5a7a;border-top:1px solid #1c1c2a;padding-top:8px;margin-top:4px;">→ Replace <span style="color:#e84a6a;">' + rec.replace + '</span>: ' + (rec.replace_reason||'') + '</div>' : '') +
+      (rec.replace ? '<div style="font-size:11px;color:var(--text-2);border-top:1px solid #1c1c2a;padding-top:8px;margin-top:4px;">→ Replace <span style="color:#e84a6a;">' + rec.replace + '</span>: ' + (rec.replace_reason||'') + '</div>' : '') +
     '</div>';
   }
 
@@ -3496,7 +3569,7 @@ async function analyzeSynergies() {
 
   const resultsEl = document.getElementById('syn-results');
   resultsEl.style.display = 'block';
-  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:#5a5a7a;font-family:DM Mono,monospace;font-size:12px;">Loading oracle text for all cards...<br><span style="font-size:10px;margin-top:6px;display:block;">This makes synergy detection much more accurate</span></div>';
+  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-2);font-family:DM Mono,monospace;font-size:12px;">Loading oracle text for all cards...<br><span style="font-size:10px;margin-top:6px;display:block;">This makes synergy detection much more accurate</span></div>';
 
   const cards = [...parseDeck(raw).keys()];
   if (commander && !cards.some(c => c.toLowerCase() === commander.toLowerCase())) cards.unshift(commander);
@@ -3520,18 +3593,18 @@ async function analyzeSynergies() {
   let html = '';
 
   // Score header
-  html += `<div style="background:#14141a;border:1px solid ${color}44;border-radius:10px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+  html += `<div style="background:var(--bg-2);border:1px solid ${color}44;border-radius:10px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
     <div style="text-align:center;flex-shrink:0;">
-      <div style="font-size:68px;font-family:'Bebas Neue',sans-serif;color:${color};line-height:1;">${score}</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:${color};">${label}</div>
+      <div style="font-size:68px;font-family:Bebas Neue,sans-serif;color:${color};line-height:1;">${score}</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:12px;letter-spacing:3px;color:${color};">${label}</div>
     </div>
     <div>
-      <div style="font-size:11px;color:#5a5a7a;margin-bottom:10px;letter-spacing:1px;">BREAKDOWN</div>
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:10px;letter-spacing:1px;">BREAKDOWN</div>
       <div style="display:flex;gap:20px;flex-wrap:wrap;">
-        <div><div style="font-size:28px;font-family:'Bebas Neue',sans-serif;color:#e8e8f0;">${Object.keys(themes).length}</div><div style="font-size:9px;color:#5a5a7a;">THEMES</div></div>
-        <div><div style="font-size:28px;font-family:'Bebas Neue',sans-serif;color:#e8e8f0;">${synergies.length}</div><div style="font-size:9px;color:#5a5a7a;">SYNERGY PAIRS</div></div>
-        <div><div style="font-size:28px;font-family:'Bebas Neue',sans-serif;color:#e8e8f0;">${Math.max(0,...Object.values(themes))}</div><div style="font-size:9px;color:#5a5a7a;">TOP THEME</div></div>
-        <div><div style="font-size:28px;font-family:'Bebas Neue',sans-serif;color:#e8e8f0;">${cards.length}</div><div style="font-size:9px;color:#5a5a7a;">CARDS</div></div>
+        <div><div style="font-size:28px;font-family:Bebas Neue,sans-serif;color:var(--text);">${Object.keys(themes).length}</div><div style="font-size:9px;color:var(--text-2);">THEMES</div></div>
+        <div><div style="font-size:28px;font-family:Bebas Neue,sans-serif;color:var(--text);">${synergies.length}</div><div style="font-size:9px;color:var(--text-2);">SYNERGY PAIRS</div></div>
+        <div><div style="font-size:28px;font-family:Bebas Neue,sans-serif;color:var(--text);">${Math.max(0,...Object.values(themes))}</div><div style="font-size:9px;color:var(--text-2);">TOP THEME</div></div>
+        <div><div style="font-size:28px;font-family:Bebas Neue,sans-serif;color:var(--text);">${cards.length}</div><div style="font-size:9px;color:var(--text-2);">CARDS</div></div>
       </div>
     </div>
   </div>`;
@@ -3540,19 +3613,19 @@ async function analyzeSynergies() {
   const sortedThemes = Object.entries(themes).sort((a,b) => b[1]-a[1]);
   if (sortedThemes.length) {
     const maxVal = sortedThemes[0][1];
-    html += `<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:16px;margin-bottom:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#e8c94a;margin-bottom:14px;">📊 THEME BREAKDOWN (${sortedThemes.length} themes detected)</div>
+    html += `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;">
+      <div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:#e8c94a;margin-bottom:14px;">📊 THEME BREAKDOWN (${sortedThemes.length} themes detected)</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">`;
     for (const [theme, count] of sortedThemes) {
       const pct = Math.round((count / maxVal) * 100);
       const examples = (cardsByTheme[theme] || []).slice(0, 3).join(', ');
       const themeColor = pct > 70 ? '#4ae8b0' : pct > 40 ? '#e8c94a' : '#9e4ae8';
-      html += `<div style="background:#0e0e14;border-radius:6px;padding:10px;">
+      html += `<div style="background:var(--bg-1);border-radius:6px;padding:10px;">
         <div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:10px;margin-bottom:4px;">
-          <span style="color:#e8e8f0;font-weight:700;">${theme}</span>
+          <span style="color:var(--text);font-weight:700;">${theme}</span>
           <span style="color:${themeColor};">${count} cards</span>
         </div>
-        <div style="background:#14141a;border-radius:3px;height:4px;margin-bottom:5px;">
+        <div style="background:var(--bg-2);border-radius:3px;height:4px;margin-bottom:5px;">
           <div style="background:${themeColor};width:${pct}%;height:4px;border-radius:3px;transition:width 0.5s;"></div>
         </div>
         <div style="font-size:9px;color:#3a3a5a;line-height:1.4;">${examples}</div>
@@ -3563,28 +3636,28 @@ async function analyzeSynergies() {
 
   // Mechanical synergy pairs
   if (synergies.length) {
-    html += `<div style="background:#14141a;border:1px solid #9e4ae833;border-radius:10px;padding:16px;margin-bottom:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;margin-bottom:12px;">⚡ ${synergies.length} MECHANICAL SYNERGIES DETECTED</div>`;
+    html += `<div style="background:var(--bg-2);border:1px solid #9e4ae833;border-radius:10px;padding:16px;margin-bottom:14px;">
+      <div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;margin-bottom:12px;">⚡ ${synergies.length} MECHANICAL SYNERGIES DETECTED</div>`;
     for (const s of synergies) {
       html += `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
         <div style="font-family:DM Mono,monospace;font-size:11px;margin-bottom:3px;">
           <span style="color:#e8c94a;font-weight:700;">${s.a}</span>
-          <span style="color:#5a5a7a;"> ⟶ </span>
-          <span style="color:#b8b8d0;">${s.cards.join(', ')}${s.count > 4 ? ` <span style="color:#5a5a7a;font-size:9px;">+${s.count-4} more</span>` : ''}</span>
+          <span style="color:var(--text-2);"> ⟶ </span>
+          <span style="color:#b8b8d0;">${s.cards.join(', ')}${s.count > 4 ? ` <span style="color:var(--text-2);font-size:9px;">+${s.count-4} more</span>` : ''}</span>
         </div>
         <div style="font-size:10px;color:#6a6a8a;">${s.desc}</div>
       </div>`;
     }
     html += '</div>';
   } else {
-    html += `<div style="background:#14141a;border:1px solid #28283a;border-radius:10px;padding:16px;margin-bottom:14px;color:#5a5a7a;font-family:DM Mono,monospace;font-size:12px;">No known mechanical synergy pairs detected. Try the AI-powered missing synergies below.</div>`;
+    html += `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;color:var(--text-2);font-family:DM Mono,monospace;font-size:12px;">No known mechanical synergy pairs detected. Try the AI-powered missing synergies below.</div>`;
   }
 
   // Missing synergies via AI
-  html += `<div style="background:#14141a;border:1px solid #4ae8b033;border-radius:10px;padding:16px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#4ae8b0;margin-bottom:6px;">💡 MISSING SYNERGIES</div>
-    <div style="font-size:11px;color:#5a5a7a;margin-bottom:12px;">AI analyzes your themes and identifies the most impactful cards missing from your deck</div>
-    <button onclick="getMissingSynergies()" id="miss-btn" style="background:#4ae8b022;border:1px solid #4ae8b055;color:#4ae8b0;padding:10px 20px;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;width:100%;">🔍 FIND MISSING SYNERGIES</button>
+  html += `<div style="background:var(--bg-2);border:1px solid #4ae8b033;border-radius:10px;padding:16px;">
+    <div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:#4ae8b0;margin-bottom:6px;">💡 MISSING SYNERGIES</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:12px;">AI analyzes your themes and identifies the most impactful cards missing from your deck</div>
+    <button onclick="getMissingSynergies()" id="miss-btn" style="background:#4ae8b022;border:1px solid #4ae8b055;color:#4ae8b0;padding:10px 20px;border-radius:6px;cursor:pointer;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;width:100%;">🔍 FIND MISSING SYNERGIES</button>
     <div id="miss-results" style="margin-top:12px;"></div>
   </div>`;
 
@@ -3600,7 +3673,7 @@ async function getMissingSynergies() {
   const missEl = document.getElementById('miss-results');
   btn.disabled = true;
   btn.textContent = '⏳ Analyzing...';
-  missEl.innerHTML = '<div style="color:#5a5a7a;font-family:DM Mono,monospace;font-size:11px;padding:8px;">Finding missing synergies via AI...</div>';
+  missEl.innerHTML = '<div style="color:var(--text-2);font-family:DM Mono,monospace;font-size:11px;padding:8px;">Finding missing synergies via AI...</div>';
 
   try {
     const BANNED = 'Mana Crypt, Jeweled Lotus, Dockside Extortionist, Black Lotus, Time Walk, Ancestral Recall, Library of Alexandria, Mox Emerald, Mox Jet, Mox Pearl, Mox Ruby, Mox Sapphire, Sol Ring';
@@ -3640,14 +3713,14 @@ Respond ONLY in valid JSON:
       const ic = impactColor[s.impact] || '#5a5a7a';
       const edhrec = 'https://edhrec.com/cards/' + (s.add||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
       const scryfall = 'https://scryfall.com/search?q=%21' + encodeURIComponent(s.add);
-      html += `<div style="border:1px solid #28283a;border-radius:6px;padding:10px;margin-bottom:8px;background:#0e0e14;">
+      html += `<div style="border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:8px;background:var(--bg-1);">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px;">
           <span style="color:${ic};font-size:9px;border:1px solid ${ic}44;border-radius:3px;padding:1px 5px;">${s.impact}</span>
           <span style="color:${tc};font-size:9px;border:1px solid ${tc}44;border-radius:3px;padding:1px 5px;">${s.type}</span>
-          <a href="${scryfall}" target="_blank" style="font-family:DM Mono,monospace;font-size:12px;color:#e8e8f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#e8c94a'" onmouseout="this.style.color='#e8e8f0'">${s.add} ↗</a>
+          <a href="${scryfall}" target="_blank" style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:700;text-decoration:none;" onmouseover="this.style.color='#e8c94a'" onmouseout="this.style.color='#e8e8f0'">${s.add} ↗</a>
           <a href="${edhrec}" target="_blank" style="font-size:9px;color:#4ae8b0;text-decoration:none;border:1px solid #4ae8b033;border-radius:3px;padding:1px 5px;">EDHREC ↗</a>
         </div>
-        <div style="font-size:10px;color:#5a5a7a;">Synergizes with: <span style="color:#b8b8d0;">${(s.synergizes_with||[]).join(', ')}</span></div>
+        <div style="font-size:10px;color:var(--text-2);">Synergizes with: <span style="color:#b8b8d0;">${(s.synergizes_with||[]).join(', ')}</span></div>
         <div style="font-size:10px;color:#7a7a9a;margin-top:3px;">${s.why}</div>
       </div>`;
     }
@@ -3667,10 +3740,121 @@ Respond ONLY in valid JSON:
   });
 })();
 </script>
+<script>
+// ── ANIMATED BACKGROUND CANVAS ──────────────────────────────
+(function initBgCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'bg-canvas';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+
+  let W, H;
+  // Pre-computed RGBA for orb gradients (fixed, no regex)
+  const ORB_COLORS = [
+    [232,201,74],  // gold
+    [74,232,176],  // teal
+    [158,74,232],  // purple
+    [74,158,232],  // blue
+    [232,74,106],  // red
+  ];
+  const SPARK_HEX = ['#e8c94a','#4ae8b0','#9e4ae8','#4a9ee8','#e84a6a'];
+
+  const orbs = [], sparks = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 18; i++) {
+    orbs.push({
+      x: Math.random(), y: Math.random(),
+      r: Math.random()*220+80,
+      rgb: ORB_COLORS[i % ORB_COLORS.length],
+      angle: Math.random()*Math.PI*2,
+      speed: Math.random()*0.00003+0.00001,
+      drift: (Math.random()-0.5)*0.00008,
+    });
+  }
+
+  for (let i = 0; i < 55; i++) {
+    sparks.push({
+      x: Math.random(), y: Math.random(),
+      size: Math.random()*1.4+0.3,
+      color: SPARK_HEX[i % SPARK_HEX.length],
+      vy: Math.random()*0.00005+0.00002,
+      vx: (Math.random()-0.5)*0.00004,
+      alpha: Math.random()*0.5+0.15,
+      phase: Math.random()*Math.PI*2,
+    });
+  }
+
+  let frame = 0;
+  function draw() {
+    frame++;
+    ctx.clearRect(0, 0, W, H);
+
+    // Drifting color orbs
+    for (const o of orbs) {
+      o.angle += o.drift;
+      o.x += Math.cos(o.angle)*o.speed;
+      o.y += Math.sin(o.angle)*o.speed;
+      if (o.x < -0.3) o.x = 1.3;
+      if (o.x > 1.3)  o.x = -0.3;
+      if (o.y < -0.3) o.y = 1.3;
+      if (o.y > 1.3)  o.y = -0.3;
+
+      const cx = o.x*W, cy = o.y*H;
+      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, o.r);
+      const [r,g,b] = o.rgb;
+      grd.addColorStop(0, 'rgba('+r+','+g+','+b+',0.055)');
+      grd.addColorStop(0.6, 'rgba('+r+','+g+','+b+',0.015)');
+      grd.addColorStop(1, 'rgba('+r+','+g+','+b+',0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(cx, cy, o.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Floating sparkles
+    for (const s of sparks) {
+      s.y -= s.vy;
+      s.x += s.vx;
+      if (s.y < -0.02) { s.y = 1.02; s.x = Math.random(); }
+      if (s.x < -0.02) s.x = 1.02;
+      if (s.x > 1.02)  s.x = -0.02;
+      const pulse = 0.4 + 0.6*Math.sin(frame*0.025 + s.phase);
+      ctx.save();
+      ctx.globalAlpha = s.alpha * pulse;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x*W, s.y*H, s.size*(0.7+0.5*pulse), 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
 <!-- Card image tooltip -->
 <div id="card-tooltip" style="display:none;position:fixed;z-index:9999;pointer-events:none;filter:drop-shadow(0 8px 32px rgba(0,0,0,0.8));">
   <img id="card-tooltip-img" src="" alt="" style="width:200px;border-radius:10px;display:block;">
 </div>
+
+
+<!-- Scroll to top -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top"
+  style="position:fixed;bottom:28px;right:24px;z-index:500;
+    background:var(--bg-3);border:1px solid var(--border-2);
+    color:var(--text-2);border-radius:50%;width:40px;height:40px;
+    font-size:18px;cursor:pointer;display:none;
+    transition:all 0.2s;box-shadow:var(--shadow-md);"
+  onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)';this.style.transform='translateY(-2px)'"
+  onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)';this.style.transform=''">↑</button>
 
 <footer>
   <p>© 2026 POKÉSTOP COLLECTABLES &nbsp;·&nbsp; EDH POWER LEVEL &nbsp;·&nbsp; edhpowerlevel.ca</p>
@@ -3897,10 +4081,10 @@ function renderHistory() {
     const col = bracketColors[h.bracket] || '#5a5a7a';
     const ago = timeAgo(h.ts);
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${col};min-width:24px;text-align:center;line-height:1;">${h.bracket}</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:${col};min-width:24px;text-align:center;line-height:1;">${h.bracket}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:#e8e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.name}</div>
-        <div style="font-size:10px;color:#5a5a7a;margin-top:2px;">${typeof h.score==='number'?h.score.toFixed(1):'?'} power &middot; ${h.gcCount} GC &middot; ${h.cardCount} cards &middot; ${ago}</div>
+        <div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.name}</div>
+        <div style="font-size:10px;color:var(--text-2);margin-top:2px;">${typeof h.score==='number'?h.score.toFixed(1):'?'} power &middot; ${h.gcCount} GC &middot; ${h.cardCount} cards &middot; ${ago}</div>
       </div>
     </div>`;
   }).join('');
@@ -3924,7 +4108,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'edh-toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#14141a;border:1px solid #e8c94a44;color:#e8e8f0;font-family:DM Mono,monospace;font-size:11px;padding:10px 20px;border-radius:6px;z-index:9999;pointer-events:none;transition:opacity 0.4s;white-space:nowrap;';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg-2);border:1px solid #e8c94a44;color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:10px 20px;border-radius:6px;z-index:9999;pointer-events:none;transition:opacity 0.4s;white-space:nowrap;';
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -3964,7 +4148,7 @@ async function fetchAndShowPrices() {
   if (!btn || !priceEl) return;
   btn.textContent = '⏳ FETCHING...';
   btn.disabled = true;
-  priceEl.innerHTML = '<div style="color:#5a5a7a;font-family:DM Mono,monospace;font-size:11px;padding:8px;">Fetching prices from Scryfall...</div>';
+  priceEl.innerHTML = '<div style="color:var(--text-2);font-family:DM Mono,monospace;font-size:11px;padding:8px;">Fetching prices from Scryfall...</div>';
 
   const cardNames = [...deck.keys()];
   const prices = await fetchPriceEstimate(cardNames);
@@ -3984,23 +4168,23 @@ async function fetchAndShowPrices() {
   const top10 = priced.slice(0, 10);
   const maxVal = top10[0]?.lineTotal || 1;
 
-  let html = `<div style="background:#0e0e14;border:1px solid #9e4ae833;border-radius:8px;padding:14px;margin-top:8px;">
+  let html = `<div style="background:var(--bg-1);border:1px solid #9e4ae833;border-radius:8px;padding:14px;margin-top:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;">&#x1F4B0; PRICE ESTIMATE</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#e8c94a;">$${total.toFixed(2)} <span style="font-size:12px;color:#5a5a7a;">USD</span></div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;">&#x1F4B0; PRICE ESTIMATE</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#e8c94a;">$${total.toFixed(2)} <span style="font-size:12px;color:var(--text-2);">USD</span></div>
     </div>
-    <div style="font-size:10px;color:#5a5a7a;margin-bottom:12px;letter-spacing:1px;">${priced.length} cards priced &middot; ${unknown} not found &middot; non-foil via Scryfall</div>`;
+    <div style="font-size:10px;color:var(--text-2);margin-bottom:12px;letter-spacing:1px;">${priced.length} cards priced &middot; ${unknown} not found &middot; non-foil via Scryfall</div>`;
 
   if (top10.length) {
-    html += `<div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Top 10 by Value</div>`;
+    html += `<div style="font-size:10px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Top 10 by Value</div>`;
     for (const c of top10) {
       const pct = Math.min(100, (c.lineTotal / maxVal) * 100);
       html += `<div style="display:grid;grid-template-columns:1fr 55px;gap:8px;align-items:center;margin-bottom:5px;">
         <div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#e8e8f0;">${c.name}${c.qty>1?` <span style="color:#5a5a7a;">x${c.qty}</span>`:''}</div>
-          <div style="background:#1c1c24;border-radius:2px;height:3px;margin-top:3px;overflow:hidden;"><div style="background:#9e4ae8;width:${pct}%;height:3px;border-radius:2px;transition:width 0.5s;"></div></div>
+          <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);">${c.name}${c.qty>1?` <span style="color:var(--text-2);">x${c.qty}</span>`:''}</div>
+          <div style="background:var(--bg-3);border-radius:2px;height:3px;margin-top:3px;overflow:hidden;"><div style="background:#9e4ae8;width:${pct}%;height:3px;border-radius:2px;transition:width 0.5s;"></div></div>
         </div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#e8c94a;text-align:right;">$${c.lineTotal.toFixed(2)}</div>
+        <div style="font-family:DM Mono,monospace;font-size:10px;color:#e8c94a;text-align:right;">$${c.lineTotal.toFixed(2)}</div>
       </div>`;
     }
   }
@@ -4089,11 +4273,11 @@ function runSingleScan() {
     const n = ct(c);
     if (!n) return '';
     return `<div style="display:grid;grid-template-columns:90px 1fr 36px;gap:8px;align-items:center;margin-bottom:6px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:#5a5a7a;text-transform:uppercase;text-align:right;">${c}</div>
-      <div style="background:#1c1c24;border-radius:3px;height:7px;overflow:hidden;">
+      <div style="font-family:DM Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--text-2);text-transform:uppercase;text-align:right;">${c}</div>
+      <div style="background:var(--bg-3);border-radius:3px;height:7px;overflow:hidden;">
         <div style="background:${col};width:${Math.min(100,(n/40)*100)}%;height:7px;border-radius:3px;transition:width 0.7s;"></div>
       </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${col};text-align:center;">${n}</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:${col};text-align:center;">${n}</div>
     </div>`;
   }).join('');
 
@@ -4122,21 +4306,21 @@ function runSingleScan() {
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
 
     <!-- LEFT: Main results card -->
-    <div style="background:#14141a;border:1px solid ${col}44;border-radius:12px;padding:22px;position:relative;overflow:hidden;grid-column:1/-1;">
+    <div style="background:var(--bg-2);border:1px solid ${col}44;border-radius:12px;padding:22px;position:relative;overflow:hidden;grid-column:1/-1;">
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${col},${col}22);"></div>
 
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:4px;color:${col};">${name}</div>
-          <div style="font-size:10px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">${cardCount} cards analyzed</div>
+          <div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:4px;color:${col};">${name}</div>
+          <div style="font-size:10px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;margin-top:2px;">${cardCount} cards analyzed</div>
         </div>
         <div style="display:flex;align-items:center;gap:16px;">
           <div style="text-align:right;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:${col};">${score.toFixed(1)}</div>
-            <div style="font-size:9px;color:#5a5a7a;letter-spacing:2px;text-transform:uppercase;">POWER / 10</div>
+            <div style="font-family:Bebas Neue,sans-serif;font-size:48px;line-height:1;color:${col};">${score.toFixed(1)}</div>
+            <div style="font-size:9px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;">POWER / 10</div>
           </div>
           <div style="text-align:center;background:${col}11;border:1px solid ${col}44;border-radius:10px;padding:10px 16px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:44px;line-height:1;color:${col};">${bracketNum}</div>
+            <div style="font-family:Bebas Neue,sans-serif;font-size:44px;line-height:1;color:${col};">${bracketNum}</div>
             <div style="font-size:9px;color:${col};letter-spacing:1px;margin-top:3px;text-transform:uppercase;">BRACKET</div>
           </div>
         </div>
@@ -4144,10 +4328,10 @@ function runSingleScan() {
 
       <!-- Power bar -->
       <div style="margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#5a5a7a;margin-bottom:5px;letter-spacing:1px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-2);margin-bottom:5px;letter-spacing:1px;">
           <span>CASUAL</span><span style="color:${col};">${bracketLabels[bracketNum]||''}</span><span>cEDH</span>
         </div>
-        <div style="background:#1c1c24;border-radius:4px;height:10px;overflow:hidden;position:relative;">
+        <div style="background:var(--bg-3);border-radius:4px;height:10px;overflow:hidden;position:relative;">
           <div style="background:linear-gradient(90deg,${col}88,${col});width:${Math.min(100,(score/10)*100)}%;height:10px;border-radius:4px;transition:width 1s ease;"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:#3a3a5a;margin-top:3px;"><span>1</span><span>10</span></div>
@@ -4162,7 +4346,7 @@ function runSingleScan() {
           {v:tutorCount, l:'Tutors'},
           {v:drawCount, l:'Draw Engines'},
           {v:confirmedCombos, l:'Full Combos'},
-        ].map(s=>`<div style="background:#0e0e14;border-radius:6px;padding:8px;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#e8e8f0;">${s.v}</div><div style="font-size:8px;color:#5a5a7a;letter-spacing:1px;text-transform:uppercase;margin-top:1px;">${s.l}</div></div>`).join('')}
+        ].map(s=>`<div style="background:var(--bg-1);border-radius:6px;padding:8px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--text);">${s.v}</div><div style="font-size:8px;color:var(--text-2);letter-spacing:1px;text-transform:uppercase;margin-top:1px;">${s.l}</div></div>`).join('')}
       </div>
 
       <!-- Checks -->
@@ -4177,17 +4361,17 @@ function runSingleScan() {
 
       <!-- Action buttons -->
       <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;border-top:1px solid #1c1c24;padding-top:14px;">
-        <button onclick="exportScanTxt('${safeN}', window._lastScanAnalysis)" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#e8c94a';this.style.color='#e8c94a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2193; EXPORT TXT</button>
-        <button onclick="shareScanURL('${safeN}',${bracketNum},${score.toFixed(1)})" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#4ae8b0';this.style.color='#4ae8b0'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F517; SHARE LINK</button>
-        <button onclick="fetchAndShowPrices()" id="price-btn" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#9e4ae8';this.style.color='#9e4ae8'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F4B0; PRICE ESTIMATE</button>
-        <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';window.scrollTo({top:0,behavior:'smooth'});" style="background:#1c1c24;border:1px solid #28283a;color:#5a5a7a;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;margin-left:auto;transition:all 0.15s;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x21BA; SCAN ANOTHER</button>
+        <button onclick="exportScanTxt('${safeN}', window._lastScanAnalysis)" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#e8c94a';this.style.color='#e8c94a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x2193; EXPORT TXT</button>
+        <button onclick="shareScanURL('${safeN}',${bracketNum},${score.toFixed(1)})" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#4ae8b0';this.style.color='#4ae8b0'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F517; SHARE LINK</button>
+        <button onclick="fetchAndShowPrices()" id="price-btn" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#9e4ae8';this.style.color='#9e4ae8'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x1F4B0; PRICE ESTIMATE</button>
+        <button onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';window.scrollTo({top:0,behavior:'smooth'});" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:6px;cursor:pointer;margin-left:auto;transition:all 0.15s;" onmouseover="this.style.borderColor='#e84a6a';this.style.color='#e84a6a'" onmouseout="this.style.borderColor='#28283a';this.style.color='#5a5a7a'">&#x21BA; SCAN ANOTHER</button>
       </div>
       <div id="price-results"></div>
     </div>
 
     <!-- Category Breakdown -->
-    <div style="background:#14141a;border:1px solid #28283a;border-radius:12px;padding:20px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:#5a5a7a;margin-bottom:14px;">&#x1F4CA; CATEGORY BREAKDOWN</div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+      <div style="font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:var(--text-2);margin-bottom:14px;">&#x1F4CA; CATEGORY BREAKDOWN</div>
       ${catRows}
     </div>
 
@@ -4253,6 +4437,103 @@ function runSingleScan() {
   }
   draw();
 })();
+
+
+// ── LIVE DB COUNT ─────────────────────────────────────────────
+(function() {
+  const el = document.getElementById('db-count');
+  if (el && typeof CARD_DB !== 'undefined') {
+    el.textContent = Object.keys(CARD_DB).length + '+';
+  }
+})();
+
+
+// ── KEYBOARD SHORTCUTS ─────────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  // Ctrl/Cmd + Enter = run analysis (on compare tab)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    const activePanel = document.querySelector('.panel.active');
+    if (activePanel && activePanel.id === 'panel-compare') {
+      runAnalysisAnimated();
+    } else if (activePanel && activePanel.id === 'panel-scan') {
+      runSingleScan();
+    }
+  }
+  // Ctrl/Cmd + K = focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    const srch = document.getElementById('search');
+    if (srch) { srch.focus(); switchTab('compare'); }
+  }
+  // 1-5 = switch tabs
+  if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+    const target = document.activeElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+    const tabMap = {'1':'compare','2':'scan','3':'recommend','4':'synergy','5':'about'};
+    if (tabMap[e.key]) switchTab(tabMap[e.key]);
+  }
+});
+
+// ── ANIMATED ANALYZE ───────────────────────────────────────────────────────
+function runAnalysisAnimated() {
+  const rawA = document.getElementById('deck-a').value;
+  const rawB = document.getElementById('deck-b').value;
+  if (!rawA.trim() || !rawB.trim()) {
+    // Shake the empty textarea
+    const ta = !rawA.trim() ? document.getElementById('deck-a') : document.getElementById('deck-b');
+    ta.style.transition = 'border-color 0.1s';
+    ta.style.borderColor = 'var(--red)';
+    setTimeout(() => { ta.style.borderColor = ''; }, 800);
+    alert('Please paste both decklists to compare.');
+    return;
+  }
+  const btn = document.getElementById('analyze-btn');
+  const prog = document.getElementById('analyze-progress');
+  const bar = document.getElementById('analyze-bar');
+  const status = document.getElementById('analyze-status');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing...';
+  prog.style.display = 'block';
+
+  const steps = [
+    [10, 'Parsing decklists...'],
+    [30, 'Looking up cards...'],
+    [55, 'Calculating power level...'],
+    [75, 'Detecting combos...'],
+    [90, 'Building comparison...'],
+    [100, 'Done!'],
+  ];
+
+  let stepIdx = 0;
+  function nextStep() {
+    if (stepIdx >= steps.length) {
+      setTimeout(() => {
+        runAnalysis();
+        btn.disabled = false;
+        btn.textContent = '⚡ Analyze & Compare';
+        prog.style.display = 'none';
+        bar.style.width = '0%';
+      }, 200);
+      return;
+    }
+    const [pct, msg] = steps[stepIdx++];
+    bar.style.width = pct + '%';
+    status.textContent = msg;
+    setTimeout(nextStep, pct === 100 ? 300 : 120);
+  }
+  nextStep();
+}
+
+
+// ── SCROLL TO TOP BUTTON ───────────────────────────────────────────────────
+window.addEventListener('scroll', function() {
+  const btn = document.getElementById('scroll-top');
+  if (btn) btn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+  if (btn) btn.style.alignItems = 'center';
+  if (btn) btn.style.justifyContent = 'center';
+});
 
 document.addEventListener('DOMContentLoaded', function() {
   initTooltip();
