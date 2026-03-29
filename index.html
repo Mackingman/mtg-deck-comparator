@@ -785,6 +785,15 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
   <div class="tab" onclick="switchTab('quiz')">
     <span style="margin-right:6px;">🎯</span>Group Quiz
   </div>
+  <div class="tab" onclick="switchTab('upgrade')">
+    <span style="margin-right:6px;">⬆</span>Upgrade Path
+  </div>
+  <div class="tab" onclick="switchTab('cmdsearch')">
+    <span style="margin-right:6px;">🧙</span>Commander
+  </div>
+  <div class="tab" onclick="switchTab('pod')">
+    <span style="margin-right:6px;">⚖</span>Pod Balance
+  </div>
   <div class="tab" onclick="switchTab('about')">
     <span style="margin-right:6px;">📖</span>Algorithm
   </div>
@@ -909,6 +918,12 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
   <div class="power-grid">
       <div class="power-card a" id="pcard-a"></div>
       <div class="power-card b" id="pcard-b"></div>
+    </div>
+
+    <!-- RADAR CHART -->
+    <div class="section-hdr">Power Profile Comparison</div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:24px;">
+      <canvas id="radar-chart" width="600" height="340" style="width:100%;max-width:600px;display:block;margin:0 auto;"></canvas>
     </div>
 
     <!-- COMPARISON -->
@@ -1219,6 +1234,84 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
 </div>
 <div style="width:100%;max-width:900px;margin:0 auto;min-height:0;">
 <ins class="adsbygoogle" style="display:block;min-height:0;" data-ad-client="ca-pub-2816476613820323" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
+</div>
+
+
+<!-- UPGRADE PATH PANEL -->
+<div class="panel" id="panel-upgrade">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">⬆ Upgrade Path</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">AI-powered cut &amp; upgrade suggestions with budget control</div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">Commander</div>
+          <input type="text" id="upg-commander" placeholder="e.g. Krenko, Mob Boss" style="width:100%;margin-bottom:0;">
+        </div>
+        <div style="width:160px;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">Budget (USD)</div>
+          <input type="text" id="upg-budget" placeholder="e.g. 50" style="width:100%;margin-bottom:0;">
+        </div>
+        <div style="width:160px;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">Target Bracket</div>
+          <select id="upg-bracket" style="width:100%;padding:9px 12px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono';font-size:11px;border-radius:var(--r-sm);">
+            <option value="2">B2 Casual</option>
+            <option value="3" selected>B3 Optimized</option>
+            <option value="4">B4 High Power</option>
+            <option value="5">B5 cEDH</option>
+          </select>
+        </div>
+      </div>
+      <div class="textarea-wrap">
+        <textarea id="upg-deck" placeholder="Paste your decklist here..." style="height:180px;" oninput="updateCounter('upg-deck','upg-counter')"></textarea>
+        <div class="counter-badge"><span class="cnt scan" id="upg-counter">0</span> cards</div>
+      </div>
+      <button onclick="runUpgradePath()" id="upg-btn" style="width:100%;margin-top:14px;padding:15px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:var(--r-md);font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">&#x26A1; GET UPGRADE PATH</button>
+    </div>
+    <div id="upg-results" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- COMMANDER SEARCH PANEL -->
+<div class="panel" id="panel-cmdsearch">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">🧙 Commander Search</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">Look up any commander — stats, top cards, typical bracket &amp; win conditions</div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="cmd-search-input" placeholder="Type a commander name... e.g. Krenko, Mob Boss" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')searchCommander()">
+        <button onclick="searchCommander()" style="padding:9px 20px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:var(--r-sm);font-family:'Bebas Neue';font-size:16px;letter-spacing:3px;cursor:pointer;white-space:nowrap;">SEARCH</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+        <span style="font-family:'DM Mono';font-size:9px;color:var(--text-4);letter-spacing:2px;text-transform:uppercase;align-self:center;">Try:</span>
+        <button onclick="quickSearchCmd('Krenko, Mob Boss')" class="sample-btn gold">Krenko</button>
+        <button onclick="quickSearchCmd('Sliver Overlord')" class="sample-btn teal">Sliver Overlord</button>
+        <button onclick="quickSearchCmd('Edgar Markov')" class="sample-btn purple">Edgar Markov</button>
+        <button onclick="quickSearchCmd('Atraxa, Praetors Voice')" class="sample-btn gold">Atraxa</button>
+        <button onclick="quickSearchCmd('Meren of Clan Nel Toth')" class="sample-btn teal">Meren</button>
+      </div>
+    </div>
+    <div id="cmd-search-results" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- POD BALANCE PANEL -->
+<div class="panel" id="panel-pod">
+  <div style="max-width:760px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">⚖ Pod Balance Checker</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">See if your pod is balanced and get matchup recommendations</div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:14px;">Enter each player's deck — bracket or full decklist</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="pod-inputs">
+        <div id="pod-slot-0"></div>
+        <div id="pod-slot-1"></div>
+        <div id="pod-slot-2"></div>
+        <div id="pod-slot-3"></div>
+      </div>
+      <button onclick="checkPodBalance()" style="width:100%;padding:15px;background:linear-gradient(135deg,#3de8a8,#0d9e6a);color:#05150e;border:none;border-radius:var(--r-md);font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">&#x2696; CHECK POD BALANCE</button>
+    </div>
+    <div id="pod-results" style="display:none;"></div>
+  </div>
 </div>
 
 <!-- ABOUT PANEL -->
@@ -3288,6 +3381,7 @@ runAnalysis = async function() {
 
     renderPowerCard('pcard-a', analysisA, nameA, 'a');
     renderPowerCard('pcard-b', analysisB, nameB, 'b');
+    setTimeout(() => drawRadarChart(analysisA, analysisB, nameA, nameB), 50);
     // Patch combo count directly into rendered stat cards
     const statA = document.querySelector('#pcard-a .pstat-val[data-stat="combos"]');
     const statB = document.querySelector('#pcard-b .pstat-val[data-stat="combos"]');
@@ -4844,6 +4938,7 @@ async function runSingleScan() {
           '<button class="btn-secondary" onclick="exportScanTxt(\'' + safeN + '\', window._lastScanAnalysis)" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x2193; EXPORT</button>' +
           '<button class="btn-secondary" onclick="shareScanURL(\'' + safeN + '\',' + bracket + ',' + score.toFixed(1) + ')" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F517; SHARE</button>' +
           '<button class="btn-secondary" onclick="printScanReport()" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F5A8; PRINT</button>' +
+          '<button class="btn-secondary" onclick="showHistoryChart()" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4C8; HISTORY</button>' +
           '<button class="btn-secondary" onclick="fetchAndShowPrices()" id="price-btn" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4B0; PRICES</button>' +
           '<button class="btn-secondary" onclick="document.getElementById(\'scan-deck\').value=\'\';document.getElementById(\'scan-name\').value=\'\';document.getElementById(\'scan-counter\').textContent=\'0\';document.getElementById(\'scan-results\').style.display=\'none\';window.scrollTo({top:0,behavior:\'smooth\'});" style="padding:8px 14px;font-size:10px;letter-spacing:2px;margin-left:auto;">&#x21BA; NEW SCAN</button>' +
         '</div>' +
@@ -4854,7 +4949,8 @@ async function runSingleScan() {
       '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">' +
         '<div style="font-family:Cinzel,serif;font-size:11px;font-weight:700;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);">&#x1F4CA; Category Breakdown</div>' +
         catRows +
-      '</div>';
+      '</div>' +
+      buildMissingStaples(deck, analysis);
 
     window._lastScanAnalysis = analysis;
     window._lastScanDeck = deck;
@@ -4958,7 +5054,7 @@ document.addEventListener('keydown', function(e) {
   if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
     const target = document.activeElement;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-    const tabMap = {'1':'compare','2':'scan','3':'recommend','4':'synergy','5':'manabase','6':'tuner','7':'quiz','8':'about'};
+    const tabMap = {'1':'compare','2':'scan','3':'recommend','4':'synergy','5':'manabase','6':'tuner','7':'quiz','8':'upgrade','9':'cmdsearch'};
     if (tabMap[e.key]) switchTab(tabMap[e.key]);
   }
 });
@@ -5031,6 +5127,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderHistory();
   renderCompareHistory();
   initQuiz();
+  initPodSlots();
 });
 
 
@@ -5903,6 +6000,573 @@ function printCompareReport() {
   win.document.write('</body></html>');
   win.document.close();
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+// RADAR CHART — Compare tab power profile
+// ══════════════════════════════════════════════════════════════════
+function drawRadarChart(analysisA, analysisB, nameA, nameB) {
+  const canvas = document.getElementById('radar-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2 + 10;
+  const radius = Math.min(W, H) * 0.36;
+  const labels = ['Speed', 'Combo', 'Tutors', 'Draw', 'Interaction', 'Ramp'];
+  const N = labels.length;
+
+  // Normalize a value 0–1 for radar
+  function norm(val, max) { return Math.min(1, Math.max(0, val / max)); }
+
+  function getAxes(an) {
+    return [
+      norm(3.5 - (an.avgCmc || 3.5), 2.5),          // Speed (lower CMC = faster)
+      norm((an.confirmedCombos || 0) + (an.comboCount || 0) * 0.3, 6),
+      norm(an.tutorCount || 0, 6),
+      norm(an.drawCount || 0, 8),
+      norm(an.interactionCount || (an.cardCount ? (an.cardCount * 0.15) : 5), 15),
+      norm(an.rampCount || 0, 10),
+    ];
+  }
+
+  const axesA = getAxes(analysisA);
+  const axesB = getAxes(analysisB);
+
+  // Draw background rings
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let r = 1; r <= 4; r++) {
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const angle = (Math.PI * 2 * i / N) - Math.PI / 2;
+      const x = cx + Math.cos(angle) * radius * (r / 4);
+      const y = cy + Math.sin(angle) * radius * (r / 4);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Draw axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  for (let i = 0; i < N; i++) {
+    const angle = (Math.PI * 2 * i / N) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+    ctx.stroke();
+  }
+
+  // Draw deck polygon
+  function drawPoly(axes, color, alpha) {
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const angle = (Math.PI * 2 * i / N) - Math.PI / 2;
+      const r = axes[i] * radius;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color.replace('1)', alpha + ')');
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Dots
+    for (let i = 0; i < N; i++) {
+      const angle = (Math.PI * 2 * i / N) - Math.PI / 2;
+      const r = axes[i] * radius;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 4, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+  }
+
+  drawPoly(axesA, 'rgba(232,201,74,1)', '0.15');
+  drawPoly(axesB, 'rgba(61,232,168,1)', '0.12');
+
+  // Labels
+  ctx.font = 'bold 11px DM Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < N; i++) {
+    const angle = (Math.PI * 2 * i / N) - Math.PI / 2;
+    const lx = cx + Math.cos(angle) * (radius + 26);
+    const ly = cy + Math.sin(angle) * (radius + 26);
+    ctx.fillStyle = 'rgba(144,144,192,0.9)';
+    ctx.fillText(labels[i].toUpperCase(), lx, ly);
+  }
+
+  // Legend
+  const legY = H - 18;
+  ctx.font = '10px DM Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#e8c94a';
+  ctx.fillRect(20, legY - 6, 14, 4);
+  ctx.fillStyle = 'rgba(240,240,250,0.7)';
+  ctx.fillText(nameA, 38, legY - 4);
+  ctx.fillStyle = '#3de8a8';
+  ctx.fillRect(cx + 20, legY - 6, 14, 4);
+  ctx.fillStyle = 'rgba(240,240,250,0.7)';
+  ctx.fillText(nameB, cx + 38, legY - 4);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MISSING STAPLES SUGGESTER
+// ══════════════════════════════════════════════════════════════════
+const STAPLES_BY_CATEGORY = {
+  ramp: ['Sol Ring','Arcane Signet','Fellwar Stone','Commander\'s Sphere','Nature\'s Lore',
+         'Rampant Growth','Cultivate','Kodama\'s Reach','Three Visits','Farseek'],
+  draw: ['Rhystic Study','Smothering Tithe','Skullclamp','Phyrexian Arena','Sylvan Library',
+         'Necropotence','Mystic Remora','Brainstorm','Ponder','Preordain'],
+  removal: ['Swords to Plowshares','Path to Exile','Assassin\'s Trophy','Abrupt Decay',
+            'Cyclonic Rift','Beast Within','Chaos Warp','Return to Nature','Generous Gift','Anguished Unmaking'],
+  interaction: ['Counterspell','Force of Will','Fierce Guardianship','Deflecting Swat',
+                'Swan Song','Negate','Pact of Negation','Flusterstorm','An Offer You Can\'t Refuse','Dovin\'s Veto'],
+  tutor: ['Demonic Tutor','Vampiric Tutor','Mystical Tutor','Enlightened Tutor',
+          'Worldly Tutor','Imperial Seal','Gamble','Survival of the Fittest','Natural Order','Crop Rotation'],
+};
+
+function buildMissingStaples(deck, analysis) {
+  const deckNames = new Set([...deck.keys()].map(n => n.toLowerCase()));
+  const missing = {};
+
+  for (const [cat, cards] of Object.entries(STAPLES_BY_CATEGORY)) {
+    const miss = cards.filter(c => !deckNames.has(c.toLowerCase())).slice(0, 4);
+    if (miss.length >= 3) missing[cat] = miss; // only show if missing 3+
+  }
+
+  if (Object.keys(missing).length === 0) return '';
+
+  const catLabels = {ramp:'⚡ Ramp', draw:'📖 Card Draw', removal:'🗑 Removal',
+                     interaction:'🛡 Interaction', tutor:'🔍 Tutors'};
+
+  let html = '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-top:16px;">';
+  html += '<div style="font-family:Cinzel,serif;font-size:11px;font-weight:700;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);">💡 Common Staples Not in Deck</div>';
+
+  for (const [cat, cards] of Object.entries(missing)) {
+    html += '<div style="margin-bottom:12px;">';
+    html += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">' + catLabels[cat] + '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    for (const c of cards) {
+      html += '<span class="flag-chip" data-card="' + c + '" style="cursor:pointer;" onclick="window.open(\'https://scryfall.com/search?q=!\\\'' + encodeURIComponent(c) + '\\\'\',\'_blank\')">' + c + '</span>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// POWER LEVEL HISTORY CHART
+// ══════════════════════════════════════════════════════════════════
+function showHistoryChart() {
+  const history = JSON.parse(localStorage.getItem('edh_scan_history') || '[]');
+  if (history.length < 2) { showToast('Scan at least 2 decks to see history'); return; }
+
+  // Group by deck name
+  const byDeck = {};
+  for (const h of history) {
+    const key = (h.name || 'Unknown').trim();
+    if (!byDeck[key]) byDeck[key] = [];
+    byDeck[key].push({ score: h.score || 0, bracket: h.bracket || 1, date: h.date || '' });
+  }
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto;position:relative;">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-3);font-size:20px;cursor:pointer;line-height:1;">×</button>
+      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:var(--gold);margin-bottom:4px;">📈 Power Level History</div>
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:2px;margin-bottom:20px;">LAST ${history.length} SCANS</div>
+      <canvas id="history-chart-canvas" width="580" height="280" style="width:100%;border-radius:8px;background:var(--bg-3);padding:12px;box-sizing:border-box;"></canvas>
+      <div id="history-legend" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // Draw after DOM insert
+  setTimeout(() => {
+    const canvas = document.getElementById('history-chart-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const pad = { top: 20, right: 20, bottom: 40, left: 40 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) {
+      const y = pad.top + chartH - (i / 10) * chartH;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + chartW, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(144,144,192,0.5)';
+      ctx.font = '9px DM Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(i, pad.left - 6, y + 3);
+    }
+
+    const colors = ['#e8c94a','#3de8a8','#a855f7','#f0516a','#60a5fa','#fb923c'];
+    const legend = document.getElementById('history-legend');
+    let ci = 0;
+
+    for (const [name, entries] of Object.entries(byDeck)) {
+      if (entries.length < 1) continue;
+      const color = colors[ci % colors.length];
+      const allScans = history.filter(h => (h.name||'').trim() === name);
+      if (allScans.length < 1) { ci++; continue; }
+
+      // Plot points
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      allScans.forEach((scan, idx) => {
+        const x = pad.left + (allScans.length === 1 ? chartW/2 : (idx / (allScans.length - 1)) * chartW);
+        const y = pad.top + chartH - ((scan.score || 0) / 10) * chartH;
+        idx === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      allScans.forEach((scan, idx) => {
+        const x = pad.left + (allScans.length === 1 ? chartW/2 : (idx / (allScans.length - 1)) * chartW);
+        const y = pad.top + chartH - ((scan.score || 0) / 10) * chartH;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      });
+
+      // Legend
+      const leg = document.createElement('div');
+      leg.style.cssText = 'display:flex;align-items:center;gap:6px;font-family:DM Mono,monospace;font-size:10px;color:var(--text-2);';
+      leg.innerHTML = '<div style="width:14px;height:3px;background:' + color + ';border-radius:2px;flex-shrink:0;"></div>' + name;
+      legend.appendChild(leg);
+      ci++;
+    }
+
+    // X axis label
+    ctx.fillStyle = 'rgba(144,144,192,0.5)';
+    ctx.font = '9px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCAN ORDER →', pad.left + chartW/2, H - 6);
+  }, 50);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UPGRADE PATH
+// ══════════════════════════════════════════════════════════════════
+async function runUpgradePath() {
+  const raw = document.getElementById('upg-deck').value.trim();
+  const commander = document.getElementById('upg-commander').value.trim();
+  const budget = parseFloat(document.getElementById('upg-budget').value) || 50;
+  const targetBracket = parseInt(document.getElementById('upg-bracket').value) || 3;
+
+  if (!raw) { showToast('Paste a decklist first'); return; }
+
+  const btn = document.getElementById('upg-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing...';
+
+  const resultsEl = document.getElementById('upg-results');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3);font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;">⏳ Generating upgrade suggestions...</div>';
+
+  try {
+    const WORKER = 'https://spellbook-proxy.work-macarthur.workers.dev';
+    const prompt = `You are an expert Magic: The Gathering Commander deck optimizer.
+
+Deck commander: ${commander || 'Unknown'}
+Target bracket: ${targetBracket} (${['','Precon','Casual','Optimized','High Power','cEDH'][targetBracket]})
+Total upgrade budget: $${budget} USD
+
+Decklist:
+${raw}
+
+Provide exactly 5 specific card cuts and their replacements that would improve this deck within the budget. For each:
+1. The card to CUT (already in the deck)
+2. The card to ADD (the upgrade)
+3. Estimated price of the new card in USD
+4. One sentence explaining why this upgrade helps
+
+Respond ONLY as JSON array, no markdown:
+[{"cut":"Card Name","add":"Card Name","price":X.XX,"reason":"reason here"},...]`;
+
+    const res = await fetch(WORKER + '/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = (data.content || []).map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const suggestions = JSON.parse(clean);
+
+    let totalCost = suggestions.reduce((a, s) => a + (s.price || 0), 0);
+    const bColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#e84a6a'};
+    const bNames = {1:'Precon',2:'Casual',3:'Optimized',4:'High Power',5:'cEDH'};
+
+    let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div style="font-family:'Bebas Neue';font-size:18px;letter-spacing:3px;color:var(--gold);">5 Suggested Upgrades</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div style="font-family:'DM Mono';font-size:10px;color:var(--text-3);">Target: <span style="color:${bColors[targetBracket]}">B${targetBracket} ${bNames[targetBracket]}</span></div>
+        <div style="font-family:'DM Mono';font-size:10px;color:var(--teal);">Est. Total: $${totalCost.toFixed(2)}</div>
+      </div>
+    </div>`;
+
+    for (const s of suggestions) {
+      html += `<div style="background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;display:grid;grid-template-columns:1fr 24px 1fr auto;gap:10px;align-items:center;">
+        <div>
+          <div style="font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:3px;">CUT</div>
+          <span class="flag-chip mld" data-card="${s.cut}" style="cursor:pointer;" onclick="window.open('https://scryfall.com/search?q=!%22${encodeURIComponent(s.cut)}%22','_blank')">${s.cut}</span>
+        </div>
+        <div style="text-align:center;font-size:18px;color:var(--text-3);">→</div>
+        <div>
+          <div style="font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin-bottom:3px;">ADD</div>
+          <span class="flag-chip gc" data-card="${s.add}" style="cursor:pointer;" onclick="window.open('https://scryfall.com/search?q=!%22${encodeURIComponent(s.add)}%22','_blank')">${s.add}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Bebas Neue';font-size:22px;color:var(--teal);line-height:1;">$${(s.price||0).toFixed(2)}</div>
+          <div style="font-family:'DM Mono';font-size:8px;color:var(--text-4);letter-spacing:1px;">est.</div>
+        </div>
+        <div style="grid-column:1/-1;font-family:'DM Mono';font-size:10px;color:var(--text-2);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;">${s.reason}</div>
+      </div>`;
+    }
+
+    if (totalCost > budget) {
+      html += `<div style="background:rgba(240,81,106,0.07);border:1px solid rgba(240,81,106,0.25);border-radius:var(--r-md);padding:12px;font-family:'DM Mono';font-size:10px;color:var(--red);">⚠ Estimated total ($${totalCost.toFixed(2)}) exceeds your budget ($${budget}). Consider doing upgrades in batches.</div>`;
+    }
+
+    resultsEl.innerHTML = html;
+  } catch(err) {
+    resultsEl.innerHTML = '<div style="background:rgba(240,81,106,0.07);border:1px solid rgba(240,81,106,0.2);border-radius:var(--r-lg);padding:20px;color:var(--red);font-family:DM Mono,monospace;font-size:12px;">✕ ' + err.message + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ GET UPGRADE PATH';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COMMANDER SEARCH
+// ══════════════════════════════════════════════════════════════════
+function quickSearchCmd(name) {
+  document.getElementById('cmd-search-input').value = name;
+  searchCommander();
+}
+
+async function searchCommander() {
+  const name = document.getElementById('cmd-search-input').value.trim();
+  if (!name) { showToast('Enter a commander name'); return; }
+
+  const resultsEl = document.getElementById('cmd-search-results');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3);font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;">⏳ Looking up ' + name + '...</div>';
+
+  try {
+    // Fetch from Scryfall for card data + from EDHREC for popularity
+    const WORKER = 'https://spellbook-proxy.work-macarthur.workers.dev';
+    const sfRes = await fetch('https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(name));
+    const sfData = sfRes.ok ? await sfRes.json() : null;
+
+    // EDHREC data via worker
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    let edhData = null;
+    try {
+      const edhRes = await fetch(WORKER + '/edhrec?commander=' + encodeURIComponent(slug));
+      if (edhRes.ok) edhData = await edhRes.json();
+    } catch(e) {}
+
+    // Claude AI analysis
+    const aiRes = await fetch(WORKER + '/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: `For the MTG Commander "${name}", give a brief analysis in JSON (no markdown):
+{"bracket":"2-3","archetype":"Combo/Aggro/etc","wincons":["win con 1","win con 2"],"keyCards":["card1","card2","card3","card4","card5"],"summary":"2 sentence summary of how the deck plays","difficulty":"Beginner/Intermediate/Advanced"}` }]
+      })
+    });
+    const aiData = await aiRes.json();
+    const aiText = (aiData.content || []).map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
+    let aiInfo = {};
+    try { aiInfo = JSON.parse(aiText); } catch(e) {}
+
+    const imageUrl = sfData?.image_uris?.normal || sfData?.card_faces?.[0]?.image_uris?.normal;
+    const bColors = {'1':'#4ae8b0','2':'#60a5fa','3':'#a855f7','4':'#e8c94a','5':'#e84a6a'};
+    const bracketStr = aiInfo.bracket || '3';
+    const bracketNum = bracketStr.split('-')[0];
+    const bColor = bColors[bracketNum] || '#e8c94a';
+    const diffColors = {'Beginner':'#4ade80','Intermediate':'#e8c94a','Advanced':'#f0516a'};
+    const diffColor = diffColors[aiInfo.difficulty] || '#e8c94a';
+
+    const topCards = edhData?.cardlist?.slice(0, 8) || [];
+
+    let html = `<div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;">`;
+    if (imageUrl) html += `<img src="${imageUrl}" alt="${name}" style="width:180px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.6);">`;
+    html += `<div>
+      <div style="font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;">${sfData?.name || name}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid ${bColor}55;color:${bColor};background:${bColor}11;">B${bracketStr}</span>
+        ${aiInfo.archetype ? `<span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);color:var(--purple);background:rgba(168,85,247,0.08);">${aiInfo.archetype}</span>` : ''}
+        ${aiInfo.difficulty ? `<span style="font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid ${diffColor}55;color:${diffColor};background:${diffColor}11;">${aiInfo.difficulty}</span>` : ''}
+      </div>
+      ${aiInfo.summary ? `<p style="font-size:12px;color:var(--text-2);line-height:1.7;margin-bottom:12px;">${aiInfo.summary}</p>` : ''}
+      ${aiInfo.wincons?.length ? `<div style="margin-bottom:10px;"><div style="font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:5px;">Win Conditions</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${aiInfo.wincons.map(w=>`<span style="font-family:'DM Mono';font-size:10px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:4px;padding:2px 8px;color:var(--purple);">${w}</span>`).join('')}</div></div>` : ''}
+      ${aiInfo.keyCards?.length ? `<div><div style="font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:5px;">Key Cards</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${aiInfo.keyCards.map(c=>`<span class="flag-chip" data-card="${c}" onclick="window.open('https://scryfall.com/search?q=!%22${encodeURIComponent(c)}%22','_blank')" style="cursor:pointer;">${c}</span>`).join('')}</div></div>` : ''}
+    </div></div>`;
+
+    if (topCards.length > 0) {
+      html += `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:3px;color:var(--text-3);text-transform:uppercase;margin-bottom:14px;">Top Cards on EDHREC</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
+        ${topCards.map(c => {
+          const cardName = c.name || c.label || '';
+          const pct = c.inclusion_rate || c.potential_decks || '';
+          return `<div style="background:var(--bg-3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+            <span class="flag-chip" data-card="${cardName}" style="background:none;border:none;padding:0;font-size:10px;cursor:pointer;" onclick="window.open('https://scryfall.com/search?q=!%22${encodeURIComponent(cardName)}%22','_blank')">${cardName}</span>
+            ${pct ? `<span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);flex-shrink:0;">${typeof pct === 'number' ? Math.round(pct)+'%' : ''}</span>` : ''}
+          </div>`;
+        }).join('')}
+        </div></div>`;
+    }
+
+    html += `<div style="text-align:center;margin-top:14px;"><a href="https://edhrec.com/commanders/${slug}" target="_blank" style="font-family:'DM Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-decoration:none;border:1px solid rgba(61,232,168,0.3);padding:6px 16px;border-radius:5px;">VIEW FULL EDHREC PAGE ↗</a></div>`;
+
+    resultsEl.innerHTML = html;
+  } catch(err) {
+    resultsEl.innerHTML = '<div style="color:var(--red);font-family:DM Mono,monospace;font-size:12px;padding:20px;">✕ ' + err.message + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// POD BALANCE CHECKER
+// ══════════════════════════════════════════════════════════════════
+function initPodSlots() {
+  const colors = [
+    {label:'Player 1', accent:'var(--gold)', accentRgb:'232,201,74'},
+    {label:'Player 2', accent:'var(--teal)', accentRgb:'61,232,168'},
+    {label:'Player 3', accent:'var(--purple)', accentRgb:'168,85,247'},
+    {label:'Player 4', accent:'var(--red)', accentRgb:'240,81,106'},
+  ];
+  colors.forEach((c, i) => {
+    const el = document.getElementById('pod-slot-' + i);
+    if (!el) return;
+    el.innerHTML = `<div style="background:var(--bg-3);border:1px solid rgba(${c.accentRgb},0.2);border-radius:var(--r-md);padding:14px;">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:rgba(${c.accentRgb},0.8);text-transform:uppercase;margin-bottom:8px;">${c.label}</div>
+      <input type="text" id="pod-name-${i}" placeholder="Deck name..." style="width:100%;font-size:11px;margin-bottom:8px;">
+      <select id="pod-bracket-${i}" style="width:100%;padding:8px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono';font-size:11px;border-radius:6px;margin-bottom:8px;">
+        <option value="">-- Quick: select bracket --</option>
+        <option value="1">B1 — Precon</option>
+        <option value="2">B2 — Casual</option>
+        <option value="3">B3 — Optimized</option>
+        <option value="4">B4 — High Power</option>
+        <option value="5">B5 — cEDH</option>
+      </select>
+      <div style="font-family:'DM Mono';font-size:8px;color:var(--text-4);letter-spacing:1px;text-align:center;margin:4px 0;">— or paste decklist —</div>
+      <textarea id="pod-deck-${i}" placeholder="Optional: paste decklist for detailed analysis..." style="width:100%;height:80px;font-size:10px;padding:8px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono';border-radius:6px;resize:vertical;"></textarea>
+    </div>`;
+  });
+}
+
+async function checkPodBalance() {
+  const players = [];
+  for (let i = 0; i < 4; i++) {
+    const name = (document.getElementById('pod-name-' + i)?.value || ('Player ' + (i+1))).trim();
+    const bracketSel = document.getElementById('pod-bracket-' + i)?.value;
+    const deckRaw = document.getElementById('pod-deck-' + i)?.value.trim() || '';
+    let bracket = bracketSel ? parseInt(bracketSel) : null;
+    let score = bracket ? bracket * 2 : null;
+
+    if (deckRaw && !bracket) {
+      const deck = parseDeck(deckRaw);
+      const analysis = analyzeDeck(deck);
+      bracket = analysis.bracket?.recommended || analysis.bracket?.min || 3;
+      score = analysis.powerLevel || bracket * 2;
+    }
+    if (!bracket) bracket = 3;
+    if (!score) score = bracket * 2;
+    players.push({ name, bracket, score });
+  }
+
+  const brackets = players.map(p => p.bracket);
+  const minB = Math.min(...brackets), maxB = Math.max(...brackets);
+  const spread = maxB - minB;
+  const avgB = brackets.reduce((a,b) => a+b, 0) / brackets.length;
+
+  const bColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#e84a6a'};
+  const bNames = {1:'Precon',2:'Casual',3:'Optimized',4:'High Power',5:'cEDH'};
+
+  let verdict, verdictColor, advice;
+  if (spread === 0) {
+    verdict = '✅ Perfectly Balanced'; verdictColor = '#4ade80';
+    advice = 'All decks are at the same bracket — this pod should have great games!';
+  } else if (spread === 1) {
+    verdict = '✅ Well Balanced'; verdictColor = '#4ade80';
+    advice = 'A 1-bracket spread is acceptable and common. Games should feel fair.';
+  } else if (spread === 2) {
+    verdict = '⚠️ Slightly Unbalanced'; verdictColor = '#e8c94a';
+    advice = 'A 2-bracket spread can make games feel one-sided. Consider asking the high-power player to tune down or the lower player to upgrade.';
+  } else {
+    verdict = '❌ Unbalanced Pod'; verdictColor = '#f0516a';
+    advice = 'A ' + spread + '-bracket spread will likely result in frustrating games. The B' + minB + ' deck will struggle and the B' + maxB + ' deck will dominate. Align brackets before playing.';
+  }
+
+  const resultsEl = document.getElementById('pod-results');
+  resultsEl.style.display = 'block';
+
+  let html = `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:16px;">
+    <div style="font-family:'Bebas Neue';font-size:28px;color:${verdictColor};letter-spacing:3px;margin-bottom:8px;">${verdict}</div>
+    <div style="font-family:'DM Mono';font-size:11px;color:var(--text-2);line-height:1.7;margin-bottom:20px;">${advice}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">`;
+
+  for (const p of players) {
+    const col = bColors[p.bracket] || '#e8c94a';
+    html += `<div style="background:var(--bg-3);border:1px solid ${col}33;border-radius:var(--r-md);padding:14px;text-align:center;">
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:1px;margin-bottom:6px;">${p.name}</div>
+      <div style="font-family:'Bebas Neue';font-size:36px;color:${col};line-height:1;">B${p.bracket}</div>
+      <div style="font-family:'DM Mono';font-size:9px;color:${col};margin-top:2px;">${bNames[p.bracket]||''}</div>
+    </div>`;
+  }
+
+  html += `</div>`;
+
+  // Balance bar
+  html += `<div style="margin-top:4px;"><div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;">Bracket Distribution</div>
+    <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--bg-3);">`;
+  for (const p of players) {
+    const col = bColors[p.bracket] || '#e8c94a';
+    html += `<div style="flex:1;background:${col};opacity:0.8;" title="${p.name}: B${p.bracket}"></div>`;
+  }
+  html += `</div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;">
+      <span style="font-family:'DM Mono';font-size:9px;color:var(--text-4);">B1 Precon</span>
+      <span style="font-family:'DM Mono';font-size:9px;color:var(--text-4);">B5 cEDH</span>
+    </div></div></div>`;
+
+  if (spread >= 2) {
+    html += `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:12px;">Suggestions to Balance</div>
+      <div style="font-family:'DM Mono';font-size:11px;color:var(--text-2);line-height:1.8;">
+        ${players.filter(p=>p.bracket===maxB).map(p=>`• <strong style="color:var(--text)">${p.name}</strong> could tune down to B${maxB-1} by removing ${maxB >= 4 ? 'fast mana and combo lines' : 'Game Changers'}`).join('<br>')}
+        ${players.filter(p=>p.bracket===minB && spread>=2).map(p=>`<br>• <strong style="color:var(--text)">${p.name}</strong> could upgrade to B${minB+1} by adding ${minB <= 2 ? 'some Game Changers and synergy pieces' : 'more tutors and interaction'}`).join('')}
+      </div></div>`;
+  }
+
+  resultsEl.innerHTML = html;
+}
+
 
 </script>
 </body>
