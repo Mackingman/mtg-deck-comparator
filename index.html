@@ -58,6 +58,46 @@
   --grad-surface: linear-gradient(160deg, #0e0e1c 0%, #12122a 100%);
 }
 
+/* ── PARCHMENT THEME ──────────────────────────────── */
+[data-theme="parchment"] {
+  --gold:     #7a5c0a;
+  --gold-lt:  #9a7c18;
+  --gold-dk:  #5a3c00;
+  --gold-a10: rgba(122,92,10,0.10);
+  --gold-a20: rgba(122,92,10,0.18);
+  --gold-a35: rgba(122,92,10,0.30);
+  --teal:     #1a6b4a;
+  --teal-a10: rgba(26,107,74,0.10);
+  --purple:   #6b21a8;
+  --red:      #b91c1c;
+  --blue:     #1d4ed8;
+  --green:    #15803d;
+
+  --bg:       #f5f0e8;
+  --bg-1:     #ede8dc;
+  --bg-2:     #e8e0d0;
+  --bg-3:     #ddd6c4;
+  --bg-4:     #d4cab4;
+  --bg-5:     #c8bca4;
+
+  --text:     #1a1208;
+  --text-2:   #4a3c20;
+  --text-3:   #7a6840;
+  --text-4:   #b0986a;
+
+  --border:   rgba(122,92,10,0.12);
+  --border-2: rgba(122,92,10,0.20);
+  --border-3: rgba(122,92,10,0.30);
+
+  --grad-gold: linear-gradient(135deg, #5a3c00, #7a5c0a 45%, #9a7c18 55%, #5a3c00);
+  --grad-surface: linear-gradient(160deg, #e8e0d0 0%, #ede8dc 100%);
+}
+[data-theme="parchment"] #bg-canvas { display: none; }
+[data-theme="parchment"] body { background: var(--bg); }
+[data-theme="parchment"] .tabs { background: rgba(237,232,220,0.95); }
+[data-theme="parchment"] textarea, [data-theme="parchment"] input[type=text] { background: var(--bg-1); color: var(--text); }
+[data-theme="parchment"] select { background: var(--bg-1); color: var(--text); }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
@@ -649,9 +689,34 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
 
 /* ── RESPONSIVE ──────────────────────────────── */
 @media(max-width:720px) {
-  .panel { padding:24px 16px; }
+  .panel { padding:16px 12px; }
   #panel-scan > div > div:first-child { grid-template-columns:1fr !important; }
-  .hstat { padding:10px 20px; }
+  .hstat { padding:8px 14px; }
+  .header { padding:36px 16px 28px; }
+  .header h1 { font-size: clamp(22px, 8vw, 48px); }
+  .tabs { gap: 0; }
+  .tab { padding: 14px 12px; font-size: 9px; letter-spacing: 1px; }
+  .power-grid { grid-template-columns: 1fr !important; }
+  .three-col { grid-template-columns: 1fr !important; }
+  .compare-layout { grid-template-columns: 1fr !important; }
+  .summary-bar { grid-template-columns: 1fr 1fr !important; }
+  .input-grid { grid-template-columns: 1fr !important; }
+  .vs-mid { display: none !important; }
+  .btn-row { flex-direction: column; align-items: stretch; }
+  .btn-row .btn-primary, .btn-row .btn-secondary { width: 100%; text-align: center; }
+  .power-stats { grid-template-columns: repeat(3, 1fr) !important; }
+  .header-stats { gap: 0; flex-wrap: wrap; justify-content: center; }
+  .hstat { border-right: none; border-bottom: 1px solid var(--border); width: 50%; }
+  .hstat:last-child, .hstat:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  #radar-chart { max-height: 240px !important; }
+  [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: 180px"] { grid-template-columns: 1fr !important; }
+}
+@media(max-width:480px) {
+  .tab span { display: none; }
+  .tab { padding: 12px 10px; font-size: 8px; }
+  .hstat-n { font-size: 26px !important; }
+  .bracket-badge { font-size: 26px !important; padding: 6px 14px !important; }
 }
 
 /* ── RESULTS ─────────────────────────────────── */
@@ -753,7 +818,11 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     <div class="mana-pip" title="Green">G</div>
   </div>
 
-  <div class="header-stats">
+  <div style="position:absolute;top:16px;right:16px;display:flex;gap:8px;align-items:center;">
+  <button onclick="toggleTheme()" id="theme-btn" title="Toggle theme" style="background:var(--bg-3);border:1px solid var(--border-2);color:var(--text-2);font-family:'DM Mono';font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)'">🌙 Dark</button>
+  <button onclick="startTour()" title="Quick tour" style="background:var(--bg-3);border:1px solid var(--border-2);color:var(--text-2);font-family:'DM Mono';font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)'">? Tour</button>
+</div>
+<div class="header-stats">
     <div class="hstat"><div class="hstat-n">5</div><div class="hstat-l">Brackets</div></div>
     
     <div class="hstat"><div class="hstat-n">53</div><div class="hstat-l">Game Changers</div></div>
@@ -4592,58 +4661,71 @@ async function fetchPriceEstimate(cardNames) {
 }
 
 async function fetchAndShowPrices() {
-  const deck = window._lastScanDeck;
-  if (!deck) return;
   const btn = document.getElementById('price-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ PRICES'; }
+
+  const raw = document.getElementById('scan-deck')?.value || '';
+  if (!raw.trim()) { showToast('Scan a deck first'); if(btn){btn.disabled=false;btn.textContent='💰 PRICES';} return; }
+
+  const deck = parseDeck(raw);
+  const names = [...deck.keys()];
   const priceEl = document.getElementById('price-results');
-  if (!btn || !priceEl) return;
-  btn.textContent = '⏳ FETCHING...';
-  btn.disabled = true;
-  priceEl.innerHTML = '<div style="color:var(--text-2);font-family:DM Mono,monospace;font-size:11px;padding:8px;">Fetching prices from Scryfall...</div>';
+  if (!priceEl) { if(btn){btn.disabled=false;btn.textContent='💰 PRICES';} return; }
 
-  const cardNames = [...deck.keys()];
-  const prices = await fetchPriceEstimate(cardNames);
+  priceEl.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text-3);padding:12px 0;letter-spacing:1px;">⏳ Fetching prices from Scryfall...</div>';
 
-  let total = 0;
-  const priced = [];
-  for (const [name, data] of deck.entries()) {
-    const qty = data.qty || 1;
-    const price = prices[name.toLowerCase()] || 0;
-    const lineTotal = price * qty;
-    total += lineTotal;
-    if (price > 0) priced.push({ name, qty, price, lineTotal });
-  }
-  priced.sort((a,b) => b.lineTotal - a.lineTotal);
+  try {
+    // Batch fetch - Scryfall already cached from scan, use cache
+    const priced = [];
+    let totalTcg = 0, totalCmk = 0, unknown = 0;
 
-  const unknown = cardNames.length - priced.length;
-  const top10 = priced.slice(0, 10);
-  const maxVal = top10[0]?.lineTotal || 1;
-
-  let html = `<div style="background:var(--bg-1);border:1px solid #9e4ae833;border-radius:8px;padding:14px;margin-top:8px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:3px;color:#9e4ae8;">&#x1F4B0; PRICE ESTIMATE</div>
-      <div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#e8c94a;">$${total.toFixed(2)} <span style="font-size:12px;color:var(--text-2);">USD</span></div>
-    </div>
-    <div style="font-size:10px;color:var(--text-2);margin-bottom:12px;letter-spacing:1px;">${priced.length} cards priced &middot; ${unknown} not found &middot; non-foil via Scryfall</div>`;
-
-  if (top10.length) {
-    html += `<div style="font-size:10px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Top 10 by Value</div>`;
-    for (const c of top10) {
-      const pct = Math.min(100, (c.lineTotal / maxVal) * 100);
-      html += `<div style="display:grid;grid-template-columns:1fr 55px;gap:8px;align-items:center;margin-bottom:5px;">
-        <div>
-          <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);">${c.name}${c.qty>1?` <span style="color:var(--text-2);">x${c.qty}</span>`:''}</div>
-          <div style="background:var(--bg-3);border-radius:2px;height:3px;margin-top:3px;overflow:hidden;"><div style="background:#9e4ae8;width:${pct}%;height:3px;border-radius:2px;transition:width 0.5s;"></div></div>
-        </div>
-        <div style="font-family:DM Mono,monospace;font-size:10px;color:#e8c94a;text-align:right;">$${c.lineTotal.toFixed(2)}</div>
-      </div>`;
+    for (const name of names) {
+      const sf = SCRYFALL_CACHE.get(name);
+      if (sf && sf.prices) {
+        const tcg = parseFloat(sf.prices.usd || sf.prices.usd_foil || 0);
+        const cmk = parseFloat(sf.prices.eur || 0);
+        const qty = deck.get(name)?.qty || 1;
+        if (tcg > 0) { totalTcg += tcg * qty; priced.push({name, tcg, cmk, qty}); }
+        else unknown++;
+      } else {
+        unknown++;
+      }
     }
-  }
-  html += `<div style="font-size:9px;color:#3a3a5a;margin-top:10px;letter-spacing:1px;">Estimates only. Check TCGPlayer or CardKingdom for current prices.</div></div>`;
 
-  priceEl.innerHTML = html;
-  btn.textContent = '💰 PRICE ESTIMATE';
-  btn.disabled = false;
+    // Sort by price desc
+    priced.sort((a, b) => b.tcg - a.tcg);
+    const top = priced.slice(0, 15);
+
+    let html = '<div style="background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-top:12px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">';
+    html += '<div style="font-family:Bebas Neue;font-size:18px;letter-spacing:3px;color:var(--gold);">💰 Deck Price Estimate</div>';
+    html += '<div style="display:flex;gap:14px;">';
+    html += '<div style="text-align:center;"><div style="font-family:Bebas Neue;font-size:28px;color:var(--teal);line-height:1;">$' + totalTcg.toFixed(2) + '</div><div style="font-family:DM Mono;font-size:8px;letter-spacing:2px;color:var(--text-3);">TCGPLAYER USD</div></div>';
+    if (totalCmk > 0) html += '<div style="text-align:center;"><div style="font-family:Bebas Neue;font-size:28px;color:var(--purple);line-height:1;">€' + totalCmk.toFixed(2) + '</div><div style="font-family:DM Mono;font-size:8px;letter-spacing:2px;color:var(--text-3);">CARDMARKET EUR</div></div>';
+    html += '</div></div>';
+
+    if (top.length > 0) {
+      html += '<div style="font-family:DM Mono;font-size:8px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;">Most Expensive Cards</div>';
+      for (const c of top) {
+        const pct = totalTcg > 0 ? (c.tcg / totalTcg * 100) : 0;
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);">';
+        html += '<div style="flex:1;font-family:DM Mono;font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + (c.qty>1?` ×${c.qty}`:'') + '</div>';
+        html += '<div style="width:80px;background:var(--bg-4);border-radius:3px;height:4px;flex-shrink:0;overflow:hidden;"><div style="height:4px;background:var(--teal);width:' + Math.min(100,pct*3) + '%;border-radius:3px;"></div></div>';
+        html += '<div style="font-family:DM Mono;font-size:10px;color:var(--teal);min-width:52px;text-align:right;">$' + c.tcg.toFixed(2) + '</div>';
+        html += '</div>';
+      }
+    }
+
+    if (unknown > 0) html += '<div style="font-family:DM Mono;font-size:9px;color:var(--text-4);margin-top:8px;letter-spacing:1px;">' + unknown + ' cards without price data (basics, unknown cards)</div>';
+    html += '<div style="font-family:DM Mono;font-size:8px;color:var(--text-4);margin-top:6px;letter-spacing:1px;">Prices from Scryfall · TCGPlayer market price · Updated daily</div>';
+    html += '</div>';
+
+    priceEl.innerHTML = html;
+  } catch(err) {
+    priceEl.innerHTML = '<div style="color:var(--red);font-family:DM Mono;font-size:11px;padding:8px;">✕ ' + err.message + '</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💰 PRICES'; }
+  }
 }
 
 // ── EXPORT / SHARE ─────────────────────────────────────────────
@@ -4939,6 +5021,7 @@ async function runSingleScan() {
           '<button class="btn-secondary" onclick="shareScanURL(\'' + safeN + '\',' + bracket + ',' + score.toFixed(1) + ')" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F517; SHARE</button>' +
           '<button class="btn-secondary" onclick="printScanReport()" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F5A8; PRINT</button>' +
           '<button class="btn-secondary" onclick="showHistoryChart()" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4C8; HISTORY</button>' +
+          '<button class="btn-secondary" onclick="showEmbedBadge(\'' + safeN + '\',' + bracket + ',' + score.toFixed(1) + ',window._lastScanAnalysis?.archetype?.label||\'Midrange\')" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F517; BADGE</button>' +
           '<button class="btn-secondary" onclick="fetchAndShowPrices()" id="price-btn" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4B0; PRICES</button>' +
           '<button class="btn-secondary" onclick="document.getElementById(\'scan-deck\').value=\'\';document.getElementById(\'scan-name\').value=\'\';document.getElementById(\'scan-counter\').textContent=\'0\';document.getElementById(\'scan-results\').style.display=\'none\';window.scrollTo({top:0,behavior:\'smooth\'});" style="padding:8px 14px;font-size:10px;letter-spacing:2px;margin-left:auto;">&#x21BA; NEW SCAN</button>' +
         '</div>' +
@@ -4950,7 +5033,8 @@ async function runSingleScan() {
         '<div style="font-family:Cinzel,serif;font-size:11px;font-weight:700;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);">&#x1F4CA; Category Breakdown</div>' +
         catRows +
       '</div>' +
-      buildMissingStaples(deck, analysis);
+      buildMissingStaples(deck, analysis) +
+      buildLegalitySection(deck);
 
     window._lastScanAnalysis = analysis;
     window._lastScanDeck = deck;
@@ -5128,6 +5212,13 @@ document.addEventListener('DOMContentLoaded', function() {
   renderCompareHistory();
   initQuiz();
   initPodSlots();
+  loadSavedTheme();
+  // Show tour on first visit
+  try {
+    if (!localStorage.getItem('edh_toured')) {
+      setTimeout(() => { localStorage.setItem('edh_toured','1'); startTour(); }, 1500);
+    }
+  } catch(e) {}
 });
 
 
@@ -6565,6 +6656,199 @@ async function checkPodBalance() {
   }
 
   resultsEl.innerHTML = html;
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'parchment' ? '' : 'parchment';
+  document.documentElement.setAttribute('data-theme', next);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = next === 'parchment' ? '🌙 Dark' : '📜 Parchment';
+  try { localStorage.setItem('edh_theme', next); } catch(e) {}
+}
+
+function loadSavedTheme() {
+  try {
+    const saved = localStorage.getItem('edh_theme');
+    if (saved === 'parchment') {
+      document.documentElement.setAttribute('data-theme', 'parchment');
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '🌙 Dark';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ONBOARDING TOUR
+// ══════════════════════════════════════════════════════════════════
+const TOUR_STEPS = [
+  { target: '#panel-compare', tab: 'compare', title: '⚔ Compare Decks', text: 'Paste two decklists to compare power levels, brackets, and card overlap side by side. URL import works with Moxfield and Archidekt.' },
+  { target: '#panel-scan', tab: 'scan', title: '🔍 Single Deck Scanner', text: 'Scan one deck for a full power level report — bracket, combos via Spellbook, Game Changers, prices, and missing staples.' },
+  { target: '#panel-recommend', tab: 'recommend', title: '✨ AI Recommendations', text: 'Get AI-powered card suggestions to improve your deck. Fast mode uses AI knowledge only; Accurate mode fetches live EDHREC data.' },
+  { target: '#panel-manabase', tab: 'manabase', title: '🏔 Mana Base Analyzer', text: 'Grade your mana base on land count, fetch lands, dual quality, and ramp density — with a letter grade for each category.' },
+  { target: '#panel-upgrade', tab: 'upgrade', title: '⬆ Upgrade Path', text: 'Set a budget and target bracket — AI suggests 5 specific cuts and upgrades with estimated prices and explanations.' },
+  { target: '#panel-cmdsearch', tab: 'cmdsearch', title: '🧙 Commander Search', text: 'Look up any commander: image, bracket estimate, archetype, win conditions, key cards, and top EDHREC inclusions.' },
+  { target: '#panel-quiz', tab: 'quiz', title: '🎯 Group Quiz', text: 'Answer 8 questions about your playgroup to find your ideal bracket — great for setting expectations before a game.' },
+];
+
+let tourStep = 0;
+
+function startTour() {
+  tourStep = 0;
+  showTourStep();
+}
+
+function showTourStep() {
+  removeTourOverlay();
+  if (tourStep >= TOUR_STEPS.length) { showToast('✓ Tour complete!'); return; }
+
+  const step = TOUR_STEPS[tourStep];
+
+  // Switch to the right tab
+  switchTab(step.tab);
+
+  setTimeout(() => {
+    const overlay = document.createElement('div');
+    overlay.id = 'tour-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9990;pointer-events:none;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9991;background:var(--bg-2);border:1px solid var(--gold);border-radius:var(--r-lg);padding:22px 24px;max-width:420px;width:90%;box-shadow:0 16px 64px rgba(0,0,0,0.8);pointer-events:all;';
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue';font-size:20px;color:var(--gold);letter-spacing:3px;">${step.title}</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:1px;margin-top:4px;">${tourStep+1} / ${TOUR_STEPS.length}</div>
+      </div>
+      <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:16px;">${step.text}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="removeTourOverlay()" style="background:none;border:1px solid var(--border-2);color:var(--text-3);font-family:'DM Mono';font-size:9px;letter-spacing:2px;padding:7px 16px;border-radius:6px;cursor:pointer;">SKIP TOUR</button>
+        ${tourStep > 0 ? `<button onclick="tourStep--;showTourStep()" style="background:var(--bg-3);border:1px solid var(--border-2);color:var(--text-2);font-family:'DM Mono';font-size:9px;letter-spacing:2px;padding:7px 16px;border-radius:6px;cursor:pointer;">← BACK</button>` : ''}
+        <button onclick="tourStep++;showTourStep()" style="background:linear-gradient(135deg,var(--gold-dk),var(--gold));color:#05050e;border:none;font-family:'DM Mono';font-size:9px;letter-spacing:2px;padding:7px 18px;border-radius:6px;cursor:pointer;font-weight:700;">${tourStep === TOUR_STEPS.length-1 ? '✓ DONE' : 'NEXT →'}</button>
+      </div>
+      <div style="margin-top:12px;background:var(--bg-3);border-radius:4px;height:3px;overflow:hidden;"><div style="height:3px;background:var(--gold);width:${((tourStep+1)/TOUR_STEPS.length)*100}%;transition:width 0.4s;border-radius:4px;"></div></div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(box);
+    box.id = 'tour-box';
+  }, 200);
+}
+
+function removeTourOverlay() {
+  document.getElementById('tour-overlay')?.remove();
+  document.getElementById('tour-box')?.remove();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BANNED LIST CHECKER — flag post-Feb-2026 bans
+// ══════════════════════════════════════════════════════════════════
+// These are cards that MIGHT get banned in future updates
+// We check live via Scryfall legality field
+async function checkFormatLegality(deck) {
+  const illegal = [];
+  const restricted = [];
+
+  for (const [name, card] of deck) {
+    const sf = SCRYFALL_CACHE.get(name);
+    if (!sf) continue;
+    const legalities = sf.legalities || {};
+
+    // Commander legality
+    if (legalities.commander === 'banned') {
+      illegal.push({ name, format: 'Commander', status: 'banned' });
+    } else if (legalities.commander === 'restricted') {
+      restricted.push({ name, format: 'Commander', status: 'restricted' });
+    }
+  }
+
+  return { illegal, restricted };
+}
+
+function buildLegalitySection(deck) {
+  // Build a format legality table for all cards (uses Scryfall cache)
+  const formatCounts = { commander: 0, modern: 0, legacy: 0, vintage: 0, pioneer: 0 };
+  const formatIssues = { commander: [], modern: [], legacy: [], vintage: [], pioneer: [] };
+
+  for (const [name] of deck) {
+    const sf = SCRYFALL_CACHE.get(name);
+    if (!sf || !sf.legalities) continue;
+    const leg = sf.legalities;
+    for (const fmt of Object.keys(formatCounts)) {
+      if (leg[fmt] === 'banned' || leg[fmt] === 'not_legal') {
+        formatIssues[fmt].push(name);
+      }
+    }
+  }
+
+  const issues = Object.entries(formatIssues).filter(([,v]) => v.length > 0);
+  if (issues.length === 0) return '';
+
+  let html = '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-top:12px;">';
+  html += '<div style="font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">⚖ Format Legality Notes</div>';
+  for (const [fmt, cards] of issues) {
+    if (fmt === 'commander') continue; // already shown in main analysis
+    html += `<div style="margin-bottom:8px;"><div style="font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;">${fmt.toUpperCase()} — ${cards.length} illegal/banned</div>`;
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+    for (const c of cards.slice(0, 8)) {
+      html += `<span class="flag-chip mld" data-card="${c}">${c}</span>`;
+    }
+    if (cards.length > 8) html += `<span class="flag-chip" style="color:var(--text-3);">+${cards.length-8} more</span>`;
+    html += '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EMBEDDABLE BADGE GENERATOR
+// ══════════════════════════════════════════════════════════════════
+function showEmbedBadge(deckName, bracket, score, archetype) {
+  const bColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#f0516a'};
+  const bNames = {1:'Precon',2:'Casual',3:'Optimized',4:'High Power',5:'cEDH'};
+  const col = bColors[bracket] || '#e8c94a';
+  const bName = bNames[bracket] || '';
+
+  const badgeHtml = `<a href="https://mtg-deck-comparator.com" target="_blank" style="display:inline-flex;align-items:center;gap:10px;background:#0e0e1c;border:1px solid ${col}55;border-radius:10px;padding:8px 14px;text-decoration:none;font-family:monospace;">
+  <span style="font-size:20px;font-weight:900;color:${col};line-height:1;">B${bracket}</span>
+  <span style="border-left:1px solid ${col}33;padding-left:10px;">
+    <span style="display:block;font-size:12px;font-weight:700;color:#f0f0fa;">${deckName}</span>
+    <span style="display:block;font-size:10px;color:${col};">${bName} · Power ${score}</span>
+  </span>
+</a>`;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;max-width:560px;width:100%;position:relative;">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-3);font-size:20px;cursor:pointer;">×</button>
+      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:var(--gold);margin-bottom:4px;">🔗 Embeddable Badge</div>
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:2px;margin-bottom:20px;">COPY & PASTE INTO YOUR BLOG, DISCORD, OR WEBSITE</div>
+
+      <div style="margin-bottom:20px;padding:16px;background:var(--bg-3);border-radius:var(--r-md);text-align:center;">
+        ${badgeHtml}
+      </div>
+
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:2px;margin-bottom:8px;">HTML CODE</div>
+      <div style="position:relative;">
+        <textarea readonly style="width:100%;height:120px;font-family:'DM Mono';font-size:10px;padding:10px;background:var(--bg-1);border:1px solid var(--border);color:var(--text-2);border-radius:6px;resize:none;line-height:1.6;">${badgeHtml.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      </div>
+      <button onclick="
+        const ta = this.previousElementSibling.querySelector('textarea');
+        navigator.clipboard.writeText(ta.value.replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
+        this.textContent='✓ COPIED!';
+        setTimeout(()=>this.textContent='📋 COPY HTML',1500);
+      " style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,var(--gold-dk),var(--gold));color:#05050e;border:none;border-radius:var(--r-sm);font-family:'DM Mono';font-size:10px;letter-spacing:3px;cursor:pointer;font-weight:700;">📋 COPY HTML</button>
+
+      <div style="margin-top:16px;font-family:'DM Mono';font-size:9px;color:var(--text-4);line-height:1.6;">
+        Works in: Reddit · Discord (as image link) · Blog posts · README files · Any HTML page
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 
