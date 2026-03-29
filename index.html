@@ -4970,59 +4970,82 @@ async function importDeckFromURL() {
   status.textContent = '⏳ Fetching deck...';
   document.getElementById('url-import-btn').disabled = true;
 
+  // Route all deck API calls through our Cloudflare Worker to avoid CORS blocks
+  const WORKER = 'https://spellbook-proxy.work-macarthur.workers.dev';
+
   try {
     let deckText = '';
     let deckName = '';
 
     if (url.includes('moxfield.com')) {
-      // Extract deck id
       const match = url.match(/moxfield\.com\/decks\/([^/?#]+)/);
       if (!match) throw new Error('Could not parse Moxfield deck ID from URL');
       const deckId = match[1];
-      status.textContent = '⏳ Calling Moxfield API...';
-      const resp = await fetch(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
-      if (!resp.ok) throw new Error(`Moxfield API returned ${resp.status}`);
-      const data = await resp.json();
-      deckName = data.name || 'Moxfield Deck';
-      const lines = [];
-      const allBoards = ['mainboard','commanders','companions','sideboard'];
-      for (const board of allBoards) {
-        if (!data.boards?.[board]?.cards) continue;
-        for (const [, entry] of Object.entries(data.boards[board].cards)) {
-          lines.push(`${entry.quantity} ${entry.card.name}`);
+      status.textContent = '⏳ Fetching from Moxfield...';
+
+      // Call via proxy: /moxfield?id=DECKID
+      const resp = await fetch(`${WORKER}/moxfield?id=${encodeURIComponent(deckId)}`);
+      if (!resp.ok) {
+        // Fallback: try direct (works if deployed as local file)
+        const resp2 = await fetch(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
+        if (!resp2.ok) throw new Error(`Could not fetch deck (${resp2.status}). Moxfield blocks cross-origin requests — try copying the decklist manually.`);
+        const data2 = await resp2.json();
+        deckName = data2.name || 'Moxfield Deck';
+        const lines = [];
+        for (const board of ['mainboard','commanders','companions']) {
+          if (!data2.boards?.[board]?.cards) continue;
+          for (const [, entry] of Object.entries(data2.boards[board].cards)) {
+            lines.push(`${entry.quantity} ${entry.card.name}`);
+          }
         }
+        deckText = lines.join('\n');
+      } else {
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        deckName = data.name || 'Moxfield Deck';
+        deckText = data.list || '';
       }
-      deckText = lines.join('\n');
 
     } else if (url.includes('archidekt.com')) {
       const match = url.match(/archidekt\.com\/decks\/(\d+)/);
       if (!match) throw new Error('Could not parse Archidekt deck ID from URL');
       const deckId = match[1];
-      status.textContent = '⏳ Calling Archidekt API...';
-      const resp = await fetch(`https://archidekt.com/api/decks/${deckId}/small/`);
-      if (!resp.ok) throw new Error(`Archidekt API returned ${resp.status}`);
-      const data = await resp.json();
-      deckName = data.name || 'Archidekt Deck';
-      const lines = [];
-      for (const card of (data.cards || [])) {
-        if (card.category === 'Sideboard' || card.category === 'Maybeboard') continue;
-        lines.push(`${card.quantity} ${card.card?.oracleCard?.name || card.card?.name || 'Unknown'}`);
+      status.textContent = '⏳ Fetching from Archidekt...';
+
+      // Call via proxy: /archidekt?id=DECKID
+      const resp = await fetch(`${WORKER}/archidekt?id=${encodeURIComponent(deckId)}`);
+      if (!resp.ok) {
+        // Archidekt has open CORS, try direct
+        const resp2 = await fetch(`https://archidekt.com/api/decks/${deckId}/small/`);
+        if (!resp2.ok) throw new Error(`Archidekt API returned ${resp2.status}`);
+        const data2 = await resp2.json();
+        deckName = data2.name || 'Archidekt Deck';
+        const lines = [];
+        for (const card of (data2.cards || [])) {
+          if (card.category === 'Sideboard' || card.category === 'Maybeboard') continue;
+          lines.push(`${card.quantity} ${card.card?.oracleCard?.name || card.card?.name || 'Unknown'}`);
+        }
+        deckText = lines.join('\n');
+      } else {
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        deckName = data.name || 'Archidekt Deck';
+        deckText = data.list || '';
       }
-      deckText = lines.join('\n');
 
     } else {
       throw new Error('Only Moxfield and Archidekt URLs are supported');
     }
 
-    if (!deckText) throw new Error('No cards found in deck');
+    if (!deckText || !deckText.trim()) throw new Error('No cards found in deck — check the URL and make sure the deck is public');
 
     document.getElementById('scan-deck').value = deckText;
     if (deckName) document.getElementById('scan-name').value = deckName;
     updateCounter('scan-deck', 'scan-counter');
     status.style.color = 'var(--teal)';
-    status.textContent = `✓ Loaded "${deckName}" — ${deckText.split('\n').filter(l=>l.trim()).length} lines`;
+    status.textContent = '✓ Loaded "' + deckName + '" — ' + deckText.split('\n').filter(l=>l.trim()).length + ' lines';
     urlInput.value = '';
-    showToast(`✓ Imported "${deckName}" from ${url.includes('moxfield') ? 'Moxfield' : 'Archidekt'}`);
+    showToast('✓ Imported "' + deckName + '" from ' + (url.includes('moxfield') ? 'Moxfield' : 'Archidekt'));
   } catch(err) {
     status.style.color = 'var(--red)';
     status.textContent = '✕ ' + err.message;
