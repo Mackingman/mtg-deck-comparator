@@ -2626,17 +2626,25 @@ function initTooltip() {
   let currentRow = null;
 
   document.addEventListener('mouseover', async (e) => {
-    const row = e.target.closest('.crd-row');
-    if (!row) return;
-    if (row === currentRow) return; // already showing for this row
-    currentRow = row;
+    // Support both .crd-row table rows and .flag-chip cards
+    const chip = e.target.closest('.flag-chip[data-card]');
+    const row = chip ? null : e.target.closest('.crd-row');
+    if (!row && !chip) return;
+    const target = row || chip;
+    if (target === currentRow) return;
+    currentRow = target;
 
-    // Extract card name: get first text span, strip qty prefix and badge labels
-    const nameEl = row.querySelector('span');
-    if (!nameEl) return;
-    let name = nameEl.childNodes[0]
-      ? nameEl.childNodes[0].textContent.replace(/^\d+x\s*/, '').trim()
-      : nameEl.textContent.replace(/^\d+x\s*/, '').replace(/GC|MLD|CMB/g, '').trim();
+    let name;
+    if (chip) {
+      name = chip.getAttribute('data-card') || chip.textContent.trim();
+    } else {
+      // Extract card name: get first text span, strip qty prefix and badge labels
+      const nameEl = row.querySelector('span');
+      if (!nameEl) return;
+      name = nameEl.childNodes[0]
+        ? nameEl.childNodes[0].textContent.replace(/^\d+x\s*/, '').trim()
+        : nameEl.textContent.replace(/^\d+x\s*/, '').replace(/GC|MLD|CMB/g, '').trim();
+    }
     if (!name || name.length < 2) return;
 
     const sf = await fetchCardData(name);
@@ -2663,10 +2671,9 @@ function initTooltip() {
   });
 
   document.addEventListener('mouseout', (e) => {
-    const row = e.target.closest('.crd-row');
-    if (!row) return;
-    // Only hide if we're actually leaving the row (not entering a child)
-    if (row.contains(e.relatedTarget)) return;
+    const target = e.target.closest('.crd-row') || e.target.closest('.flag-chip[data-card]');
+    if (!target) return;
+    if (target.contains(e.relatedTarget)) return;
     currentRow = null;
     tooltip.style.display = 'none';
   });
@@ -2717,8 +2724,9 @@ async function fetchCombosFromSpellbook(cardNames, commanderName) {
 
     if (res.ok) {
       const data = await res.json();
-      const variants = data.results || data.combos || data.included || 
-                       (Array.isArray(data) ? data : []);
+      const rawVariants = data.results || data.combos || data.included || 
+                       (Array.isArray(data) ? data : null);
+      const variants = Array.isArray(rawVariants) ? rawVariants : [];
       console.log('[Spellbook] Worker returned', variants.length, 'variants, keys:', Object.keys(data));
 
       for (const v of variants) {
@@ -4626,9 +4634,7 @@ async function runSingleScan() {
       var s = n.replace(/['"<>&]/g, function(c) {
         return {'\'':'&#39;','"':'&quot;','<':'&lt;','>':'&gt;','&':'&amp;'}[c];
       });
-      return '<span class="flag-chip ' + cls + '" data-card="' + s + '" ' +
-        'onmouseover="showTooltip(event,\'' + s + '\',this)" ' +
-        'onmouseout="hideTooltip()">' + n + '</span>';
+      return '<span class="flag-chip ' + cls + '" data-card="' + s + '">' + n + '</span>';
     }
     function chips(arr, cls) { return arr.map(function(n){ return chip(n, cls); }).join(''); }
 
