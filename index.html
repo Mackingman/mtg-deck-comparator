@@ -52,60 +52,6 @@
   --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
   --shadow-md: 0 6px 32px rgba(0,0,0,0.7);
   --shadow-lg: 0 16px 64px rgba(0,0,0,0.9);
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;500;600;700&family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EDH Power Level — Deck Analyzer</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600;700;800&family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@700;900&display=swap');
-
-/* ════════════════════════════════════════════════
-   EDH POWER LEVEL  ·  Design System
-   ════════════════════════════════════════════════ */
-:root {
-  /* Colors */
-  --gold:     #e8c94a;
-  --gold-lt:  #f5df7a;
-  --gold-dk:  #9a7c18;
-  --gold-a10: rgba(232,201,74,0.10);
-  --gold-a20: rgba(232,201,74,0.20);
-  --gold-a35: rgba(232,201,74,0.35);
-  --teal:     #3de8a8;
-  --teal-a10: rgba(61,232,168,0.10);
-  --purple:   #a855f7;
-  --red:      #f0516a;
-  --blue:     #60a5fa;
-  --green:    #4ade80;
-
-  /* Surfaces */
-  --bg:       #05050e;
-  --bg-1:     #090914;
-  --bg-2:     #0e0e1c;
-  --bg-3:     #141428;
-  --bg-4:     #1b1b35;
-  --bg-5:     #22223f;
-
-  /* Type */
-  --text:     #f0f0fa;
-  --text-2:   #9090c0;
-  --text-3:   #50507a;
-  --text-4:   #28284a;
-
-  /* Structure */
-  --border:   rgba(255,255,255,0.06);
-  --border-2: rgba(255,255,255,0.10);
-  --border-3: rgba(255,255,255,0.16);
-  --r-sm: 8px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
-  --shadow-md: 0 6px 32px rgba(0,0,0,0.7);
-  --shadow-lg: 0 16px 64px rgba(0,0,0,0.9);
 
   /* Brand gradients */
   --grad-gold: linear-gradient(135deg, #7a5c0a, #e8c94a 45%, #f5e07a 55%, #9a7c18);
@@ -3291,8 +3237,25 @@ runAnalysis = async function() {
     const nameFieldA = (document.getElementById('name-a').value || '').trim();
     const nameFieldB = (document.getElementById('name-b').value || '').trim();
     // Use name field as commander hint if it's been changed from default
-    const cmdA = (nameFieldA && nameFieldA !== 'Deck A' && nameFieldA.length > 3) ? nameFieldA : null;
-    const cmdB = (nameFieldB && nameFieldB !== 'Deck B' && nameFieldB.length > 3) ? nameFieldB : null;
+    // Auto-detect commander from EDHREC format
+    function autoDetectCmd(deckRaw, fallbackName, defaultVal) {
+      const lines = deckRaw.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const lt = lines[i].trim().toLowerCase();
+        if (lt === 'commander' || lt === '# commander') {
+          for (let j = i+1; j < lines.length; j++) {
+            const cn = lines[j].trim();
+            if (cn && !cn.startsWith('//') && !cn.startsWith('#')) {
+              const m2 = cn.match(/^\d+[xX]?\s+(.+)$/);
+              return m2 ? m2[1].replace(/\s*\([^)]*\)\s*$/, '').trim() : cn;
+            }
+          }
+        }
+      }
+      return (fallbackName && fallbackName !== defaultVal && fallbackName.length > 3) ? fallbackName : null;
+    }
+    const cmdA = autoDetectCmd(rawA, nameFieldA, 'Deck A');
+    const cmdB = autoDetectCmd(rawB, nameFieldB, 'Deck B');
     const combosA = await fetchCombosFromSpellbook(namesA, cmdA);
     const combosB = await fetchCombosFromSpellbook(namesB, cmdB);
 
@@ -4626,6 +4589,23 @@ async function runSingleScan() {
   if (!raw.trim()) { alert('Please paste a decklist first.'); return; }
   const deckName = document.getElementById('scan-name').value || 'My Deck';
   const cmdHint = document.getElementById('scan-name').value || null;
+  // Auto-detect commander from EDHREC format (line tagged "Commander" or first creature)
+  let autoCommander = null;
+  const rawLines = raw.split('\n');
+  for (let li = 0; li < rawLines.length; li++) {
+    const lt = rawLines[li].trim().toLowerCase();
+    if (lt === 'commander' || lt === '# commander') {
+      for (let lj = li+1; lj < rawLines.length; lj++) {
+        const cn = rawLines[lj].trim();
+        if (cn && !cn.startsWith('//') && !cn.startsWith('#')) {
+          const m2 = cn.match(/^\d+[xX]?\s+(.+)$/);
+          autoCommander = m2 ? m2[1].replace(/\s*\([^)]*\)\s*$/, '').trim() : cn;
+          break;
+        }
+      }
+      break;
+    }
+  }
 
   const btn = document.getElementById('scan-btn');
   btn.disabled = true;
@@ -4665,7 +4645,7 @@ async function runSingleScan() {
 
     // ── STEP 4: Commander Spellbook combos (same as Compare tab) ───────────
     btn.textContent = '⏳ Checking combos...';
-    const cmdName = (cmdHint && cmdHint !== 'My Deck' && cmdHint.length > 3) ? cmdHint : null;
+    const cmdName = autoCommander || ((cmdHint && cmdHint !== 'My Deck' && cmdHint.length > 3) ? cmdHint : null);
     let combos = [];
     try {
       combos = await fetchCombosFromSpellbook(cardNames, cmdName);
