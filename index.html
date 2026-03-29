@@ -1367,6 +1367,26 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
   </div>
 </div>
 
+
+<!-- Card image tooltip -->
+<div id="card-tooltip" style="display:none;position:fixed;z-index:9999;pointer-events:none;filter:drop-shadow(0 8px 32px rgba(0,0,0,0.8));">
+  <img id="card-tooltip-img" src="" alt="" style="width:200px;border-radius:10px;display:block;">
+</div>
+
+<!-- Scroll to top -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top"
+  style="position:fixed;bottom:28px;right:24px;z-index:500;
+    background:var(--bg-3);border:1px solid var(--border-2);
+    color:var(--text-2);border-radius:50%;width:40px;height:40px;
+    font-size:18px;cursor:pointer;display:none;
+    transition:all 0.2s;box-shadow:var(--shadow-md);"
+  onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)';this.style.transform='translateY(-2px)'"
+  onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)';this.style.transform=''">↑</button>
+
+<footer>
+  <p>© 2026 POKÉSTOP COLLECTABLES &nbsp;·&nbsp; EDH POWER LEVEL &nbsp;·&nbsp; edhpowerlevel.ca</p>
+</footer>
+
 <script>
 // ══════════════════════════════════════════════════════
 // CARD DATABASE
@@ -4683,7 +4703,7 @@ async function runSingleScan() {
           combosHtml += '</div>';
         }
         combosHtml += '</div>';
-        combosHtml += '<button id="' + comboId + '-btn" onclick="toggleCombos(' + JSON.stringify(comboId) + ')" style="background:none;border:1px solid rgba(168,85,247,0.35);color:var(--purple);font-family:DM Mono,monospace;font-size:9px;letter-spacing:2px;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:4px;transition:all 0.2s;text-transform:uppercase;">';
+        combosHtml += '<button id="' + comboId + '-btn" onclick="toggleCombos(\'' + comboId + '\')" style="background:none;border:1px solid rgba(168,85,247,0.35);color:var(--purple);font-family:DM Mono,monospace;font-size:9px;letter-spacing:2px;padding:6px 16px;border-radius:5px;cursor:pointer;margin-top:4px;transition:all 0.2s;text-transform:uppercase;">';
         combosHtml += '▼ Show ' + (combos.length - 5) + ' more combos</button>';
       }
       combosHtml += '</div>';
