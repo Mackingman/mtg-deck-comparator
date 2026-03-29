@@ -5516,17 +5516,23 @@ let quizState = { step: 0, answers: {}, scores: {} };
 
 function initQuiz() {
   quizState = { step: 0, answers: {}, scores: {} };
-  document.getElementById('quiz-result').style.display = 'none';
-  document.getElementById('quiz-container').style.display = 'block';
+  var qr = document.getElementById('quiz-result');
+  var qc = document.getElementById('quiz-container');
+  if (qr) qr.style.display = 'none';
+  if (qc) qc.style.display = 'block';
   renderQuizQuestion();
 }
 
 function renderQuizQuestion() {
   const q = QUIZ_QUESTIONS[quizState.step];
   const progress = ((quizState.step) / QUIZ_QUESTIONS.length) * 100;
-  document.getElementById('quiz-progress-bar').style.width = progress + '%';
-  document.getElementById('quiz-step-label').textContent = `Question ${quizState.step + 1} of ${QUIZ_QUESTIONS.length}`;
-  document.getElementById('quiz-back-btn').style.display = quizState.step > 0 ? 'block' : 'none';
+  var pb = document.getElementById('quiz-progress-bar');
+  var sl = document.getElementById('quiz-step-label');
+  var bb = document.getElementById('quiz-back-btn');
+  if (!pb || !sl || !bb) return;
+  pb.style.width = progress + '%';
+  sl.textContent = 'Question ' + (quizState.step + 1) + ' of ' + QUIZ_QUESTIONS.length;
+  bb.style.display = quizState.step > 0 ? 'block' : 'none';
 
   const card = document.getElementById('quiz-question-card');
   card.innerHTML = `
