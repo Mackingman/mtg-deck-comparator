@@ -52,6 +52,60 @@
   --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
   --shadow-md: 0 6px 32px rgba(0,0,0,0.7);
   --shadow-lg: 0 16px 64px rgba(0,0,0,0.9);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;500;600;700&family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDH Power Level — Deck Analyzer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600;700;800&family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@700;900&display=swap');
+
+/* ════════════════════════════════════════════════
+   EDH POWER LEVEL  ·  Design System
+   ════════════════════════════════════════════════ */
+:root {
+  /* Colors */
+  --gold:     #e8c94a;
+  --gold-lt:  #f5df7a;
+  --gold-dk:  #9a7c18;
+  --gold-a10: rgba(232,201,74,0.10);
+  --gold-a20: rgba(232,201,74,0.20);
+  --gold-a35: rgba(232,201,74,0.35);
+  --teal:     #3de8a8;
+  --teal-a10: rgba(61,232,168,0.10);
+  --purple:   #a855f7;
+  --red:      #f0516a;
+  --blue:     #60a5fa;
+  --green:    #4ade80;
+
+  /* Surfaces */
+  --bg:       #05050e;
+  --bg-1:     #090914;
+  --bg-2:     #0e0e1c;
+  --bg-3:     #141428;
+  --bg-4:     #1b1b35;
+  --bg-5:     #22223f;
+
+  /* Type */
+  --text:     #f0f0fa;
+  --text-2:   #9090c0;
+  --text-3:   #50507a;
+  --text-4:   #28284a;
+
+  /* Structure */
+  --border:   rgba(255,255,255,0.06);
+  --border-2: rgba(255,255,255,0.10);
+  --border-3: rgba(255,255,255,0.16);
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 32px rgba(0,0,0,0.7);
+  --shadow-lg: 0 16px 64px rgba(0,0,0,0.9);
 
   /* Brand gradients */
   --grad-gold: linear-gradient(135deg, #7a5c0a, #e8c94a 45%, #f5e07a 55%, #9a7c18);
@@ -2047,6 +2101,8 @@ function analyzeDeck(deck) {
     if (DRAW_CARDS.has(name)) drawCount++;
     if (TUTORS.has(name)) tutorCount++;
     if (card.type === "artifact" && card.cmc <= 2 && !card.gc) rampCount++;
+    // Count interaction (instants/sorceries that remove things)
+    if ((card.type === 'instant' || card.type === 'sorcery') && card.cmc <= 4) interactionCount++;
 
     if (card.banned) { bannedCount += qty; bannedCards.push(name); }
     else if (card.gc) { gcCount += qty; gcCards.push(name); }
@@ -5671,38 +5727,47 @@ function detectArchetype(gcCount, mldCount, comboCount, tutorCount, drawCount, r
     combo: 0, stax: 0, tempo: 0, aggro: 0, control: 0, midrange: 0, ramp: 0
   };
 
-  // Combo signals
-  if (confirmedCombos >= 3) score.combo += 4;
-  else if (confirmedCombos >= 1) score.combo += 2;
-  if (comboCount >= 4) score.combo += 2;
-  if (tutorCount >= 4) score.combo += 2;
+  // ── Combo signals ─────────────────────────────────────
+  if (confirmedCombos >= 3) score.combo += 5;
+  else if (confirmedCombos >= 1) score.combo += 3;
+  if (comboCount >= 3) score.combo += 2;
+  if (tutorCount >= 5) score.combo += 2;
+  else if (tutorCount >= 3) score.combo += 1;
 
-  // Stax signals
-  if (mldCount >= 1) score.stax += 4;
-  if (gcCount >= 4) score.stax += 1;
+  // ── Stax signals ──────────────────────────────────────
+  if (mldCount >= 1) score.stax += 5;
+  if (gcCount >= 5) score.stax += 2;
+  else if (gcCount >= 3) score.stax += 1;
 
-  // Control signals
-  if (interactionCount >= 8) score.control += 3;
-  if (drawCount >= 5) score.control += 2;
+  // ── Control signals ───────────────────────────────────
+  if (interactionCount >= 10) score.control += 4;
+  else if (interactionCount >= 6) score.control += 2;
+  if (drawCount >= 6) score.control += 2;
+  else if (drawCount >= 3) score.control += 1;
+  if (avgCmc >= 3.5) score.control += 1;
 
-  // Aggro / tempo signals
-  if (avgCmc <= 2.2) { score.aggro += 3; score.tempo += 2; }
-  else if (avgCmc <= 2.8) { score.tempo += 2; }
+  // ── Aggro / Tempo signals ─────────────────────────────
+  if (avgCmc <= 2.0) { score.aggro += 4; score.tempo += 2; }
+  else if (avgCmc <= 2.5) { score.tempo += 3; score.aggro += 1; }
+  else if (avgCmc <= 3.0) { score.tempo += 1; }
 
-  // Ramp signals
-  if (rampCount >= 8) score.ramp += 3;
-  if (avgCmc >= 4) score.ramp += 2;
+  // ── Ramp signals ──────────────────────────────────────
+  if (rampCount >= 6) score.ramp += 3;
+  else if (rampCount >= 3) score.ramp += 1;
+  if (avgCmc >= 4.5) score.ramp += 3;
+  else if (avgCmc >= 3.8) score.ramp += 1;
 
-  // Midrange default
+  // ── Midrange default ─────────────────────────────────
   score.midrange += 1;
+  if (avgCmc >= 3.0 && avgCmc <= 4.0) score.midrange += 1;
+  if (gcCount >= 1 && confirmedCombos === 0) score.midrange += 1;
 
-  // Find highest
-  var best = 'Midrange', bestVal = 0;
+  // ── Resolve best label ────────────────────────────────
+  var best = 'midrange', bestVal = 0;
   for (var k in score) {
     if (score[k] > bestVal) { bestVal = score[k]; best = k; }
   }
 
-  // Format nicely
   var names = {
     combo: 'Combo', stax: 'Stax', tempo: 'Tempo',
     aggro: 'Aggro', control: 'Control', midrange: 'Midrange', ramp: 'Ramp'
