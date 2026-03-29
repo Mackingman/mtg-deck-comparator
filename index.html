@@ -776,6 +776,15 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
   <div class="tab" onclick="switchTab('synergy')">
     <span style="margin-right:6px;">🔗</span>Synergies
   </div>
+  <div class="tab" onclick="switchTab('manabase')">
+    <span style="margin-right:6px;">🏔</span>Mana Base
+  </div>
+  <div class="tab" onclick="switchTab('tuner')">
+    <span style="margin-right:6px;">🎛</span>Bracket Tuner
+  </div>
+  <div class="tab" onclick="switchTab('quiz')">
+    <span style="margin-right:6px;">🎯</span>Group Quiz
+  </div>
   <div class="tab" onclick="switchTab('about')">
     <span style="margin-right:6px;">📖</span>Algorithm
   </div>
@@ -1092,6 +1101,16 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
             <button class="btn-clear" onclick="document.getElementById('scan-deck').value='';document.getElementById('scan-name').value='';document.getElementById('scan-counter').textContent='0';document.getElementById('scan-results').style.display='none';">&#x2715; CLEAR</button>
           </div>
 
+          <!-- URL Import -->
+          <div style="margin-bottom:12px;">
+            <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">🔗 Import from URL</div>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="scan-url" placeholder="Paste Moxfield or Archidekt deck URL..." style="flex:1;font-size:11px;padding:8px 12px;font-family:'DM Mono',monospace;margin-bottom:0;">
+              <button onclick="importDeckFromURL()" id="url-import-btn" style="padding:8px 14px;background:rgba(61,232,168,0.08);border:1px solid rgba(61,232,168,0.3);color:var(--teal);font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='rgba(61,232,168,0.3)'">⬇ FETCH</button>
+            </div>
+            <div id="url-import-status" style="font-family:'DM Mono';font-size:9px;color:var(--text-3);margin-top:4px;letter-spacing:1px;display:none;"></div>
+          </div>
+
           <!-- Textarea -->
           <div style="position:relative;">
             <textarea id="scan-deck" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes stripped automatically" style="width:100%;height:240px;padding:12px;padding-bottom:30px;background:var(--bg-1);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.8;border-radius:8px;resize:vertical;box-sizing:border-box;" oninput="updateCounter('scan-deck','scan-counter')" onfocus="this.style.borderColor='#e8c94a33'" onblur="this.style.borderColor='#28283a'"></textarea>
@@ -1256,6 +1275,96 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     <p style="font-size:13px;color:var(--text-2);">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
   </div>
 
+</div>
+
+<!-- MANA BASE ANALYZER PANEL -->
+<div class="panel" id="panel-manabase">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">🏔 Mana Base Analyzer</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">Evaluate your land count, ramp, curve &amp; color consistency</div>
+
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="deck-lbl a">⚔ Your Deck</div>
+        <button class="btn-clear" onclick="document.getElementById('mb-deck').value='';document.getElementById('mb-results').style.display='none';">✕ CLEAR</button>
+      </div>
+      <input type="text" id="mb-commander" placeholder="Commander name (optional, helps color identity check)" style="width:100%;margin-bottom:10px;">
+      <div class="textarea-wrap">
+        <textarea id="mb-deck" placeholder="Paste your decklist here..." style="height:200px;" oninput="updateCounter('mb-deck','mb-counter')"></textarea>
+        <div class="counter-badge"><span class="cnt scan" id="mb-counter">0</span> cards</div>
+      </div>
+      <div style="margin-top:14px;">
+        <button onclick="analyzeManaBase()" style="width:100%;padding:15px;background:linear-gradient(135deg,#1a3a2a,#3de8a8);color:#05150e;border:none;border-radius:var(--r-md);font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(61,232,168,0.15);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(61,232,168,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(61,232,168,0.15)'">🏔 ANALYZE MANA BASE</button>
+      </div>
+    </div>
+    <div id="mb-results" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- BRACKET TUNER PANEL -->
+<div class="panel" id="panel-tuner">
+  <div style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">🎛 Bracket Tuner</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;">Find exactly which cards to cut to hit your target bracket</div>
+
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="deck-lbl a">⚔ Your Deck</div>
+        <button class="btn-clear" onclick="document.getElementById('tuner-deck').value='';document.getElementById('tuner-results').style.display='none';">✕ CLEAR</button>
+      </div>
+      <div class="textarea-wrap">
+        <textarea id="tuner-deck" placeholder="Paste your decklist here..." style="height:200px;" oninput="updateCounter('tuner-deck','tuner-counter')"></textarea>
+        <div class="counter-badge"><span class="cnt scan" id="tuner-counter">0</span> cards</div>
+      </div>
+
+      <div style="margin-top:16px;margin-bottom:16px;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:3px;color:var(--text-3);text-transform:uppercase;margin-bottom:10px;">Target Bracket</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label id="tgt-b1" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(61,232,168,0.06);border:1px solid rgba(61,232,168,0.25);border-radius:8px;padding:8px 14px;transition:all 0.2s;">
+            <input type="radio" name="target-bracket" value="1" style="accent-color:#4ae8b0;">
+            <span style="font-family:'Bebas Neue';font-size:16px;color:#4ae8b0;letter-spacing:2px;">B1 Precon</span>
+          </label>
+          <label id="tgt-b2" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.25);border-radius:8px;padding:8px 14px;transition:all 0.2s;">
+            <input type="radio" name="target-bracket" value="2" style="accent-color:#60a5fa;">
+            <span style="font-family:'Bebas Neue';font-size:16px;color:#60a5fa;letter-spacing:2px;">B2 Casual</span>
+          </label>
+          <label id="tgt-b3" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:8px 14px;transition:all 0.2s;">
+            <input type="radio" name="target-bracket" value="3" checked style="accent-color:#a855f7;">
+            <span style="font-family:'Bebas Neue';font-size:16px;color:#a855f7;letter-spacing:2px;">B3 Optimized</span>
+          </label>
+          <label id="tgt-b4" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(232,201,74,0.06);border:1px solid rgba(232,201,74,0.25);border-radius:8px;padding:8px 14px;transition:all 0.2s;">
+            <input type="radio" name="target-bracket" value="4" style="accent-color:#e8c94a;">
+            <span style="font-family:'Bebas Neue';font-size:16px;color:#e8c94a;letter-spacing:2px;">B4 High Power</span>
+          </label>
+        </div>
+      </div>
+
+      <button onclick="runBracketTuner()" style="width:100%;padding:15px;background:linear-gradient(135deg,#e8c94a,#c8a030);color:#0c0c0e;border:none;border-radius:var(--r-md);font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">🎛 TUNE MY DECK</button>
+    </div>
+
+    <div id="tuner-results" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- GROUP QUIZ PANEL -->
+<div class="panel" id="panel-quiz">
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:5px;color:#e8c94a;margin-bottom:2px;">🎯 What Bracket Is My Group?</div>
+    <div style="font-size:11px;color:var(--text-2);margin-bottom:24px;letter-spacing:2px;text-transform:uppercase;">Answer a few questions to find your pod's ideal bracket</div>
+
+    <div id="quiz-container">
+      <div id="quiz-progress-bar-wrap" style="background:var(--bg-3);border-radius:4px;height:4px;margin-bottom:24px;overflow:hidden;">
+        <div id="quiz-progress-bar" style="height:4px;background:linear-gradient(90deg,var(--gold-dk),var(--gold));width:0%;transition:width 0.5s ease;border-radius:4px;"></div>
+      </div>
+      <div id="quiz-question-card" style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;min-height:200px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+        <button id="quiz-back-btn" onclick="quizBack()" style="background:none;border:1px solid var(--border-2);color:var(--text-3);font-family:'DM Mono';font-size:10px;letter-spacing:2px;padding:8px 18px;border-radius:6px;cursor:pointer;transition:all 0.2s;display:none;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-3)'">← BACK</button>
+        <div id="quiz-step-label" style="font-family:'DM Mono';font-size:9px;color:var(--text-4);letter-spacing:2px;margin-left:auto;"></div>
+      </div>
+    </div>
+
+    <div id="quiz-result" style="display:none;margin-top:24px;"></div>
+  </div>
 </div>
 
 <script>
@@ -4657,6 +4766,7 @@ async function runSingleScan() {
         '<div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:14px;">' +
           '<button class="btn-secondary" onclick="exportScanTxt(\'' + safeN + '\', window._lastScanAnalysis)" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x2193; EXPORT</button>' +
           '<button class="btn-secondary" onclick="shareScanURL(\'' + safeN + '\',' + bracket + ',' + score.toFixed(1) + ')" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F517; SHARE</button>' +
+          '<button class="btn-secondary" onclick="printScanReport()" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F5A8; PRINT</button>' +
           '<button class="btn-secondary" onclick="fetchAndShowPrices()" id="price-btn" style="padding:8px 14px;font-size:10px;letter-spacing:2px;">&#x1F4B0; PRICES</button>' +
           '<button class="btn-secondary" onclick="document.getElementById(\'scan-deck\').value=\'\';document.getElementById(\'scan-name\').value=\'\';document.getElementById(\'scan-counter\').textContent=\'0\';document.getElementById(\'scan-results\').style.display=\'none\';window.scrollTo({top:0,behavior:\'smooth\'});" style="padding:8px 14px;font-size:10px;letter-spacing:2px;margin-left:auto;">&#x21BA; NEW SCAN</button>' +
         '</div>' +
@@ -4771,7 +4881,7 @@ document.addEventListener('keydown', function(e) {
   if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
     const target = document.activeElement;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-    const tabMap = {'1':'compare','2':'scan','3':'recommend','4':'synergy','5':'about'};
+    const tabMap = {'1':'compare','2':'scan','3':'recommend','4':'synergy','5':'manabase','6':'tuner','7':'quiz','8':'about'};
     if (tabMap[e.key]) switchTab(tabMap[e.key]);
   }
 });
@@ -4843,7 +4953,636 @@ document.addEventListener('DOMContentLoaded', function() {
   updateModeUI();
   renderHistory();
   renderCompareHistory();
+  initQuiz();
 });
+
+
+// ═══════════════════════════════════════════════════════════
+// URL IMPORT (Moxfield / Archidekt)
+// ═══════════════════════════════════════════════════════════
+async function importDeckFromURL() {
+  const urlInput = document.getElementById('scan-url');
+  const status = document.getElementById('url-import-status');
+  const url = urlInput.value.trim();
+  if (!url) { showToast('Paste a Moxfield or Archidekt URL first'); return; }
+  status.style.display = 'block';
+  status.style.color = 'var(--text-3)';
+  status.textContent = '⏳ Fetching deck...';
+  document.getElementById('url-import-btn').disabled = true;
+
+  try {
+    let deckText = '';
+    let deckName = '';
+
+    if (url.includes('moxfield.com')) {
+      // Extract deck id
+      const match = url.match(/moxfield\.com\/decks\/([^/?#]+)/);
+      if (!match) throw new Error('Could not parse Moxfield deck ID from URL');
+      const deckId = match[1];
+      status.textContent = '⏳ Calling Moxfield API...';
+      const resp = await fetch(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
+      if (!resp.ok) throw new Error(`Moxfield API returned ${resp.status}`);
+      const data = await resp.json();
+      deckName = data.name || 'Moxfield Deck';
+      const lines = [];
+      const allBoards = ['mainboard','commanders','companions','sideboard'];
+      for (const board of allBoards) {
+        if (!data.boards?.[board]?.cards) continue;
+        for (const [, entry] of Object.entries(data.boards[board].cards)) {
+          lines.push(`${entry.quantity} ${entry.card.name}`);
+        }
+      }
+      deckText = lines.join('\n');
+
+    } else if (url.includes('archidekt.com')) {
+      const match = url.match(/archidekt\.com\/decks\/(\d+)/);
+      if (!match) throw new Error('Could not parse Archidekt deck ID from URL');
+      const deckId = match[1];
+      status.textContent = '⏳ Calling Archidekt API...';
+      const resp = await fetch(`https://archidekt.com/api/decks/${deckId}/small/`);
+      if (!resp.ok) throw new Error(`Archidekt API returned ${resp.status}`);
+      const data = await resp.json();
+      deckName = data.name || 'Archidekt Deck';
+      const lines = [];
+      for (const card of (data.cards || [])) {
+        if (card.category === 'Sideboard' || card.category === 'Maybeboard') continue;
+        lines.push(`${card.quantity} ${card.card?.oracleCard?.name || card.card?.name || 'Unknown'}`);
+      }
+      deckText = lines.join('\n');
+
+    } else {
+      throw new Error('Only Moxfield and Archidekt URLs are supported');
+    }
+
+    if (!deckText) throw new Error('No cards found in deck');
+
+    document.getElementById('scan-deck').value = deckText;
+    if (deckName) document.getElementById('scan-name').value = deckName;
+    updateCounter('scan-deck', 'scan-counter');
+    status.style.color = 'var(--teal)';
+    status.textContent = `✓ Loaded "${deckName}" — ${deckText.split('\n').filter(l=>l.trim()).length} lines`;
+    urlInput.value = '';
+    showToast(`✓ Imported "${deckName}" from ${url.includes('moxfield') ? 'Moxfield' : 'Archidekt'}`);
+  } catch(err) {
+    status.style.color = 'var(--red)';
+    status.textContent = '✕ ' + err.message;
+    showToast('Import failed: ' + err.message);
+  } finally {
+    document.getElementById('url-import-btn').disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRINT / SHAREABLE REPORT
+// ═══════════════════════════════════════════════════════════
+function printScanReport() {
+  const an = window._lastScanAnalysis;
+  const deckName = document.getElementById('scan-name').value || 'My Deck';
+  if (!an) { showToast('Scan a deck first to generate a report'); return; }
+  const bracketColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#e84a6a'};
+  const col = bracketColors[an.bracket?.recommended || an.bracket?.min || 3] || '#e8c94a';
+  const now = new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'});
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${deckName} — EDH Power Level Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:#fff;color:#111;max-width:720px;margin:0 auto;padding:36px 28px;}
+  h1{font-family:'Cinzel',serif;font-size:28px;color:#111;margin-bottom:4px;}
+  .sub{font-family:'DM Mono',monospace;font-size:11px;color:#777;letter-spacing:3px;text-transform:uppercase;margin-bottom:28px;}
+  .badge{display:inline-block;font-family:'Cinzel',serif;font-size:48px;font-weight:900;color:${col};border:3px solid ${col};border-radius:12px;padding:8px 28px;line-height:1;margin:0 0 8px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin:20px 0;}
+  .stat{background:#f7f7f7;border-radius:8px;padding:14px;text-align:center;}
+  .stat-n{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:#111;}
+  .stat-l{font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+  .section{margin-top:24px;}
+  .section-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#777;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:12px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-family:'DM Mono',monospace;font-size:11px;background:#f3f3f3;border:1px solid #ddd;border-radius:5px;padding:3px 10px;}
+  .chip.gc{border-color:${col};color:#7a5c0a;}
+  .chip.mld{border-color:#e84a6a;color:#c0101c;}
+  .chip.combo{border-color:#a855f7;color:#6b21a8;}
+  .chip.xt{border-color:#60a5fa;color:#1e40af;}
+  footer{margin-top:36px;font-family:'DM Mono',monospace;font-size:9px;color:#bbb;letter-spacing:2px;text-align:center;border-top:1px solid #eee;padding-top:16px;}
+  @media print{body{padding:20px;}button{display:none;}}
+</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+  <div>
+    <h1>${deckName}</h1>
+    <div class="sub">EDH Power Level Report · ${now}</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:10px;color:#aaa;font-family:'DM Mono',monospace;letter-spacing:2px;margin-bottom:4px;">BRACKET</div>
+    <div class="badge">B${an.bracket?.recommended || an.bracket?.min || '?'}</div>
+    <div style="font-size:11px;color:#666;font-family:'DM Mono',monospace;margin-top:4px;">Power Level: ${an.powerLevel?.toFixed(1) || '—'} / 10</div>
+  </div>
+</div>
+<div class="grid">
+  <div class="stat"><div class="stat-n">${an.cardCount || '—'}</div><div class="stat-l">Cards</div></div>
+  <div class="stat"><div class="stat-n">${an.gcCount || 0}</div><div class="stat-l">Game Changers</div></div>
+  <div class="stat"><div class="stat-n">${an.avgCmc?.toFixed(2) || '—'}</div><div class="stat-l">Avg CMC</div></div>
+  <div class="stat"><div class="stat-n">${an.confirmedCombos || 0}</div><div class="stat-l">Combos</div></div>
+</div>
+${an.gcCards?.length ? `<div class="section"><div class="section-title">⚠ Game Changers (${an.gcCards.length})</div><div class="chips">${an.gcCards.map(c=>`<span class="chip gc">${c}</span>`).join('')}</div></div>` : ''}
+${an.comboCards?.length ? `<div class="section"><div class="section-title">🌀 Combo Pieces</div><div class="chips">${an.comboCards.map(c=>`<span class="chip combo">${c}</span>`).join('')}</div></div>` : ''}
+${an.mldCards?.length ? `<div class="section"><div class="section-title">🌋 MLD Cards</div><div class="chips">${an.mldCards.map(c=>`<span class="chip mld">${c}</span>`).join('')}</div></div>` : ''}
+${an.xtCards?.length ? `<div class="section"><div class="section-title">⏱ Extra Turns</div><div class="chips">${an.xtCards.map(c=>`<span class="chip xt">${c}</span>`).join('')}</div></div>` : ''}
+<footer>Generated by EDH Power Level · edhpowerlevel.ca</footer>
+<script>window.print();<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MANA BASE ANALYZER
+// ═══════════════════════════════════════════════════════════
+function analyzeManaBase() {
+  const raw = document.getElementById('mb-deck').value;
+  const cmdName = document.getElementById('mb-commander').value.trim();
+  if (!raw.trim()) { showToast('Paste a decklist first'); return; }
+
+  const deck = parseDeck(raw);
+  const cards = [...deck.entries()];
+  const totalCards = [...deck.values()].reduce((a,c)=>a+c.qty,0);
+
+  // Categorize lands
+  const FETCHES = new Set(["Arid Mesa","Bloodstained Mire","Flooded Strand","Marsh Flats","Misty Rainforest","Polluted Delta","Scalding Tarn","Verdant Catacombs","Windswept Heath","Wooded Foothills","Prismatic Vista","Fabled Passage","Evolving Wilds","Terramorphic Expanse"]);
+  const BASICS = new Set(["Plains","Island","Swamp","Mountain","Forest","Snow-Covered Plains","Snow-Covered Island","Snow-Covered Swamp","Snow-Covered Mountain","Snow-Covered Forest","Wastes"]);
+  const SHOCKS = new Set(["Hallowed Fountain","Watery Grave","Blood Crypt","Stomping Ground","Temple Garden","Sacred Foundry","Steam Vents","Overgrown Tomb","Godless Shrine","Breeding Pool"]);
+  const DUALS = new Set(["Underground Sea","Volcanic Island","Badlands","Bayou","Taiga","Savannah","Tundra","Tropical Island","Plateau","Scrubland"]);
+  const UTILITY_LANDS = new Set(["Ancient Tomb","Gaea's Cradle","Serra's Sanctum","Cabal Coffers","Urborg, Tomb of Yawgmoth","Yavimaya, Cradle of Growth","Field of the Dead","Reliquary Tower","Maze of Ith","Phyrexian Tower","Strip Mine","Wasteland","Rishadan Port"]);
+  const RAMP_SPELLS = new Set(["Sol Ring","Arcane Signet","Fellwar Stone","Commander's Sphere","Nature's Lore","Three Visits","Rampant Growth","Cultivate","Kodama's Reach","Farseek","Skyshroud Claim","Tempt with Discovery","Explosive Vegetation","Traverse the Outlands","Harrow","Crop Rotation","Land Tax","Weathered Wayfarer","Oracle of Mul Daya","Exploration","Burgeoning","Mana Crypt","Mana Vault","Grim Monolith","Chrome Mox","Mox Diamond","Lotus Petal","Dark Ritual","Cabal Ritual","Jeska's Will"]);
+  const MDFCs = new Set(["Bala Ged Recovery","Malakir Rebirth","Agadeem's Awakening","Emeria's Call","Sea Gate Restoration","Kabira Takedown","Silundi Vision","Turntimber Symbiosis","Shatterskull Smashing","Tangled Florahedron","Jwari Disruption","Kazandu Mammoth"]);
+
+  let landCount=0, fetchCount=0, basicCount=0, shockCount=0, dualCount=0, utilityCount=0, mdfc=0;
+  let rampCount=0;
+  let totalCmc=0, nonLandCount=0;
+  const landNames=[], rampNames=[];
+
+  // Pip counting
+  const colorSymbols = {W:0,U:0,B:0,R:0,G:0,C:0};
+
+  for (const [name, card] of cards) {
+    const qty = card.qty;
+    if (card.type === 'land') {
+      landCount += qty;
+      landNames.push(name);
+      if (FETCHES.has(name)) fetchCount += qty;
+      else if (BASICS.has(name)) basicCount += qty;
+      else if (SHOCKS.has(name)) shockCount += qty;
+      else if (DUALS.has(name)) dualCount += qty;
+      else if (MDFCs.has(name)) mdfc += qty;
+      else if (UTILITY_LANDS.has(name)) utilityCount += qty;
+    } else {
+      totalCmc += card.cmc * qty;
+      nonLandCount += qty;
+    }
+    if (RAMP_SPELLS.has(name)) { rampCount += qty; rampNames.push(name); }
+  }
+
+  const avgCmc = nonLandCount > 0 ? totalCmc / nonLandCount : 3;
+
+  // Grading
+  function gradeSection(val, thresholds, labels) {
+    // thresholds: [great, ok, poor]
+    if (val >= thresholds[0]) return {grade:'A', label:labels[0], color:'#4ade80'};
+    if (val >= thresholds[1]) return {grade:'B', label:labels[1], color:'#e8c94a'};
+    if (val >= thresholds[2]) return {grade:'C', label:labels[2], color:'#fb923c'};
+    return {grade:'D', label:labels[3], color:'#e84a6a'};
+  }
+
+  const recLands = avgCmc <= 2 ? 33 : avgCmc <= 3 ? 36 : avgCmc <= 3.5 ? 37 : 38;
+  const recRamp = avgCmc <= 2.5 ? 8 : avgCmc <= 3.5 ? 10 : 12;
+
+  const landGrade = gradeSection(landCount,
+    [recLands, recLands-2, recLands-4],
+    [`Solid land count for avg CMC ${avgCmc.toFixed(1)}`, 'Slightly low, consider +1–2 lands', 'Noticeably light on lands', 'Dangerously low — add lands']);
+  const rampGrade = gradeSection(rampCount,
+    [recRamp, recRamp-2, recRamp-4],
+    ['Strong ramp package', 'Adequate ramp', 'Could use 1–2 more ramp pieces', 'Very low ramp — add 2–4 pieces']);
+  const fetchGrade = gradeSection(fetchCount,
+    [6, 4, 2],
+    ['Excellent fetch count for consistency', 'Good fetch count', 'Add more fetches if in budget', 'No fetches — mana consistency will suffer']);
+  const qualityGrade = gradeSection(dualCount + shockCount,
+    [8, 5, 2],
+    ['Premium dual land package', 'Good dual coverage', 'Moderate duals — consider upgrades', 'Mostly basics/budget — consistent but slow']);
+
+  const overallScore = (
+    ({'A':4,'B':3,'C':2,'D':1}[landGrade.grade]) +
+    ({'A':4,'B':3,'C':2,'D':1}[rampGrade.grade]) +
+    ({'A':4,'B':3,'C':2,'D':1}[fetchGrade.grade]) +
+    ({'A':4,'B':3,'C':2,'D':1}[qualityGrade.grade])
+  );
+  const overallLetter = overallScore >= 14 ? 'A' : overallScore >= 10 ? 'B' : overallScore >= 7 ? 'C' : 'D';
+  const overallColor = {'A':'#4ade80','B':'#e8c94a','C':'#fb923c','D':'#e84a6a'}[overallLetter];
+
+  const el = document.getElementById('mb-results');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;margin-bottom:20px;">
+      <div style="background:var(--bg-2);border:2px solid ${overallColor}33;border-radius:var(--r-lg);padding:20px 28px;text-align:center;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:3px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">Overall</div>
+        <div style="font-family:'Bebas Neue';font-size:72px;color:${overallColor};line-height:1;text-shadow:0 0 30px ${overallColor}88;">${overallLetter}</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);letter-spacing:2px;margin-top:4px;">Mana Base</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${[
+          {label:'Land Count', val:landCount, rec:recLands, grade:landGrade, note:`Rec: ${recLands} for avg CMC ${avgCmc.toFixed(1)}`},
+          {label:'Ramp Pieces', val:rampCount, rec:recRamp, grade:rampGrade, note:`Rec: ${recRamp} for avg CMC ${avgCmc.toFixed(1)}`},
+          {label:'Fetch Lands', val:fetchCount, rec:6, grade:fetchGrade, note:'Fetches = consistency'},
+          {label:'Dual Quality', val:dualCount+shockCount, rec:8, grade:qualityGrade, note:'Duals + Shocks'},
+        ].map(s => `
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;">${s.label}</div>
+              <div style="font-family:'Bebas Neue';font-size:22px;color:${s.grade.color};line-height:1;">${s.grade.grade}</div>
+            </div>
+            <div style="font-family:'Bebas Neue';font-size:32px;color:${s.grade.color};line-height:1;">${s.val}</div>
+            <div style="font-family:'DM Mono';font-size:9px;color:var(--text-3);margin-top:4px;line-height:1.4;">${s.grade.label}</div>
+            <div style="font-family:'DM Mono';font-size:8px;color:var(--text-4);margin-top:2px;">${s.note}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;">
+      <div class="section-hdr" style="margin-top:0;">Land Composition</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px;">
+        ${[
+          {label:'Basics',val:basicCount,color:'var(--text-2)'},
+          {label:'Fetch Lands',val:fetchCount,color:'var(--teal)'},
+          {label:'Shock Lands',val:shockCount,color:'var(--blue)'},
+          {label:'Original Duals',val:dualCount,color:'var(--gold)'},
+          {label:'Utility Lands',val:utilityCount,color:'var(--purple)'},
+          {label:'MDFCs',val:mdfc,color:'var(--green)'},
+          {label:'Other Lands',val:landCount-basicCount-fetchCount-shockCount-dualCount-utilityCount-mdfc,color:'var(--text-3)'},
+        ].map(s => `
+          <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-family:'Bebas Neue';font-size:24px;color:${s.color};line-height:1;">${Math.max(0,s.val)}</div>
+            <div style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;color:var(--text-3);margin-top:3px;">${s.label}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    ${rampNames.length ? `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+      <div class="section-hdr" style="margin-top:0;">Recognized Ramp (${rampNames.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+        ${rampNames.map(n=>`<span class="flag-chip">${n}</span>`).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BRACKET TUNER
+// ═══════════════════════════════════════════════════════════
+function runBracketTuner() {
+  const raw = document.getElementById('tuner-deck').value;
+  if (!raw.trim()) { showToast('Paste a decklist first'); return; }
+  const targetBracket = parseInt(document.querySelector('input[name="target-bracket"]:checked')?.value || '3');
+
+  const deck = parseDeck(raw);
+  const analysis = analyzeDeck(deck);
+  const currentBracket = analysis.bracket?.recommended || analysis.bracket?.min || 1;
+
+  const el = document.getElementById('tuner-results');
+  el.style.display = 'block';
+
+  const bColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#e84a6a'};
+  const bNames = {1:'Precon',2:'Casual',3:'Optimized',4:'High Power',5:'cEDH'};
+
+  if (currentBracket <= targetBracket) {
+    el.innerHTML = `
+      <div style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.3);border-radius:var(--r-lg);padding:28px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:12px;">✅</div>
+        <div style="font-family:'Bebas Neue';font-size:24px;color:#4ade80;letter-spacing:3px;">Already Fits B${targetBracket}!</div>
+        <div style="font-family:'DM Mono';font-size:11px;color:var(--text-2);margin-top:8px;">
+          Your deck is currently Bracket ${currentBracket} (${bNames[currentBracket]}), which fits within Bracket ${targetBracket}.
+          No cuts required.
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Figure out what needs to be cut for each target
+  const cuts = [];
+  const suggestions = [];
+
+  // Rule: B1 = no GC, no combos, no MLD, no XT chain
+  // Rule: B2 = no GC, no XT chain
+  // Rule: B3 = max 3 GC, no MLD, no XT chain
+  // Rule: B4 = no XT chain restriction (only illegal cards blocked)
+
+  if (targetBracket <= 2) {
+    // Must remove ALL game changers
+    for (const name of analysis.gcCards) {
+      cuts.push({name, reason:'Game Changer — not allowed in B1/B2', category:'gc', priority:'MUST CUT'});
+    }
+  } else if (targetBracket === 3) {
+    // Can keep up to 3 GC
+    if (analysis.gcCards.length > 3) {
+      const toCut = analysis.gcCards.slice(3);
+      for (const name of toCut) {
+        cuts.push({name, reason:`${analysis.gcCards.length} Game Changers detected — B3 allows max 3`, category:'gc', priority:'MUST CUT'});
+      }
+    }
+  }
+
+  if (targetBracket <= 3) {
+    for (const name of analysis.mldCards) {
+      cuts.push({name, reason:'Mass Land Denial — requires B4+', category:'mld', priority:'MUST CUT'});
+    }
+    for (const name of analysis.xtCards) {
+      if (CARD_DB[name]?.xtchain) {
+        cuts.push({name, reason:'Extra Turn Chain — requires B4+', category:'xt', priority:'MUST CUT'});
+      }
+    }
+  }
+
+  // Advisory cuts for power score
+  if (targetBracket <= 2 && analysis.powerLevel > 6) {
+    const highImpact = [...deck.entries()]
+      .filter(([n,c]) => !c.gc && !c.mld && !c.xtchain && c.impact >= 14 && c.type !== 'land')
+      .sort((a,b) => b[1].impact - a[1].impact)
+      .slice(0, 5);
+    for (const [name, card] of highImpact) {
+      suggestions.push({name, reason:`High-impact card (score ${card.impact}/20) — consider swapping for B${targetBracket}`, category:'power', priority:'CONSIDER'});
+    }
+  }
+
+  const mustCuts = cuts.filter(c=>c.priority==='MUST CUT');
+  const couldCut = [...cuts.filter(c=>c.priority!=='MUST CUT'), ...suggestions];
+
+  const chipStyle = {
+    gc: 'border-color:rgba(232,201,74,0.5);color:var(--gold);background:rgba(232,201,74,0.08);',
+    mld: 'border-color:rgba(240,81,106,0.5);color:var(--red);background:rgba(240,81,106,0.08);',
+    xt: 'border-color:rgba(96,165,250,0.5);color:var(--blue);background:rgba(96,165,250,0.08);',
+    power: 'border-color:rgba(168,85,247,0.4);color:var(--purple);background:rgba(168,85,247,0.06);',
+  };
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;text-align:center;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);margin-bottom:6px;">CURRENT</div>
+        <div style="font-family:'Bebas Neue';font-size:42px;color:${bColors[currentBracket]};line-height:1;">B${currentBracket}</div>
+        <div style="font-family:'DM Mono';font-size:10px;color:${bColors[currentBracket]};margin-top:4px;">${bNames[currentBracket]}</div>
+      </div>
+      <div style="background:var(--bg-2);border:1px solid ${bColors[targetBracket]}44;border-radius:var(--r-md);padding:18px;text-align:center;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--text-3);margin-bottom:6px;">TARGET</div>
+        <div style="font-family:'Bebas Neue';font-size:42px;color:${bColors[targetBracket]};line-height:1;">B${targetBracket}</div>
+        <div style="font-family:'DM Mono';font-size:10px;color:${bColors[targetBracket]};margin-top:4px;">${bNames[targetBracket]}</div>
+      </div>
+    </div>
+
+    ${mustCuts.length ? `
+    <div style="background:rgba(240,81,106,0.06);border:1px solid rgba(240,81,106,0.25);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;">
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:var(--red);text-transform:uppercase;margin-bottom:14px;">
+        ✕ Must Cut (${mustCuts.length} cards)
+      </div>
+      ${mustCuts.map(c=>`
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span class="flag-chip" style="${chipStyle[c.category]}">${c.name}</span>
+          <div style="font-family:'DM Mono';font-size:10px;color:var(--text-3);flex:1;padding-top:3px;">${c.reason}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    ${couldCut.length ? `
+    <div style="background:rgba(232,201,74,0.04);border:1px solid rgba(232,201,74,0.2);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;">
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">
+        ⚠ Consider Cutting (${couldCut.length} cards)
+      </div>
+      ${couldCut.map(c=>`
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span class="flag-chip" style="${chipStyle[c.category] || ''}">${c.name}</span>
+          <div style="font-family:'DM Mono';font-size:10px;color:var(--text-3);flex:1;padding-top:3px;">${c.reason}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    ${mustCuts.length === 0 && couldCut.length === 0 ? `
+    <div style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.3);border-radius:var(--r-lg);padding:20px;text-align:center;">
+      <div style="font-family:'Bebas Neue';font-size:20px;color:#4ade80;letter-spacing:3px;">No Rule-Based Cuts Required</div>
+      <div style="font-family:'DM Mono';font-size:11px;color:var(--text-2);margin-top:8px;">Your deck meets the B${targetBracket} rules. Power level may still feel high — consider swapping some high-impact cards.</div>
+    </div>` : ''}
+  `;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// GROUP BRACKET QUIZ
+// ═══════════════════════════════════════════════════════════
+const QUIZ_QUESTIONS = [
+  {
+    id: 'sol_ring',
+    q: 'Do all players in your pod run Sol Ring?',
+    sub: 'Sol Ring is not a Game Changer but is a power signal',
+    opts: [
+      {label:'Yes, everyone runs it', val:1, points:{base:2}},
+      {label:'Most do', val:2, points:{base:1}},
+      {label:'Some do, some don\'t', val:3, points:{base:0}},
+      {label:'Nobody runs it — we keep it casual', val:4, points:{base:-1}},
+    ]
+  },
+  {
+    id: 'game_changers',
+    q: 'How many Game Changers (GC) does your average pod deck run?',
+    sub: 'GCs include cards like Demonic Tutor, Cyclonic Rift, Force of Will, etc.',
+    opts: [
+      {label:'None — we avoid them', val:1, points:{gc:-2}},
+      {label:'1–2 each', val:2, points:{gc:1}},
+      {label:'3–5 each', val:3, points:{gc:2}},
+      {label:'5+ each — we go for it', val:4, points:{gc:3}},
+    ]
+  },
+  {
+    id: 'tutors',
+    q: 'How many dedicated tutors does a typical deck in your pod run?',
+    sub: 'Vampiric Tutor, Demonic Tutor, Mystical Tutor, etc.',
+    opts: [
+      {label:'None', val:1, points:{tutor:-1}},
+      {label:'1–2', val:2, points:{tutor:0}},
+      {label:'3–5', val:3, points:{tutor:2}},
+      {label:'5+ — we maximize consistency', val:4, points:{tutor:3}},
+    ]
+  },
+  {
+    id: 'combos',
+    q: 'Does your group allow infinite combos?',
+    sub: 'Two-card infinite win conditions',
+    opts: [
+      {label:'No — we don\'t play them', val:1, points:{combo:-2}},
+      {label:'Rarely / only as finishers', val:2, points:{combo:0}},
+      {label:'Yes, some decks run them', val:3, points:{combo:2}},
+      {label:'Yes, combos are expected and common', val:4, points:{combo:3}},
+    ]
+  },
+  {
+    id: 'fast_mana',
+    q: 'Does your group use fast mana beyond Sol Ring?',
+    sub: 'Mana Crypt, Mox Diamond, Chrome Mox, Lotus Petal, etc.',
+    opts: [
+      {label:'No — Sol Ring is the max', val:1, points:{mana:-1}},
+      {label:'Some (1–2 per deck)', val:2, points:{mana:1}},
+      {label:'Moderate (Arcane Signet + some Moxen)', val:3, points:{mana:2}},
+      {label:'Full cEDH fast mana package', val:4, points:{mana:4}},
+    ]
+  },
+  {
+    id: 'avg_turn',
+    q: 'What turn does your pod typically end the game?',
+    sub: 'Average across your group\'s decks',
+    opts: [
+      {label:'Turn 10+ (long grindy games)', val:1, points:{speed:-2}},
+      {label:'Turn 7–9', val:2, points:{speed:0}},
+      {label:'Turn 5–7', val:3, points:{speed:2}},
+      {label:'Turn 3–5 (we go fast)', val:4, points:{speed:4}},
+    ]
+  },
+  {
+    id: 'stax',
+    q: 'Does your group run stax or heavy disruption?',
+    sub: 'Null Rod, Stony Silence, Winter Orb, Rule of Law, Blood Moon, etc.',
+    opts: [
+      {label:'No stax at all', val:1, points:{stax:-1}},
+      {label:'Light hate pieces', val:2, points:{stax:0}},
+      {label:'Moderate stax', val:3, points:{stax:2}},
+      {label:'Heavy stax is expected', val:4, points:{stax:3}},
+    ]
+  },
+  {
+    id: 'feel',
+    q: 'How would your group describe your games?',
+    sub: 'Honest gut-check',
+    opts: [
+      {label:'Relaxed — story & fun over winning', val:1, points:{feel:-2}},
+      {label:'Competitive-ish but still casual', val:2, points:{feel:0}},
+      {label:'High power — we play to win', val:3, points:{feel:2}},
+      {label:'Full cEDH — every decision matters', val:4, points:{feel:4}},
+    ]
+  },
+];
+
+let quizState = { step: 0, answers: {}, scores: {} };
+
+function initQuiz() {
+  quizState = { step: 0, answers: {}, scores: {} };
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-container').style.display = 'block';
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const q = QUIZ_QUESTIONS[quizState.step];
+  const progress = ((quizState.step) / QUIZ_QUESTIONS.length) * 100;
+  document.getElementById('quiz-progress-bar').style.width = progress + '%';
+  document.getElementById('quiz-step-label').textContent = `Question ${quizState.step + 1} of ${QUIZ_QUESTIONS.length}`;
+  document.getElementById('quiz-back-btn').style.display = quizState.step > 0 ? 'block' : 'none';
+
+  const card = document.getElementById('quiz-question-card');
+  card.innerHTML = `
+    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Question ${quizState.step + 1}</div>
+    <div style="font-family:'Barlow',sans-serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.4;">${q.q}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);margin-bottom:20px;letter-spacing:0.5px;">${q.sub}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${q.opts.map((o,i) => `
+        <button onclick="quizAnswer(${i})" style="text-align:left;padding:12px 16px;background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--r-md);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;cursor:pointer;transition:all 0.18s;display:flex;align-items:center;gap:12px;"
+          onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(232,201,74,0.06)'"
+          onmouseout="this.style.borderColor='var(--border-2)';this.style.background='var(--bg-3)'">
+          <span style="font-family:'Bebas Neue';font-size:16px;color:var(--gold);min-width:20px;">${'ABCD'[i]}</span>
+          ${o.label}
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function quizAnswer(optIdx) {
+  const q = QUIZ_QUESTIONS[quizState.step];
+  const opt = q.opts[optIdx];
+  quizState.answers[q.id] = optIdx;
+  // Accumulate scores
+  for (const [key, val] of Object.entries(opt.points)) {
+    quizState.scores[key] = (quizState.scores[key] || 0) + val;
+  }
+  quizState.step++;
+  if (quizState.step >= QUIZ_QUESTIONS.length) {
+    showQuizResult();
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+function quizBack() {
+  if (quizState.step <= 0) return;
+  quizState.step--;
+  // Remove last answer's score contribution
+  const q = QUIZ_QUESTIONS[quizState.step];
+  const prevAnswerIdx = quizState.answers[q.id];
+  if (prevAnswerIdx !== undefined) {
+    const opt = q.opts[prevAnswerIdx];
+    for (const [key, val] of Object.entries(opt.points)) {
+      quizState.scores[key] = (quizState.scores[key] || 0) - val;
+    }
+    delete quizState.answers[q.id];
+  }
+  renderQuizQuestion();
+}
+
+function showQuizResult() {
+  document.getElementById('quiz-progress-bar').style.width = '100%';
+  document.getElementById('quiz-container').style.display = 'none';
+
+  const total = Object.values(quizState.scores).reduce((a,b)=>a+b,0);
+  // Scoring: max ~22 points = cEDH, min ~-9 = pure precon
+  let bracket, label, desc, color, emoji;
+  if (total <= 0) {
+    bracket=1; label='Precon / Exhibition'; color='#4ae8b0'; emoji='🌿';
+    desc='Your group plays at a very casual level — precon-level or lightly modified decks, no combos, no Game Changers. Focus on fun and flavor over optimization.';
+  } else if (total <= 6) {
+    bracket=2; label='Casual'; color='#60a5fa'; emoji='⚔';
+    desc='Your group is solidly casual — upgraded precons, some synergies, but no broken cards or turn-3 wins. Most Commander tables land here.';
+  } else if (total <= 13) {
+    bracket=3; label='Optimized'; color='#a855f7'; emoji='🔮';
+    desc='Your group plays focused, optimized decks. Some Game Changers, combos may appear, but the games are still varied and interactive.';
+  } else if (total <= 19) {
+    bracket=4; label='High Power'; color='#e8c94a'; emoji='🔥';
+    desc='Your group plays high-power Commander — fast mana, efficient combos, stax pieces. Not quite cEDH but definitely not for the faint of heart.';
+  } else {
+    bracket=5; label='cEDH'; color='#e84a6a'; emoji='💀';
+    desc='Your group is playing full competitive EDH. Every card choice is optimized. Fast mana, turn-3 wins, and rule of law effects are the norm.';
+  }
+
+  const el = document.getElementById('quiz-result');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="background:var(--bg-2);border:1px solid ${color}33;border-radius:var(--r-lg);padding:32px;text-align:center;margin-bottom:20px;">
+      <div style="font-size:48px;margin-bottom:12px;">${emoji}</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:4px;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;">Your Group Plays At</div>
+      <div style="font-family:'Bebas Neue';font-size:80px;color:${color};line-height:1;text-shadow:0 0 40px ${color}88;">B${bracket}</div>
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:${color};margin-top:4px;letter-spacing:2px;">${label}</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--text-2);margin-top:16px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.7;">${desc}</div>
+    </div>
+
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;">
+      <div class="section-hdr" style="margin-top:0;">Recommendations For Your Group</div>
+      <div style="font-family:'DM Mono';font-size:11px;color:var(--text-2);line-height:1.8;">
+        ${bracket === 1 ? '• Keep decks to precon-level or light upgrades<br>• Avoid tutors and Game Changers<br>• Focus on fun themes and fair gameplay' :
+          bracket === 2 ? '• Upgraded precons are welcome but avoid Game Changers<br>• Combos should be grindy (8+ mana), not efficient<br>• Communication before the game sets expectations' :
+          bracket === 3 ? '• Up to 3 Game Changers per deck is the sweet spot<br>• Combos allowed but avoid sub-turn-6 wins<br>• Discuss stax pieces — they can feel bad at this bracket' :
+          bracket === 4 ? '• Full Game Changer packages are expected<br>• Fast mana and 2-card combos are on the table<br>• Make sure everyone is on the same page about the power level' :
+          '• You\'re in cEDH territory — maximize every card choice<br>• Fast mana, efficient tutors, and reliable combo lines<br>• Conceding when combos go off is considered good etiquette'}
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <button onclick="initQuiz()" style="padding:12px 32px;background:var(--bg-3);border:1px solid var(--border-2);color:var(--text-2);font-family:'DM Mono';font-size:10px;letter-spacing:2px;border-radius:var(--r-md);cursor:pointer;transition:all 0.2s;text-transform:uppercase;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)'">↺ Retake Quiz</button>
+    </div>
+  `;
+}
+
 </script>
 </body>
 </html>
