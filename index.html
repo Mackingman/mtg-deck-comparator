@@ -831,6 +831,11 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
         <button class="btn-clear" onclick="document.getElementById('deck-a').value='';document.getElementById('name-a').value='Deck A';document.getElementById('counter-a').textContent='0';">✕ CLEAR</button>
       </div>
       <input type="text" id="name-a" value="Deck A" placeholder="Deck name...">
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <input type="text" id="url-a" placeholder="Moxfield or Archidekt URL..." style="flex:1;font-size:10px;padding:6px 10px;font-family:'DM Mono',monospace;margin-bottom:0;">
+        <button onclick="importCompareURL('a')" style="padding:6px 12px;background:rgba(232,201,74,0.08);border:1px solid rgba(232,201,74,0.3);color:var(--gold);font-family:'Bebas Neue';font-size:12px;letter-spacing:1px;border-radius:6px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(232,201,74,0.3)'">&#x2B07; URL</button>
+      </div>
+      <div id="url-a-status" style="font-family:'DM Mono';font-size:9px;color:var(--text-3);margin-bottom:4px;letter-spacing:1px;display:none;"></div>
       <div style="position:relative;">
         <textarea id="deck-a" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes are stripped automatically" oninput="updateCounter('deck-a','counter-a')" style="padding-bottom:32px;"></textarea>
         <div class="counter-badge"><span class="cnt a" id="counter-a">0</span> / 100</div>
@@ -847,6 +852,11 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
         <button class="btn-clear" onclick="document.getElementById('deck-b').value='';document.getElementById('name-b').value='Deck B';document.getElementById('counter-b').textContent='0';">✕ CLEAR</button>
       </div>
       <input type="text" id="name-b" value="Deck B" placeholder="Deck name...">
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <input type="text" id="url-b" placeholder="Moxfield or Archidekt URL..." style="flex:1;font-size:10px;padding:6px 10px;font-family:'DM Mono',monospace;margin-bottom:0;">
+        <button onclick="importCompareURL('b')" style="padding:6px 12px;background:rgba(61,232,168,0.08);border:1px solid rgba(61,232,168,0.3);color:var(--teal);font-family:'Bebas Neue';font-size:12px;letter-spacing:1px;border-radius:6px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='rgba(61,232,168,0.3)'">&#x2B07; URL</button>
+      </div>
+      <div id="url-b-status" style="font-family:'DM Mono';font-size:9px;color:var(--text-3);margin-bottom:4px;letter-spacing:1px;display:none;"></div>
       <div style="position:relative;">
         <textarea id="deck-b" placeholder="Paste your decklist here...&#10;Format: 1 Card Name&#10;Set codes are stripped automatically" oninput="updateCounter('deck-b','counter-b')" style="padding-bottom:32px;"></textarea>
         <div class="counter-badge"><span class="cnt b" id="counter-b">0</span> / 100</div>
@@ -952,7 +962,8 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     </div>
 
     <div style="text-align:center;margin-top:24px;">
-      <button class="btn-secondary" onclick="exportTxt()" style="padding:10px 28px;">&#x2193; Export Comparison as Text</button>
+      <button class="btn-secondary" onclick="exportTxt()" style="padding:10px 28px;">&#x2193; Export as Text</button>
+      <button class="btn-secondary" onclick="printCompareReport()" style="padding:10px 28px;">&#x1F5A8; Print Report</button>
     </div>
 
   </div><!-- /results -->
@@ -2069,7 +2080,8 @@ function analyzeDeck(deck) {
     confirmedCombos, drawCount, tutorCount, fetchCount, dualCount,
     gcCards, mldCards, xtCards, comboCards, bannedCards,
     bracket: determineBracket(gcCount, mldCount, xtCount, xtChainCount, comboCount, powerLevel, bannedCount, confirmedCombos, tutorCount),
-    cardCount: [...deck.values()].reduce((a,c) => a+c.qty, 0)
+    cardCount: [...deck.values()].reduce((a,c) => a+c.qty, 0),
+    archetype: detectArchetype(gcCount, mldCount, comboCount, tutorCount, drawCount, rampCount, interactionCount, confirmedCombos, avgCmc)
   };
 }
 
@@ -2185,7 +2197,10 @@ function renderPowerCard(elId, analysis, deckName, colorClass) {
     <div class="power-card-header">
       <div>
         <div class="power-card-name ${nameClass}">${deckName}</div>
-        <div style="font-size:11px;color:var(--text-2);margin-top:2px;letter-spacing:1px">${analysis.cardCount} cards analyzed</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <div style="font-size:11px;color:var(--text-2);letter-spacing:1px">${analysis.cardCount} cards analyzed</div>
+          ${analysis.archetype ? `<span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border-radius:4px;border:1px solid ${analysis.archetype.color}55;color:${analysis.archetype.color};background:${analysis.archetype.color}11;">${analysis.archetype.label}</span>` : ''}
+        </div>
       </div>
       <div class="bracket-badge ${brClass}">B${br}</div>
     </div>
@@ -2263,6 +2278,8 @@ function runAnalysis() {
   const deckB = parseDeck(rawB);
   const analysisA = analyzeDeck(deckA);
   const analysisB = analyzeDeck(deckB);
+  window._lastAnalysisA = analysisA;
+  window._lastAnalysisB = analysisB;
 
   renderPowerCard('pcard-a', analysisA, nameA, 'a');
   renderPowerCard('pcard-b', analysisB, nameB, 'b');
@@ -5645,6 +5662,201 @@ function toggleCombos(id) {
   hidden.style.display = isOpen ? 'none' : 'block';
   var total = (window['_combos_' + id] || []).length;
   btn.textContent = isOpen ? '▼ Show ' + (total - 5) + ' more combos' : '▲ Show less';
+}
+
+
+// ── ARCHETYPE DETECTOR ─────────────────────────────────────────────
+function detectArchetype(gcCount, mldCount, comboCount, tutorCount, drawCount, rampCount, interactionCount, confirmedCombos, avgCmc) {
+  var score = {
+    combo: 0, stax: 0, tempo: 0, aggro: 0, control: 0, midrange: 0, ramp: 0
+  };
+
+  // Combo signals
+  if (confirmedCombos >= 3) score.combo += 4;
+  else if (confirmedCombos >= 1) score.combo += 2;
+  if (comboCount >= 4) score.combo += 2;
+  if (tutorCount >= 4) score.combo += 2;
+
+  // Stax signals
+  if (mldCount >= 1) score.stax += 4;
+  if (gcCount >= 4) score.stax += 1;
+
+  // Control signals
+  if (interactionCount >= 8) score.control += 3;
+  if (drawCount >= 5) score.control += 2;
+
+  // Aggro / tempo signals
+  if (avgCmc <= 2.2) { score.aggro += 3; score.tempo += 2; }
+  else if (avgCmc <= 2.8) { score.tempo += 2; }
+
+  // Ramp signals
+  if (rampCount >= 8) score.ramp += 3;
+  if (avgCmc >= 4) score.ramp += 2;
+
+  // Midrange default
+  score.midrange += 1;
+
+  // Find highest
+  var best = 'Midrange', bestVal = 0;
+  for (var k in score) {
+    if (score[k] > bestVal) { bestVal = score[k]; best = k; }
+  }
+
+  // Format nicely
+  var names = {
+    combo: 'Combo', stax: 'Stax', tempo: 'Tempo',
+    aggro: 'Aggro', control: 'Control', midrange: 'Midrange', ramp: 'Ramp'
+  };
+  var colors = {
+    combo: '#a855f7', stax: '#f0516a', tempo: '#60a5fa',
+    aggro: '#fb923c', control: '#4ae8b0', midrange: '#e8c94a', ramp: '#4ade80'
+  };
+  return { label: names[best] || 'Midrange', color: colors[best] || '#e8c94a' };
+}
+
+// ── COMPARE URL IMPORT ──────────────────────────────────────────────
+async function importCompareURL(side) {
+  var urlEl = document.getElementById('url-' + side);
+  var statusEl = document.getElementById('url-' + side + '-status');
+  var url = urlEl.value.trim();
+  if (!url) { showToast('Paste a Moxfield or Archidekt URL first'); return; }
+
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--text-3)';
+  statusEl.textContent = '\u29d7 Fetching...';
+
+  var WORKER = 'https://spellbook-proxy.work-macarthur.workers.dev';
+
+  try {
+    var deckText = '', deckName = '';
+
+    if (url.includes('moxfield.com')) {
+      var match = url.match(/moxfield\.com\/decks\/([^/?#]+)/);
+      if (!match) throw new Error('Could not parse Moxfield deck ID');
+      var resp = await fetch(WORKER + '/moxfield?id=' + encodeURIComponent(match[1]));
+      if (!resp.ok) {
+        // fallback direct
+        var resp2 = await fetch('https://api2.moxfield.com/v3/decks/all/' + match[1]);
+        if (!resp2.ok) throw new Error('Moxfield blocked — make sure deck is Public');
+        var d2 = await resp2.json();
+        deckName = d2.name || 'Moxfield Deck';
+        var lines = [];
+        for (var board of ['commanders','companions','mainboard']) {
+          if (!d2.boards?.[board]?.cards) continue;
+          for (var [,e] of Object.entries(d2.boards[board].cards)) {
+            if (e.card?.name) lines.push(e.quantity + ' ' + e.card.name);
+          }
+        }
+        deckText = lines.join('\n');
+      } else {
+        var d = await resp.json();
+        if (d.error) throw new Error(d.error);
+        deckName = d.name; deckText = d.list;
+      }
+    } else if (url.includes('archidekt.com')) {
+      var match = url.match(/archidekt\.com\/decks\/(\d+)/);
+      if (!match) throw new Error('Could not parse Archidekt deck ID');
+      var resp = await fetch(WORKER + '/archidekt?id=' + encodeURIComponent(match[1]));
+      if (!resp.ok) {
+        var resp2 = await fetch('https://archidekt.com/api/decks/' + match[1] + '/small/');
+        if (!resp2.ok) throw new Error('Archidekt returned ' + resp2.status);
+        var d2 = await resp2.json();
+        deckName = d2.name || 'Archidekt Deck';
+        var lines = [];
+        for (var card of (d2.cards || [])) {
+          if (card.category === 'Sideboard' || card.category === 'Maybeboard') continue;
+          var n = card.card?.oracleCard?.name || card.card?.name;
+          if (n) lines.push((card.quantity||1) + ' ' + n);
+        }
+        deckText = lines.join('\n');
+      } else {
+        var d = await resp.json();
+        if (d.error) throw new Error(d.error);
+        deckName = d.name; deckText = d.list;
+      }
+    } else {
+      throw new Error('Only Moxfield and Archidekt URLs are supported');
+    }
+
+    if (!deckText || !deckText.trim()) throw new Error('No cards found — is the deck public?');
+
+    document.getElementById('deck-' + side).value = deckText;
+    if (deckName) document.getElementById('name-' + side).value = deckName;
+    updateCounter('deck-' + side, 'counter-' + side);
+    urlEl.value = '';
+    statusEl.style.color = 'var(--teal)';
+    statusEl.textContent = '\u2713 Loaded "' + deckName + '"';
+    showToast('\u2713 Imported ' + deckName + ' into Deck ' + side.toUpperCase());
+  } catch(err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = '\u2715 ' + err.message;
+  }
+}
+
+// ── PRINT COMPARE REPORT ────────────────────────────────────────────
+function printCompareReport() {
+  var nameA = document.getElementById('name-a').value || 'Deck A';
+  var nameB = document.getElementById('name-b').value || 'Deck B';
+  var anA = window._lastAnalysisA;
+  var anB = window._lastAnalysisB;
+  if (!anA || !anB) { showToast('Run an analysis first'); return; }
+
+  var now = new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'});
+  var bColors = {1:'#4ae8b0',2:'#60a5fa',3:'#a855f7',4:'#e8c94a',5:'#e84a6a'};
+  var colA = bColors[anA.bracket?.recommended || anA.bracket?.min || 3] || '#e8c94a';
+  var colB = bColors[anB.bracket?.recommended || anB.bracket?.min || 3] || '#60a5fa';
+
+  var win = window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>EDH Deck Comparison Report</title>' +
+    '<style>@import url(\'https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Barlow:wght@400;600&family=DM+Mono:wght@400;500&display=swap\');' +
+    '*{box-sizing:border-box;margin:0;padding:0;}' +
+    'body{font-family:Barlow,sans-serif;background:#fff;color:#111;max-width:760px;margin:0 auto;padding:32px 24px;}' +
+    'h1{font-family:Cinzel,serif;font-size:22px;margin-bottom:4px;}' +
+    '.sub{font-family:"DM Mono",monospace;font-size:10px;color:#999;letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;}' +
+    '.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}' +
+    '.card{border-radius:10px;padding:18px;border:2px solid;}' +
+    '.badge{font-family:Cinzel,serif;font-size:44px;font-weight:700;line-height:1;}' +
+    '.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}' +
+    '.stat{background:#f7f7f7;border-radius:6px;padding:10px;text-align:center;}' +
+    '.stat-n{font-family:"DM Mono",monospace;font-size:22px;font-weight:700;}' +
+    '.stat-l{font-size:9px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}' +
+    '.section{margin-top:20px;}' +
+    '.section-title{font-family:Cinzel,serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:10px;}' +
+    '.chips{display:flex;flex-wrap:wrap;gap:5px;}' +
+    '.chip{font-family:"DM Mono",monospace;font-size:10px;background:#f3f3f3;border:1px solid #ddd;border-radius:4px;padding:2px 8px;}' +
+    'footer{margin-top:28px;font-family:"DM Mono",monospace;font-size:9px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:12px;}' +
+    '@media print{button{display:none;}}' +
+    '</style></head><body>');
+  win.document.write('<h1>EDH Deck Comparison</h1><div class="sub">Report generated ' + now + ' &nbsp;·&nbsp; edhpowerlevel.ca</div>');
+  win.document.write('<div class="grid">');
+
+  function deckCard(an, name, col) {
+    var bracket = an.bracket?.recommended || an.bracket?.min || '?';
+    var arch = an.archetype ? (' &nbsp;<span style="font-size:10px;background:' + an.archetype.color + '22;border:1px solid ' + an.archetype.color + '55;color:' + an.archetype.color + ';padding:1px 7px;border-radius:4px;font-family:DM Mono,monospace;">' + an.archetype.label + '</span>') : '';
+    var out = '<div class="card" style="border-color:' + col + '44;">';
+    out += '<div style="font-family:Cinzel,serif;font-size:16px;font-weight:700;color:' + col + ';margin-bottom:10px;">' + name + arch + '</div>';
+    out += '<div class="badge" style="color:' + col + ';">B' + bracket + '</div>';
+    out += '<div style="font-family:DM Mono,monospace;font-size:11px;color:#666;margin-top:4px;">Power ' + (an.powerLevel?.toFixed(1) || '?') + ' / 10</div>';
+    out += '<div class="stat-grid">';
+    out += '<div class="stat"><div class="stat-n">' + (an.cardCount||'?') + '</div><div class="stat-l">Cards</div></div>';
+    out += '<div class="stat"><div class="stat-n">' + (an.gcCount||0) + '</div><div class="stat-l">GC</div></div>';
+    out += '<div class="stat"><div class="stat-n">' + (an.avgCmc?.toFixed(1)||'?') + '</div><div class="stat-l">Avg CMC</div></div>';
+    out += '<div class="stat"><div class="stat-n">' + (an.tutorCount||0) + '</div><div class="stat-l">Tutors</div></div>';
+    out += '<div class="stat"><div class="stat-n">' + (an.drawCount||0) + '</div><div class="stat-l">Draw</div></div>';
+    out += '<div class="stat"><div class="stat-n">' + (an.confirmedCombos||0) + '</div><div class="stat-l">Combos</div></div>';
+    out += '</div>';
+    if (an.gcCards?.length) out += '<div class="section"><div class="section-title">Game Changers</div><div class="chips">' + an.gcCards.map(function(c){return '<span class="chip">'+c+'</span>';}).join('') + '</div></div>';
+    out += '</div>';
+    return out;
+  }
+
+  win.document.write(deckCard(anA, nameA, colA));
+  win.document.write(deckCard(anB, nameB, colB));
+  win.document.write('</div>');
+  win.document.write('<footer>Generated by EDH Power Level &nbsp;·&nbsp; edhpowerlevel.ca</footer>');
+  win.document.write('<script>window.print();<\/script>');
+  win.document.write('</body></html>');
+  win.document.close();
 }
 
 </script>
