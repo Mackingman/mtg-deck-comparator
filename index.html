@@ -3398,12 +3398,15 @@ runAnalysis = async function() {
       if (sf) {
         const sfData = scryfallToCardData(sf);
         if (sfData) {
-          card.cmc = sfData.cmc;
-          card.type = sfData.type;
-          card.impact = sfData.impact;   // oracle-text derived impact
-          card.known = true;             // mark as Scryfall-resolved
-          card.imageUrl = sfData.imageUrl;
-          card.typeLine = sfData.typeLine;
+          card.cmc           = sfData.cmc;
+          card.type          = sfData.type;
+          card.impact        = sfData.impact;
+          card.known         = true;
+          card.imageUrl      = sfData.imageUrl;
+          card.typeLine      = sfData.typeLine;
+          card.colors        = sfData.colors;
+          card.colorIdentity = sfData.colorIdentity;
+          card.oracleText    = sfData.oracleText;
         }
       }
     }
@@ -3452,15 +3455,25 @@ runAnalysis = async function() {
     if (combosA.length > 0) analysisA.confirmedCombos = combosA.length;
     if (combosB.length > 0) analysisB.confirmedCombos = combosB.length;
 
-    // Re-calculate power level with real combo count
+    // Re-calculate power level AND bracket with real combo count
     analysisA.powerLevel = Math.round(scoreToPowerLevel(
       analysisA.rawScore, analysisA.avgCmc, analysisA.gcCount,
       analysisA.confirmedCombos, analysisA.tutorCount, analysisA.drawCount
     ) * 10) / 10;
+    analysisA.bracket = determineBracket(
+      analysisA.gcCount, analysisA.mldCount, analysisA.xtCount,
+      analysisA.xtChainCount, analysisA.comboCount, analysisA.powerLevel,
+      analysisA.bannedCount, analysisA.confirmedCombos, analysisA.tutorCount
+    );
     analysisB.powerLevel = Math.round(scoreToPowerLevel(
       analysisB.rawScore, analysisB.avgCmc, analysisB.gcCount,
       analysisB.confirmedCombos, analysisB.tutorCount, analysisB.drawCount
     ) * 10) / 10;
+    analysisB.bracket = determineBracket(
+      analysisB.gcCount, analysisB.mldCount, analysisB.xtCount,
+      analysisB.xtChainCount, analysisB.comboCount, analysisB.powerLevel,
+      analysisB.bannedCount, analysisB.confirmedCombos, analysisB.tutorCount
+    );
 
     const nameA = document.getElementById('name-a').value || 'Deck A';
     const nameB = document.getElementById('name-b').value || 'Deck B';
@@ -4858,7 +4871,20 @@ async function runSingleScan() {
     // ── STEP 5: Run analysis (identical to Compare tab) ────────────────────
     btn.textContent = '⏳ Calculating power level...';
     const analysis = analyzeDeck(deck);
-    if (combos.length > 0) analysis.confirmedCombos = combos.length;
+    if (combos.length > 0) {
+      analysis.confirmedCombos = combos.length;
+      // Recalculate power level with real combo count (same as Compare tab)
+      analysis.powerLevel = Math.round(scoreToPowerLevel(
+        analysis.rawScore, analysis.avgCmc, analysis.gcCount,
+        analysis.confirmedCombos, analysis.tutorCount, analysis.drawCount
+      ) * 10) / 10;
+      // Recalculate bracket with updated combo count
+      analysis.bracket = determineBracket(
+        analysis.gcCount, analysis.mldCount, analysis.xtCount,
+        analysis.xtChainCount, analysis.comboCount, analysis.powerLevel,
+        analysis.bannedCount, analysis.confirmedCombos, analysis.tutorCount
+      );
+    }
 
     // ── STEP 6: Render results ─────────────────────────────────────────────
     const score      = analysis.powerLevel || 0;
