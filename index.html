@@ -876,7 +876,7 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">⌘ Enter</kbd> Analyze
   </span>
   <span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);">
-    <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">1-5</kbd> Switch tabs
+    <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">1-9</kbd> Switch tabs
   </span>
   <span style="font-family:'DM Mono';font-size:9px;color:var(--text-3);">
     <kbd style="background:var(--bg-3);border:1px solid var(--border-2);border-radius:3px;padding:1px 5px;font-size:8px;">⌘ K</kbd> Search cards
@@ -888,13 +888,13 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     <span style="font-size:22px;">⚡</span>
     <div>
       <div class="welcome-text">Welcome to <strong>EDH Power Level</strong> — paste your Commander decklist to get started</div>
-      <div class="welcome-sub">Supports Moxfield · Archidekt · EDHREC · MTGGoldfish · plain text</div>
+      <div class="welcome-sub">Supports Moxfield · Archidekt · EDHREC · MTGGoldfish · plain text &nbsp;·&nbsp; <span style="color:var(--teal)">New: Upgrade Path · Commander Search · Pod Balance · Radar Charts</span></div>
     </div>
   </div>
   <button class="welcome-dismiss" onclick="document.getElementById('welcome-banner').style.display='none'">DISMISS ✕</button>
 </div>
   </div>
-  <button onclick="document.getElementById('welcome-banner').style.display='none'" style="background:none;border:1px solid var(--border2);color:var(--text-dim);font-family:'DM Mono';font-size:9px;letter-spacing:2px;padding:5px 12px;border-radius:6px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">DISMISS ✕</button>
+
 </div>
 
 <!-- COMPARE PANEL -->
@@ -969,7 +969,7 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
     <div id="analyze-status" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-3);letter-spacing:2px;text-align:center;margin-top:6px;text-transform:uppercase;"></div>
   </div>
 
-  <div id="results">
+  <div id="results" style="display:none;">
 
     <!-- POWER LEVEL -->
     <div class="section-hdr">Power Level &amp; Bracket Analysis <span style="font-family:'DM Mono';font-size:8px;color:var(--teal);letter-spacing:1px;vertical-align:middle;margin-left:8px;background:rgba(61,232,168,0.08);border:1px solid rgba(61,232,168,0.2);padding:2px 7px;border-radius:4px;">&#x2713; Scryfall Enhanced</span></div>
@@ -1153,7 +1153,7 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
 <div class="panel" id="panel-synergy">
   <div style="max-width:860px;margin:0 auto;">
     <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:#e8c94a;margin-bottom:4px;">🔗 Synergy Analyzer</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);margin-bottom:24px;letter-spacing:1px;">Deep synergy analysis for a single deck — themes, pairs, score, and missing pieces</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);margin-bottom:24px;letter-spacing:1px;">Deep AI synergy analysis — themes, card pairs, synergy score, and missing pieces. Powered by EDHREC data in Accurate mode.</div>
 
     <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1446,6 +1446,23 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
 
     <div class="section-hdr">&#x1F4CA; Power Score</div>
     <p style="font-size:13px;color:var(--text-2);">Power score uses card Impact ratings (popularity + cost proxies) multiplied by an Efficiency factor from average CMC. Lower CMC = higher efficiency. The 1–10 scale uses a curve: casual decks ~4–6, high-powered ~7–8, cEDH 8.5–10. Unknown cards default to Impact 5, CMC 3.</p>
+
+    <div class="section-hdr">&#x1F4CB; Changelog</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);line-height:2.2;">
+      <div><span style="color:var(--gold);">Mar 2026</span> &nbsp;— Added Upgrade Path, Commander Search, Pod Balance, Radar Chart, Theme Toggle, Embeddable Badge, Onboarding Tour, Live Prices, Format Legality</div>
+      <div><span style="color:var(--gold);">Feb 2026</span> &nbsp;— Updated GC list (53 cards), Banned list (Feb 9 update), Added Farewell + Biorhythm as Game Changers</div>
+      <div><span style="color:var(--gold);">Jan 2026</span> &nbsp;— Added Mana Base Analyzer, Bracket Tuner, Group Quiz, URL import (Moxfield/Archidekt), Print Reports</div>
+      <div><span style="color:var(--gold);">Dec 2025</span> &nbsp;— Spellbook live combo detection, Scryfall card enrichment, Session history, Sample deck loader</div>
+      <div><span style="color:var(--gold);">Nov 2025</span> &nbsp;— Initial launch: Compare, Single Deck Scanner, AI Recommendations, Synergy Analyzer</div>
+    </div>
+
+    <div class="section-hdr">&#x1F517; Links</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+      <a href="https://mtg-deck-comparator.com" target="_blank" style="font-family:'DM Mono';font-size:10px;color:var(--teal);letter-spacing:1px;text-decoration:none;border:1px solid rgba(61,232,168,0.3);padding:5px 14px;border-radius:5px;">🌐 edhpowerlevel.ca</a>
+      <a href="https://commanderspellbook.com" target="_blank" style="font-family:'DM Mono';font-size:10px;color:var(--purple);letter-spacing:1px;text-decoration:none;border:1px solid rgba(168,85,247,0.3);padding:5px 14px;border-radius:5px;">🌀 Commander Spellbook</a>
+      <a href="https://edhrec.com" target="_blank" style="font-family:'DM Mono';font-size:10px;color:var(--gold);letter-spacing:1px;text-decoration:none;border:1px solid rgba(232,201,74,0.3);padding:5px 14px;border-radius:5px;">📊 EDHREC</a>
+      <a href="https://scryfall.com" target="_blank" style="font-family:'DM Mono';font-size:10px;color:var(--blue);letter-spacing:1px;text-decoration:none;border:1px solid rgba(96,165,250,0.3);padding:5px 14px;border-radius:5px;">🔍 Scryfall</a>
+    </div>
   </div>
 
 </div>
@@ -1557,7 +1574,7 @@ footer p { font-family:'DM Mono'; font-size:9px; color:var(--text-4); letter-spa
   onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-2)';this.style.transform=''">↑</button>
 
 <footer>
-  <p>© 2026 POKÉSTOP COLLECTABLES &nbsp;·&nbsp; EDH POWER LEVEL &nbsp;·&nbsp; edhpowerlevel.ca</p>
+  <p>© 2026 POKÉSTOP COLLECTABLES &nbsp;·&nbsp; <a href="https://mtg-deck-comparator.com" style="color:var(--gold);text-decoration:none;">EDH POWER LEVEL</a> &nbsp;·&nbsp; edhpowerlevel.ca &nbsp;·&nbsp; Data: Scryfall · EDHREC · Commander Spellbook</p>
 </footer>
 
 <script>
